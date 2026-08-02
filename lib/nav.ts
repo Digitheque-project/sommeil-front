@@ -23,10 +23,16 @@ export const NAV_ITEMS: NavItem[] = [
     label: "Compte rendu",
     href: "/comptes-rendus",
     icon: "description",
-    shortLabel: "Rapports",
+    shortLabel: "Bilan",
   },
   {
-    label: "Archives & Rapports",
+    label: "Rapports & Statistiques",
+    href: "/rapports",
+    icon: "bar_chart",
+    shortLabel: "Stats",
+  },
+  {
+    label: "Archives",
     href: "/archives",
     icon: "archive",
     shortLabel: "Archives",

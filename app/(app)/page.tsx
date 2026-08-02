@@ -1,5 +1,6 @@
+import Link from "next/link";
 import TopBar from "@/components/TopBar";
-import DashboardShell from '@/components/DashboardShell';
+import BarChart from "@/components/charts/BarChart";
 
 const activityFeed = [
   {
@@ -9,7 +10,7 @@ const activityFeed = [
     title: "Données PSG téléchargées",
     subtitle: "Patient: Mme. Sophie Martin · ID #4429",
     time: "Il y a 12 min",
-    action: "Analyser",
+    badge: undefined as string | undefined,
   },
   {
     icon: "verified",
@@ -18,7 +19,7 @@ const activityFeed = [
     title: "Compte-rendu validé",
     subtitle: "Par Dr. Leroy · Patient: M. Pierre Adam",
     time: "Il y a 1h",
-    badge: "TERMINE",
+    badge: "TERMINÉ",
   },
   {
     icon: "edit_calendar",
@@ -27,15 +28,16 @@ const activityFeed = [
     title: "Nouvelle Consultation",
     subtitle: "Patient: Emma Bernard · Demain à 09:00",
     time: "Il y a 2h",
+    badge: undefined as string | undefined,
   },
 ];
 
-const monthlyVolume = [
-  { label: "S1", previous: 40, current: 60 },
-  { label: "S2", previous: 50, current: 45 },
-  { label: "S3", previous: 30, current: 80 },
-  { label: "S4", previous: 45, current: 70 },
-  { label: "S5", previous: 60, current: 90 },
+const weeklyExamTrend = [
+  { label: "S1", values: { courant: 38 } },
+  { label: "S2", values: { courant: 41 } },
+  { label: "S3", values: { courant: 29 } },
+  { label: "S4", values: { courant: 44 } },
+  { label: "S5", values: { courant: 52 } },
 ];
 
 const calendarDays = [
@@ -236,52 +238,86 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-section-gap">
           {/* Center Column */}
           <div className="lg:col-span-2 space-y-gutter">
-            {/* Dynamic dashboard shell (fetches mock data) */}
-            <div className="bg-white border border-outline-variant rounded-xl overflow-hidden">
-                <DashboardShell />
+            {/* Activité Récente */}
+            <div className="bg-white border border-outline-variant rounded-[32px] overflow-hidden shadow-sm">
+              <div className="p-6 border-b border-outline-variant flex justify-between items-center">
+                <h3 className="font-headline-sm text-headline-sm text-primary">
+                  Activité Récente
+                </h3>
+                <button className="rounded-full border border-outline-variant px-4 py-2 text-label-sm font-medium text-on-surface-variant hover:bg-surface-container transition-colors">
+                  Voir tout
+                </button>
               </div>
-
-            {/* Clinical Data Chart Placeholder */}
-            <div className="bg-white border border-outline-variant rounded-[32px] p-6 h-[420px] overflow-hidden shadow-sm">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between mb-6">
-                <div>
-                  <h3 className="font-headline-sm text-headline-sm text-primary">
-                    Volume d&apos;Examens Mensuel
-                  </h3>
-                  <p className="text-label-sm text-on-surface-variant">
-                    Octobre 2023 vs Septembre 2023
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-3 text-label-sm">
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full bg-secondary" />
-                    <span>Courant</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full bg-outline-variant" />
-                    <span>Précédent</span>
-                  </div>
-                </div>
-              </div>
-              <div className="grid grid-cols-5 gap-4 h-full items-end pt-2">
-                {monthlyVolume.map((week) => (
-                  <div key={week.label} className="flex flex-col items-center gap-3">
-                    <div className="flex h-64 w-full items-end gap-2">
+              <div className="divide-y divide-outline-variant">
+                {activityFeed.map((item) => (
+                  <div
+                    key={item.title}
+                    className="p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="flex items-start gap-4">
                       <div
-                        className="flex-1 rounded-t-3xl bg-outline-variant/30"
-                        style={{ height: `${week.previous}%` }}
-                      />
-                      <div
-                        className="flex-1 rounded-t-3xl bg-secondary/80"
-                        style={{ height: `${week.current}%` }}
-                      />
+                        className={`w-12 h-12 rounded-2xl ${item.iconBg} ${item.iconColor} flex items-center justify-center shrink-0`}
+                      >
+                        <span className="material-symbols-outlined icon-lg">
+                          {item.icon}
+                        </span>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="font-semibold text-on-surface">
+                          {item.title}
+                        </div>
+                        <div className="text-label-sm text-on-surface-variant">
+                          {item.subtitle}
+                        </div>
+                      </div>
                     </div>
-                    <span className="text-[10px] font-data-mono text-on-surface-variant">
-                      {week.label}
-                    </span>
+                    <div className="flex items-center gap-3 sm:flex-col sm:items-end">
+                      <span className="text-label-sm text-on-surface-variant">
+                        {item.time}
+                      </span>
+                      {item.badge && (
+                        <span className="text-[10px] font-bold uppercase bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                          {item.badge}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
+              <div className="p-4">
+                <button className="w-full bg-tertiary text-on-tertiary rounded-2xl py-3 flex items-center justify-center gap-2 font-label-md text-label-md hover:opacity-90 transition-all">
+                  <span className="material-symbols-outlined">add</span>
+                  Créer une nouvelle entrée
+                </button>
+              </div>
+            </div>
+
+            {/* Exam Volume Preview */}
+            <div className="bg-white border border-outline-variant rounded-[32px] p-6 shadow-sm">
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <div>
+                  <h3 className="font-headline-sm text-headline-sm text-primary">
+                    Volume d&apos;Examens
+                  </h3>
+                  <p className="text-label-sm text-on-surface-variant">
+                    Tendance hebdomadaire
+                  </p>
+                </div>
+                <Link
+                  href="/rapports"
+                  className="shrink-0 flex items-center gap-1 text-secondary text-label-sm font-semibold hover:underline"
+                >
+                  Voir les rapports
+                  <span className="material-symbols-outlined text-[16px]">
+                    arrow_forward
+                  </span>
+                </Link>
+              </div>
+              <BarChart
+                data={weeklyExamTrend}
+                series={[{ key: "courant", label: "Examens", color: "#2563eb" }]}
+                height={140}
+              />
             </div>
           </div>
 

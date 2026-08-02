@@ -132,7 +132,7 @@ export default function ArchivesPage() {
   return (
     <>
       <TopBar
-        title="Archives & Rapports"
+        title="Archives"
         searchPlaceholder="Rechercher un dossier..."
         doctorName="Dr. Morel"
         doctorRole="Spécialiste Sommeil"
