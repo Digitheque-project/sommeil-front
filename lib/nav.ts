@@ -1,0 +1,34 @@
+export type NavItem = {
+  label: string;
+  href: string;
+  icon: string;
+  shortLabel?: string;
+};
+
+export const NAV_ITEMS: NavItem[] = [
+  { label: "Tableau de bord", href: "/", icon: "dashboard", shortLabel: "Accueil" },
+  {
+    label: "Consultation",
+    href: "/consultation",
+    icon: "medical_services",
+    shortLabel: "Consults",
+  },
+  {
+    label: "Polysomnographie",
+    href: "/polysomnographie",
+    icon: "sleep",
+    shortLabel: "PSG",
+  },
+  {
+    label: "Compte rendu",
+    href: "/comptes-rendus",
+    icon: "description",
+    shortLabel: "Rapports",
+  },
+  {
+    label: "Archives & Rapports",
+    href: "/archives",
+    icon: "archive",
+    shortLabel: "Archives",
+  },
+];

@@ -1,0 +1,254 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------------------------------------------------------------------- */
+/* Clinical Serenity — design tokens for the Sleep Center Management app  */
+/* Source: maquettes "sommeildesign" (Stitch) — palette identique sur les */
+/* 5 écrans (tableau de bord, consultation, PSG, compte rendu, archives)  */
+/* ---------------------------------------------------------------------- */
+
+:root {
+  --font-inter: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-jetbrains-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+@theme inline {
+  /* Colors (Clinical Serenity palette) */
+  --color-on-primary-container: #8293b8;
+  --color-secondary: #2563eb;
+  --color-on-error-container: #93000a;
+  --color-surface-container-low: #eef4ff;
+  --color-surface-bright: #f8fbff;
+  --color-surface-dim: #e8efff;
+  --color-tertiary-fixed: #e9effe;
+  --color-inverse-surface: #1e293b;
+  --color-error-container: #ffdad6;
+  --color-background: #eef4ff;
+  --color-on-tertiary-container: #8a93a0;
+  --color-surface-container-lowest: #ffffff;
+  --color-secondary-fixed-dim: #c7d8ff;
+  --color-surface-tint: #dbe5ff;
+  --color-on-primary-fixed-variant: #3f5fbd;
+  --color-surface: #ffffff;
+  --color-on-secondary-fixed: #0f172a;
+  --color-primary-fixed: #dbe1ff;
+  --color-on-surface: #0f172a;
+  --color-tertiary-fixed-dim: #cad2e8;
+  --color-on-secondary-container: #1d4cff;
+  --color-inverse-on-surface: #f8fbff;
+  --color-on-background: #0f172a;
+  --color-on-secondary-fixed-variant: #1647a9;
+  --color-on-tertiary-fixed: #131c26;
+  --color-on-tertiary: #ffffff;
+  --color-outline: #cbd5e1;
+  --color-on-surface-variant: #64748b;
+  --color-secondary-container: #dbe4ff;
+  --color-on-primary-fixed: #081b3a;
+  --color-on-primary: #ffffff;
+  --color-on-secondary: #ffffff;
+  --color-primary: #1d4cff;
+  --color-on-tertiary-fixed-variant: #3f4853;
+  --color-inverse-primary: #c8d4ff;
+  --color-tertiary-container: #eff4ff;
+  --color-outline-variant: #d1d9e6;
+  --color-primary-container: #e0e8ff;
+  --color-tertiary: #0e1721;
+  --color-surface-container-highest: #dbe4ff;
+  --color-surface-container: #eff4ff;
+  --color-error: #ba1a1a;
+  --color-secondary-fixed: #d6e3ff;
+  --color-primary-fixed-dim: #c7d4ff;
+  --color-on-error: #ffffff;
+  --color-surface-variant: #e2e8f0;
+  --color-surface-container-high: #dfe7ff;
+
+  /* Border radius (Soft / Functional Minimalism) */
+  --radius: 0.125rem;
+  --radius-lg: 0.25rem;
+  --radius-xl: 0.5rem;
+
+  /* Spacing scale extensions */
+  --spacing-container-padding: 24px;
+  --spacing-form-element-gap: 20px;
+  --spacing-gutter: 16px;
+  --spacing-unit: 8px;
+  --spacing-section-gap: 32px;
+
+  /* Font families */
+  --font-body-lg: var(--font-inter);
+  --font-data-mono: var(--font-jetbrains-mono);
+  --font-label-md: var(--font-inter);
+  --font-headline-sm: var(--font-inter);
+  --font-label-sm: var(--font-inter);
+  --font-headline-md: var(--font-inter);
+  --font-body-md: var(--font-inter);
+  --font-body-sm: var(--font-inter);
+  --font-display-lg: var(--font-inter);
+
+  /* Font sizes (with matching line-height / letter-spacing / weight) */
+  --text-body-lg: 18px;
+  --text-body-lg--line-height: 28px;
+  --text-body-lg--font-weight: 400;
+
+  --text-data-mono: 14px;
+  --text-data-mono--line-height: 20px;
+  --text-data-mono--font-weight: 400;
+
+  --text-label-md: 14px;
+  --text-label-md--line-height: 20px;
+  --text-label-md--letter-spacing: 0.05em;
+  --text-label-md--font-weight: 600;
+
+  --text-headline-sm: 20px;
+  --text-headline-sm--line-height: 28px;
+  --text-headline-sm--font-weight: 600;
+
+  --text-label-sm: 12px;
+  --text-label-sm--line-height: 16px;
+  --text-label-sm--font-weight: 500;
+
+  --text-headline-md: 24px;
+  --text-headline-md--line-height: 32px;
+  --text-headline-md--letter-spacing: -0.01em;
+  --text-headline-md--font-weight: 600;
+
+  --text-body-md: 16px;
+  --text-body-md--line-height: 24px;
+  --text-body-md--font-weight: 400;
+
+  --text-body-sm: 14px;
+  --text-body-sm--line-height: 20px;
+  --text-body-sm--font-weight: 400;
+
+  --text-display-lg: 36px;
+  --text-display-lg--line-height: 44px;
+  --text-display-lg--letter-spacing: -0.02em;
+  --text-display-lg--font-weight: 700;
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-on-background);
+}
+
+/* Material Symbols (Google) */
+.material-symbols-outlined {
+  font-variation-settings:
+    "FILL" 0,
+    "wght" 400,
+    "GRAD" 0,
+    "opsz" 24;
+  vertical-align: middle;
+  font-family: "Material Symbols Outlined", sans-serif;
+}
+
+.material-symbols-outlined.filled {
+  font-variation-settings:
+    "FILL" 1,
+    "wght" 400,
+    "GRAD" 0,
+    "opsz" 24;
+}
+
+/* Custom scrollbars used across the clinical portal */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Live monitoring signal grid (Polysomnographie) */
+.signal-grid {
+  background-image:
+    linear-gradient(var(--color-surface-container) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-surface-container) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.monitor-glow {
+  box-shadow: inset 0 0 40px rgba(0, 93, 184, 0.05);
+}
+
+@keyframes pulse-red {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+.animate-pulse-red {
+  animation: pulse-red 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes dash {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.scrolling-waveform {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: dash 10s linear infinite;
+}
+
+/* Utility helpers (container spacing, gutters, section gaps) */
+.icon-lg { font-size: 20px; }
+.icon-xl { font-size: 24px; }
+
+/* Container adjustments to match mock spacing */
+.p-section-gap { padding: var(--spacing-section-gap); }
+.p-gutter { padding: var(--spacing-gutter); }
+.gap-gutter { gap: var(--spacing-gutter); }
+.gap-section-gap { gap: var(--spacing-section-gap); }
+.py-unit { padding-block: var(--spacing-unit); }
+.space-y-gutter > :not(:last-child) { margin-bottom: var(--spacing-gutter); }
+.space-y-section-gap > :not(:last-child) { margin-bottom: var(--spacing-section-gap); }
+.p-0 { padding: 0; }
+
+/* Typography utility classes mapped to design tokens */
+.font-headline-sm { font-family: var(--font-headline-sm); font-weight: var(--text-headline-sm--font-weight); }
+.text-headline-sm { font-size: var(--text-headline-sm); line-height: var(--text-headline-sm--line-height); }
+
+.font-headline-md { font-family: var(--font-headline-md); font-weight: var(--text-headline-md--font-weight); }
+.text-headline-md { font-size: var(--text-headline-md); line-height: var(--text-headline-md--line-height); }
+
+.font-display-lg { font-family: var(--font-display-lg); font-weight: var(--text-display-lg--font-weight); }
+.text-display-lg { font-size: var(--text-display-lg); line-height: var(--text-display-lg--line-height); }
+
+.font-label-md { font-family: var(--font-label-md); font-weight: var(--text-label-md--font-weight); }
+.text-label-md { font-size: var(--text-label-md); line-height: var(--text-label-md--line-height); letter-spacing: var(--text-label-md--letter-spacing); }
+
+.font-label-sm { font-family: var(--font-label-sm); font-weight: var(--text-label-sm--font-weight); }
+.text-label-sm { font-size: var(--text-label-sm); line-height: var(--text-label-sm--line-height); }
+
+.font-body-md { font-family: var(--font-body-md); font-weight: var(--text-body-md--font-weight); }
+.text-body-md { font-size: var(--text-body-md); line-height: var(--text-body-md--line-height); }
+
+.font-body-sm { font-family: var(--font-body-sm); font-weight: var(--text-body-sm--font-weight); }
+.text-body-sm { font-size: var(--text-body-sm); line-height: var(--text-body-sm--line-height); }
+
+/* Sidebar gradient and muted text for reference style */
+.bg-sidebar-gradient {
+  background: linear-gradient(180deg, var(--color-primary) 0%, #071237 100%);
+}
+.text-sidebar-muted { color: rgba(255,255,255,0.85); }
+
+.font-data-mono { font-family: var(--font-data-mono); font-weight: var(--text-data-mono--font-weight); }
+.text-data-mono { font-size: var(--text-data-mono); line-height: var(--text-data-mono--line-height); }
+
+/* Utility: primary focus ring matching primary color */
+.focus-ring-primary:focus-visible { box-shadow: 0 0 0 3px rgba(3,22,53,0.12); }
+
+/* (Icon sizing and container utilities defined earlier) */
+
