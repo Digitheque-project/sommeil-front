@@ -112,17 +112,18 @@ export default function Sidebar() {
       <div className="mt-6 mx-4 rounded-[28px] border border-white/15 bg-white/8 p-4 backdrop-blur-sm text-white">
         <div className="flex items-center gap-3 mb-3">
           <div className="w-12 h-12 rounded-full bg-white/15 flex items-center justify-center text-white font-semibold">
-            CP
+            LM
           </div>
           <div>
-            <p className="font-semibold">Chef Pharmacien</p>
+            <p className="font-semibold">Dr. Laurent Morel</p>
             <p className="text-[11px] uppercase tracking-[0.18em] text-sidebar-muted">
-              PHARMACIEN CHEF
+              Spécialiste Sommeil
             </p>
           </div>
         </div>
         <p className="text-[12px] text-sidebar-muted leading-5">
-          Accès rapide à l&apos;ensemble des rapports et du planning quotidien.
+          Accès rapide à l&apos;ensemble des dossiers patients et au planning
+          des examens de sommeil.
         </p>
       </div>
     </>

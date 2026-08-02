@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 /* ---------------------------------------------------------------------- */
 /* Clinical Serenity — design tokens for the Sleep Center Management app  */
