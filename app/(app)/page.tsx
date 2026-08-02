@@ -99,7 +99,7 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <div className="rounded-[32px] border border-outline-variant bg-surface-container-lowest p-6 shadow-sm">
+                <div className="rounded-[32px] border border-outline-variant bg-white p-6 shadow-sm">
                 <div className="flex items-center justify-between gap-4 mb-5">
                   <div>
                     <p className="text-label-sm uppercase tracking-[0.18em] text-on-surface-variant">
@@ -143,8 +143,8 @@ export default function DashboardPage() {
         </section>
 
         {/* Bento Grid Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-          <div className="bg-surface-container-lowest border border-outline-variant p-6 rounded-[28px] shadow-sm hover:shadow-md transition-shadow duration-200">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+          <div className="bg-white border border-outline-variant p-6 rounded-[28px] shadow-sm hover:shadow-md transition-shadow duration-200">
             <div className="flex items-start justify-between mb-4">
               <div className="p-3 rounded-2xl bg-secondary-container/15 text-secondary inline-flex">
                 <span className="material-symbols-outlined icon-xl">
@@ -237,12 +237,12 @@ export default function DashboardPage() {
           {/* Center Column */}
           <div className="lg:col-span-2 space-y-gutter">
             {/* Dynamic dashboard shell (fetches mock data) */}
-            <div className="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden">
-              <DashboardShell />
-            </div>
+            <div className="bg-white border border-outline-variant rounded-xl overflow-hidden">
+                <DashboardShell />
+              </div>
 
             {/* Clinical Data Chart Placeholder */}
-            <div className="bg-surface-container-lowest border border-outline-variant rounded-[32px] p-6 h-[420px] overflow-hidden shadow-sm">
+            <div className="bg-white border border-outline-variant rounded-[32px] p-6 h-[420px] overflow-hidden shadow-sm">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between mb-6">
                 <div>
                   <h3 className="font-headline-sm text-headline-sm text-primary">
@@ -287,7 +287,7 @@ export default function DashboardPage() {
 
           {/* Right Column: Calendar & Quick Tools */}
           <div className="space-y-gutter">
-            <div className="bg-surface-container-lowest border border-outline-variant rounded-[32px] overflow-hidden shadow-sm">
+            <div className="bg-white border border-outline-variant rounded-[32px] overflow-hidden shadow-sm">
               <div className="p-4 border-b border-outline-variant flex items-center justify-between bg-primary text-on-primary">
                 <h3 className="font-label-md text-label-md uppercase tracking-wider">
                   Calendrier

@@ -18,7 +18,7 @@ export default function TopBar({
   avatarSrc,
 }: Readonly<TopBarProps>) {
   return (
-    <header className="flex justify-between items-center w-full px-container-padding h-16 z-30 bg-surface border-b border-outline-variant sticky top-0 shadow-sm">
+    <header className="flex justify-between items-center w-full px-container-padding h-16 z-30 bg-surface-bright border-b border-outline-variant sticky top-0 shadow-md">
       <div className="flex items-center gap-4">
         <button
           className="p-2 text-on-surface cursor-pointer"
@@ -39,12 +39,12 @@ export default function TopBar({
       </div>
 
       <div className="flex items-center gap-4">
-        <div className="hidden lg:flex items-center bg-surface-container px-4 py-2 rounded-full border border-outline-variant">
-          <span className="material-symbols-outlined text-on-surface-variant mr-2 text-[20px]">
+        <div className="hidden lg:flex items-center bg-white px-4 py-2 rounded-full border border-outline-variant">
+          <span className="material-symbols-outlined text-primary mr-2 text-[20px]">
             search
           </span>
           <input
-            className="bg-transparent border-none focus:ring-0 text-body-sm w-64 p-0 outline-none"
+            className="bg-transparent border-none focus:ring-0 text-body-sm w-64 p-0 outline-none placeholder:text-on-surface-variant"
             placeholder={searchPlaceholder}
             type="text"
           />
@@ -52,13 +52,13 @@ export default function TopBar({
 
         <div className="flex items-center gap-2">
           <button
-            className="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high rounded-full transition-colors cursor-pointer"
+            className="w-10 h-10 flex items-center justify-center text-primary hover:bg-primary/10 rounded-full transition-colors cursor-pointer"
             aria-label="Notifications"
           >
             <span className="material-symbols-outlined">notifications</span>
           </button>
           <button
-            className="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high rounded-full transition-colors cursor-pointer"
+            className="w-10 h-10 flex items-center justify-center text-primary hover:bg-primary/10 rounded-full transition-colors cursor-pointer"
             aria-label="Paramètres"
           >
             <span className="material-symbols-outlined">settings</span>
@@ -74,7 +74,7 @@ export default function TopBar({
                 height={32}
               />
             ) : (
-              <div className="w-8 h-8 rounded-full bg-secondary-fixed flex items-center justify-center text-secondary">
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                 <span className="material-symbols-outlined text-[20px]">
                   person
                 </span>
