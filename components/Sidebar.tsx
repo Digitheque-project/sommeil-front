@@ -40,8 +40,8 @@ export default function Sidebar() {
   const navContent = (
     <>
       <div className="px-6 py-5 mb-8">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-white shadow-sm mb-4">
-          <span className="font-bold text-lg tracking-tight text-primary">CHU</span>
+        <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white shadow-sm mb-4 overflow-hidden border border-white/60">
+          <img src="/chu.png" alt="Logo CHU" className="w-full h-full object-cover" />
         </div>
         <div>
           <h1 className="font-headline-sm text-headline-sm font-semibold text-white leading-tight">

@@ -3,297 +3,308 @@
 import { useState } from "react";
 import TopBar from "@/components/TopBar";
 
-const summaryMetrics = [
-  { label: "Index Apnées (IAH)", value: "32.4 /h", color: "text-error" },
-  { label: "Saturation min SpO2", value: "84 %", color: "text-secondary" },
-  { label: "Temps de sommeil total", value: "6h 12m", color: "text-primary" },
-  { label: "Efficacité du sommeil", value: "78.5 %", color: "text-secondary" },
-];
-
-const templates = [
-  {
-    title: "SAOS Sévère",
-    preview: "Patient présentant un index élevé avec désaturations...",
-  },
-  {
-    title: "Examen Normal",
-    preview: "Architecture du sommeil respectée, absence d'apnées...",
-  },
-  {
-    title: "Insomnie Initiale",
-    preview: "Allongement de la latence d'endormissement...",
-  },
-];
-
 type SaveState = "idle" | "saving" | "saved";
 
-export default function CompteRenduPage() {
-  const [saveState, setSaveState] = useState<SaveState>("idle");
-  const [notes, setNotes] = useState("");
+type ExamReport = {
+  id: number;
+  name: string;
+  performedAt: string;
+  status: string;
+  report: string;
+  draftReport: string;
+  lastSaved: string;
+  saveState: SaveState;
+};
 
-  const handleSave = () => {
-    setSaveState("saving");
-    setTimeout(() => {
-      setSaveState("saved");
-      setTimeout(() => setSaveState("idle"), 3000);
-    }, 1200);
+type Patient = {
+  id: number;
+  name: string;
+  birthDate: string;
+  age: string;
+  dossier: string;
+  examReports: ExamReport[];
+};
+
+
+const initialPatients: Patient[] = [
+  {
+    id: 1,
+    name: "Jean-Luc DUBOIS",
+    birthDate: "12/05/1974",
+    age: "49 ans",
+    dossier: "#PSG-2023-8942",
+    examReports: [
+      {
+        id: 1,
+        name: "Polysomnographie Complète",
+        performedAt: "24 octobre 2023",
+        status: "Réalisé",
+        report: "",
+        draftReport: "",
+        lastSaved: "Jamais",
+        saveState: "idle",
+      },
+      {
+        id: 2,
+        name: "EEG de nuit",
+        performedAt: "24 octobre 2023",
+        status: "Réalisé",
+        report: "",
+        draftReport: "",
+        lastSaved: "Jamais",
+        saveState: "idle",
+      },
+    ],
+  },
+  {
+    id: 2,
+    name: "Claire MARTIN",
+    birthDate: "07/11/1982",
+    age: "43 ans",
+    dossier: "#PSG-2024-2107",
+    examReports: [
+      {
+        id: 3,
+        name: "Polysomnographie Complète",
+        performedAt: "15 janvier 2024",
+        status: "Réalisé",
+        report: "",
+        draftReport: "",
+        lastSaved: "Jamais",
+        saveState: "idle",
+      },
+      {
+        id: 4,
+        name: "Test CPAP",
+        performedAt: "15 janvier 2024",
+        status: "Réalisé",
+        report: "",
+        draftReport: "",
+        lastSaved: "Jamais",
+        saveState: "idle",
+      },
+    ],
+  },
+];
+
+export default function CompteRenduPage() {
+  const [patients, setPatients] = useState<Patient[]>(initialPatients);
+  const [selectedPatientId, setSelectedPatientId] = useState<number | null>(null);
+  const [selectedExamId, setSelectedExamId] = useState<number | null>(null);
+
+  const selectedPatient = selectedPatientId !== null ? patients.find((patient) => patient.id === selectedPatientId) ?? null : null;
+  const selectedExam = selectedPatient && selectedExamId !== null ? selectedPatient.examReports.find((exam) => exam.id === selectedExamId) ?? null : null;
+
+  const updateExamReportDraft = (patientId: number, examId: number, draftReport: string) => {
+    setPatients((prev) =>
+      prev.map((patient) =>
+        patient.id === patientId
+          ? {
+              ...patient,
+              examReports: patient.examReports.map((exam) =>
+                exam.id === examId ? { ...exam, draftReport } : exam
+              ),
+            }
+          : patient
+      )
+    );
   };
+
+  const saveExamReport = (patientId: number, examId: number) => {
+    setPatients((prev) =>
+      prev.map((patient) =>
+        patient.id === patientId
+          ? {
+              ...patient,
+              examReports: patient.examReports.map((exam) =>
+                exam.id === examId ? { ...exam, saveState: "saving" } : exam
+              ),
+            }
+          : patient
+      )
+    );
+
+    setTimeout(() => {
+      const savedAt = new Date().toLocaleTimeString("fr-FR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
+      setPatients((prev) =>
+        prev.map((patient) =>
+          patient.id === patientId
+            ? {
+                ...patient,
+                examReports: patient.examReports.map((exam) =>
+                  exam.id === examId
+                    ? {
+                        ...exam,
+                        report: exam.draftReport,
+                        saveState: "saved",
+                        lastSaved: savedAt,
+                      }
+                    : exam
+                ),
+              }
+            : patient
+        )
+      );
+
+      setTimeout(() => {
+        setPatients((prev) =>
+          prev.map((patient) =>
+            patient.id === patientId
+              ? {
+                  ...patient,
+                  examReports: patient.examReports.map((exam) =>
+                    exam.id === examId ? { ...exam, saveState: "idle" } : exam
+                  ),
+                }
+              : patient
+          )
+        );
+      }, 2500);
+    }, 900);
+  };
+
 
   return (
     <>
       <TopBar
-        title="Rédaction du Compte Rendu"
+        title="Rédaction du compte rendu"
         searchPlaceholder="Rechercher un dossier..."
         doctorName="Dr. Morel"
         doctorRole="Somnologue"
+        showSettings={false}
       />
 
-      <div className="max-w-6xl mx-auto px-container-padding py-section-gap">
-        {/* Patient Header Info */}
-        <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 mb-gutter shadow-sm flex flex-wrap items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-secondary-fixed rounded-full flex items-center justify-center text-secondary shrink-0">
-              <span className="material-symbols-outlined filled">
-                person
-              </span>
+      <main className="w-full mx-auto px-container-padding py-section-gap">
+        <section className="bg-surface-container-lowest border border-outline-variant rounded-3xl p-6 mb-6 shadow-sm">
+          {selectedPatient ? (
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <p className="text-label-sm text-on-surface-variant uppercase tracking-[0.18em] mb-2">
+                  Patient
+                </p>
+                <h1 className="font-headline-sm text-headline-sm text-primary">
+                  {selectedPatient.name}
+                </h1>
+                <p className="text-body-sm text-on-surface-variant mt-2">
+                  {selectedPatient.birthDate} · {selectedPatient.age} · Dossier {selectedPatient.dossier}
+                </p>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <div className="rounded-3xl bg-surface-container p-4 text-center">
+                  <p className="text-label-sm text-on-surface-variant uppercase">Examen sélectionné</p>
+                  <p className="font-label-md text-primary mt-2">{selectedExam?.name ?? "Aucun examen sélectionné"}</p>
+                </div>
+                <div className="rounded-3xl bg-surface-container p-4 text-center">
+                  <p className="text-label-sm text-on-surface-variant uppercase">Date</p>
+                  <p className="font-label-md text-primary mt-2">{selectedExam?.performedAt ?? "-"}</p>
+                </div>
+                <div className="rounded-3xl bg-surface-container p-4 text-center">
+                  <p className="text-label-sm text-on-surface-variant uppercase">Statut</p>
+                  <p className="font-label-md text-primary mt-2">{selectedExam?.status ?? "-"}</p>
+                </div>
+              </div>
             </div>
-            <div>
-              <h2 className="font-headline-sm text-headline-sm text-primary">
-                Jean-Luc DUBOIS
+          ) : (
+            <div className="text-center py-12">
+              <p className="font-headline-sm text-headline-sm text-primary mb-2">Sélectionnez un patient pour commencer</p>
+              <p className="text-body-sm text-on-surface-variant">Seul le patient choisi s’affichera ici.</p>
+            </div>
+          )}
+        </section>
+
+        <div className="grid grid-cols-12 gap-6">
+          <aside className="col-span-12 lg:col-span-4 space-y-4">
+            <section className="bg-surface-container-lowest border border-outline-variant rounded-3xl p-5 shadow-sm">
+              <h2 className="font-label-md text-label-md text-on-surface-variant uppercase mb-5">
+                Patients PSG
               </h2>
-              <div className="flex flex-wrap gap-4 mt-1">
-                <span className="text-on-surface-variant text-body-sm flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[18px]">
-                    calendar_today
-                  </span>{" "}
-                  12/05/1974 (49 ans)
-                </span>
-                <span className="text-on-surface-variant text-body-sm flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[18px]">
-                    fingerprint
-                  </span>{" "}
-                  ID: #PSG-2023-8942
-                </span>
-              </div>
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <div className="text-right">
-              <p className="text-label-sm text-on-surface-variant uppercase">
-                Date de l&apos;examen
-              </p>
-              <p className="font-label-md text-label-md text-primary">
-                24 Octobre 2023
-              </p>
-            </div>
-            <div className="w-px h-10 bg-outline-variant mx-2" />
-            <div className="text-right">
-              <p className="text-label-sm text-on-surface-variant uppercase">
-                Type d&apos;examen
-              </p>
-              <p className="font-label-md text-label-md text-primary">
-                Polysomnographie Complète
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-12 gap-gutter">
-          {/* Summary Metrics */}
-          <div className="col-span-12 lg:col-span-4 space-y-4">
-            <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-5 shadow-sm">
-              <h3 className="font-label-md text-label-md text-on-surface-variant mb-4 uppercase flex items-center gap-2">
-                <span className="material-symbols-outlined text-secondary">
-                  insights
-                </span>{" "}
-                Synthèse des données
-              </h3>
-              <div className="space-y-4">
-                {summaryMetrics.map((metric) => (
-                  <div
-                    key={metric.label}
-                    className="flex justify-between items-end border-b border-outline-variant pb-2"
-                  >
-                    <span className="text-body-sm text-on-surface-variant">
-                      {metric.label}
-                    </span>
-                    <span
-                      className={`font-data-mono text-headline-sm ${metric.color}`}
-                    >
-                      {metric.value}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <button className="w-full mt-6 py-2 px-4 border border-secondary text-secondary rounded-lg font-label-md text-label-md hover:bg-surface-container-low transition-colors flex items-center justify-center gap-2">
-                <span className="material-symbols-outlined text-[20px]">
-                  visibility
-                </span>{" "}
-                Voir le tracé complet
-              </button>
-            </div>
-
-            <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-5 shadow-sm">
-              <h3 className="font-label-md text-label-md text-on-surface-variant mb-3 uppercase">
-                Templates de rédaction
-              </h3>
-              <div className="grid grid-cols-1 gap-2">
-                {templates.map((template) => (
+              <div className="space-y-3">
+                {patients.map((patient) => (
                   <button
-                    key={template.title}
-                    onClick={() =>
-                      setNotes((prev) =>
-                        prev ? `${prev}\n\n${template.preview}` : template.preview
-                      )
-                    }
-                    className="text-left p-2.5 rounded border border-outline-variant hover:bg-surface-container-high transition-colors text-body-sm"
+                    key={patient.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedPatientId(patient.id);
+                      setSelectedExamId(patient.examReports[0]?.id ?? null);
+                    }}
+                    className={`w-full text-left rounded-3xl border px-4 py-4 transition-colors ${
+                      selectedPatientId === patient.id
+                        ? "border-primary bg-primary/10"
+                        : "border-outline-variant bg-surface-container"
+                    }`}
                   >
-                    <span className="font-semibold block mb-0.5">
-                      {template.title}
-                    </span>
-                    <span className="text-on-surface-variant truncate block">
-                      {template.preview}
-                    </span>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-on-surface">{patient.name}</p>
+                        <p className="text-body-sm text-on-surface-variant mt-1">{patient.birthDate} · {patient.age}</p>
+                        <p className="text-body-sm text-on-surface-variant mt-1">Dossier {patient.dossier}</p>
+                      </div>
+                    </div>
                   </button>
                 ))}
               </div>
-            </div>
-          </div>
+            </section>
 
-          {/* Main Free Text Editor */}
-          <div className="col-span-12 lg:col-span-8">
-            <div className="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm flex flex-col h-full">
-              <div className="px-6 py-4 border-b border-outline-variant flex items-center justify-between flex-wrap gap-2">
-                <h3 className="font-headline-sm text-headline-sm text-primary">
-                  Observations &amp; Conclusion Médicale
-                </h3>
-                <div className="flex items-center gap-1 text-on-surface-variant">
-                  <span className="material-symbols-outlined text-[18px]">
-                    history
-                  </span>
-                  <span className="text-label-sm">
-                    Dernière sauvegarde: 14:02
-                  </span>
+          </aside>
+
+          <section className="col-span-12 lg:col-span-8">
+            <div className="bg-surface-container-lowest border border-outline-variant rounded-3xl shadow-sm flex flex-col h-full">
+              <div className="px-6 py-5 border-b border-outline-variant flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-label-sm text-on-surface-variant uppercase tracking-[0.18em]">
+                    Rapport libre
+                  </p>
+                  <h2 className="font-headline-sm text-headline-sm text-primary mt-2">
+                    Rédigez votre compte rendu
+                  </h2>
+                </div>
+                <div className="rounded-3xl bg-surface-container p-3 text-sm text-on-surface-variant">
+                  Dernière sauvegarde: {selectedExam?.lastSaved}
                 </div>
               </div>
 
-              <div className="bg-surface-container-low px-4 py-2 border-b border-outline-variant flex gap-4">
-                <div className="flex gap-1">
-                  <button
-                    className="p-1 hover:bg-surface-container-high rounded transition-colors"
-                    aria-label="Gras"
-                  >
-                    <span className="material-symbols-outlined text-[20px]">
-                      format_bold
-                    </span>
-                  </button>
-                  <button
-                    className="p-1 hover:bg-surface-container-high rounded transition-colors"
-                    aria-label="Italique"
-                  >
-                    <span className="material-symbols-outlined text-[20px]">
-                      format_italic
-                    </span>
-                  </button>
-                  <button
-                    className="p-1 hover:bg-surface-container-high rounded transition-colors"
-                    aria-label="Liste à puces"
-                  >
-                    <span className="material-symbols-outlined text-[20px]">
-                      format_list_bulleted
-                    </span>
-                  </button>
-                </div>
-                <div className="w-px h-6 bg-outline-variant" />
-                <div className="flex gap-1">
-                  <button
-                    className="p-1 hover:bg-surface-container-high rounded transition-colors"
-                    aria-label="Ajouter un lien"
-                  >
-                    <span className="material-symbols-outlined text-[20px]">
-                      add_link
-                    </span>
-                  </button>
-                  <button
-                    className="p-1 hover:bg-surface-container-high rounded transition-colors"
-                    aria-label="Joindre un fichier"
-                  >
-                    <span className="material-symbols-outlined text-[20px]">
-                      attach_file
-                    </span>
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex-1 p-6">
+              <div className="p-6">
                 <textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  className="w-full h-full min-h-[500px] border-none focus:ring-0 font-body-lg text-body-lg placeholder:text-on-surface-variant/40 resize-none outline-none"
-                  placeholder="Saisissez ici vos conclusions détaillées sur l'examen de M. DUBOIS..."
+                  value={selectedExam?.draftReport ?? ""}
+                  onChange={(event) =>
+                    selectedPatient && selectedExam && updateExamReportDraft(selectedPatient.id, selectedExam.id, event.target.value)
+                  }
+                  placeholder={selectedPatient ? "Rédigez ici votre compte rendu libre pour l'examen réalisé..." : "Sélectionnez un patient pour commencer"}
+                  disabled={!selectedPatient || !selectedExam}
+                  className="w-full min-h-[520px] resize-none rounded-3xl border border-outline-variant bg-background p-5 text-body-lg text-on-surface focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
                 />
               </div>
 
-              <div className="p-6 border-t border-outline-variant bg-surface-bright flex flex-wrap items-center justify-between gap-4 rounded-b-xl">
-                <div className="flex gap-4">
-                  <button className="flex items-center gap-2 text-on-surface-variant font-label-md text-label-md px-4 py-2 hover:bg-surface-container-high rounded-lg transition-colors">
-                    <span className="material-symbols-outlined">print</span>{" "}
-                    Imprimer le brouillon
-                  </button>
-                  <button className="flex items-center gap-2 text-on-surface-variant font-label-md text-label-md px-4 py-2 hover:bg-surface-container-high rounded-lg transition-colors">
-                    <span className="material-symbols-outlined">share</span>{" "}
-                    Partager
+              <div className="px-6 py-5 border-t border-outline-variant bg-surface-bright rounded-b-3xl flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="text-body-sm text-on-surface-variant hidden md:block">
+                  Votre texte est enregistré localement avant validation. Cliquez sur Enregistrer pour confirmer le rapport.
+                </div>
+                <div className="w-full sm:w-auto rounded-3xl bg-success/10 p-4 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => selectedPatient && selectedExam && saveExamReport(selectedPatient.id, selectedExam.id)}
+                    disabled={!selectedExam?.draftReport || selectedExam.saveState === "saving"}
+                    className={`inline-flex items-center justify-center gap-2 rounded-3xl px-6 py-3 text-body-md font-semibold transition-colors focus:outline-none focus:ring-0 ${
+                      selectedExam?.saveState === "saving"
+                        ? "bg-surface-container text-on-surface-variant"
+                        : "bg-secondary text-on-secondary hover:bg-secondary/90"
+                    } ${!selectedExam?.draftReport || selectedExam.saveState === "saving" ? "opacity-60 cursor-not-allowed" : ""}`}
+                  >
+                    <span className="material-symbols-outlined">
+                      {selectedExam?.saveState === "saving" ? "sync" : "save"}
+                    </span>
+                    {selectedExam?.saveState === "saving" ? "Enregistrement..." : "Enregistrer"}
                   </button>
                 </div>
-                <button
-                  onClick={handleSave}
-                  disabled={saveState === "saving"}
-                  className={`px-8 py-3 rounded-lg font-headline-sm flex items-center gap-3 shadow-lg active:scale-95 transition-all disabled:cursor-not-allowed ${
-                    saveState === "saved"
-                      ? "bg-green-600 text-white"
-                      : "bg-secondary text-on-secondary hover:brightness-110"
-                  }`}
-                >
-                  <span
-                    className={`material-symbols-outlined filled ${
-                      saveState === "saving" ? "animate-spin" : ""
-                    }`}
-                  >
-                    {saveState === "saving"
-                      ? "sync"
-                      : saveState === "saved"
-                        ? "check_circle"
-                        : "archive"}
-                  </span>
-                  {saveState === "saving"
-                    ? "Traitement..."
-                    : saveState === "saved"
-                      ? "Archivé avec succès"
-                      : "Enregistrer et Archiver"}
-                </button>
               </div>
             </div>
-          </div>
+          </section>
         </div>
-
-        {/* Contextual Assistant */}
-        <div className="mt-section-gap bg-primary-container text-on-primary-container p-6 rounded-xl border border-primary-container flex items-start gap-4">
-          <span className="material-symbols-outlined text-[32px]">
-            lightbulb
-          </span>
-          <div>
-            <h4 className="font-headline-sm text-headline-sm mb-1">
-              Aide au diagnostic
-            </h4>
-            <p className="text-body-md opacity-90 max-w-3xl">
-              Basé sur les données de polysomnographie, ce patient présente
-              une fragmentation sévère du sommeil avec une prédominance
-              d&apos;événements obstructifs en position supine. Un traitement
-              par PPC (Pression Positive Continue) est fortement recommandé.
-            </p>
-          </div>
-        </div>
-      </div>
+      </main>
     </>
   );
 }
