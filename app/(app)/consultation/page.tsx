@@ -1,74 +1,319 @@
+"use client";
+
+import { useMemo, useState } from "react";
 import TopBar from "@/components/TopBar";
 
-const queue = [
+type PatientStatus = "TOUS" | "EN ATTENTE" | "EN COURS" | "EFFECTUÉ";
+type VisitType = "TOUS" | "INITIALE" | "CONTROLE";
+
+type Appointment = {
+  id: number;
+  time: string;
+  name: string;
+  date: string;
+  status: Exclude<PatientStatus, "TOUS">;
+  nature: "Consultation initiale" | "Contrôle" | "Suivi CPAP" | "Résultats Poly" | "Consultation";
+  visitType: Exclude<VisitType, "TOUS">;
+  isUrgent: boolean;
+  patientId: string;
+  motif: string;
+  priseEnCharge?: { companyName: string; isActive: boolean } | null;
+  isArrived: boolean;
+  isReport: boolean;
+  sexe: string;
+  age: number;
+  timeline: Array<{
+    title: string;
+    date: string;
+    body: string;
+    accent: string;
+    attachment: string;
+  }>;
+  nextStep: {
+    label: string;
+    date: string;
+    place: string;
+  };
+  prescription: Array<{ label: string; detail: string; ok: boolean }>;
+};
+
+const formatAppointmentDate = (date: Date) =>
+  new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(date).replace(/,/g, "");
+
+const todayDateLabel = formatAppointmentDate(new Date());
+
+const initialAppointments: Appointment[] = [
   {
-    name: "MARCEL, Sophie",
+    id: 29481,
     time: "14:30",
-    timeColor: "text-secondary font-semibold",
-    id: "#29481",
-    reason: "Consultation initiale",
-    active: true,
-    tags: [
-      { label: "Urgent", className: "bg-error-container text-on-error-container" },
-      { label: "Apnée suspectée", className: "bg-surface-dim text-on-surface-variant" },
+    name: "MARCEL, Sophie",
+    date: todayDateLabel,
+    status: "EN ATTENTE",
+    nature: "Consultation initiale",
+    visitType: "INITIALE",
+    isUrgent: true,
+    patientId: "29481-FR",
+    motif: "Apnée suspectée / fatigue diurne",
+    priseEnCharge: { companyName: "Axa Santé", isActive: true },
+    isArrived: false,
+    isReport: false,
+    sexe: "F",
+    age: 42,
+    timeline: [
+      {
+        title: "Consultation de suivi trimestriel",
+        date: "12 Jan 2024",
+        body: "Patient rapporte une amélioration significative de la fatigue diurne. Somnolence (Epworth: 6/24). Ajustement de la pression CPAP à 10cm H2O.",
+        accent: "bg-[#005b82]",
+        attachment: "ORDONNANCE_JAN24.PDF",
+      },
+      {
+        title: "Polysomnographie Niveau 1",
+        date: "15 Oct 2023",
+        body: "Diagnostic d'AOS sévère. Saturation moyenne 89%. Présence de ronflements positionnels.",
+        accent: "bg-slate-300",
+        attachment: "RAPPORT_EXAMEN.XLSX",
+      },
+    ],
+    nextStep: {
+      label: "Contrôle Polygraphique (6 mois)",
+      date: "18 Avril 2024",
+      place: "Salle d'Examen B • 21:00",
+    },
+    prescription: [
+      { label: "Traitement CPAP", detail: "Pression: 10cm H2O • Masque nasal", ok: true },
+      { label: "Mélatonine 2mg", detail: "1 gélule au coucher • 3 mois", ok: false },
     ],
   },
   {
-    name: "LEFEBVRE, Thomas",
+    id: 30122,
     time: "15:15",
-    id: "#30122",
-    reason: "Suivi CPAP",
-    tags: [
+    name: "LEFEBVRE, Thomas",
+    date: todayDateLabel,
+    status: "EN COURS",
+    nature: "Suivi CPAP",
+    visitType: "CONTROLE",
+    isUrgent: false,
+    patientId: "30122-FR",
+    motif: "Suivi CPAP / contrôle trimestriel",
+    priseEnCharge: { companyName: "MGEN", isActive: true },
+    isArrived: true,
+    isReport: false,
+    sexe: "M",
+    age: 51,
+    timeline: [
       {
-        label: "Régulier",
-        className: "bg-surface-container-highest text-on-surface-variant",
+        title: "Suivi de traitement CPAP",
+        date: "12 Jan 2024",
+        body: "Amélioration de la fatigue diurne. Pression CPAP ajustée à 11 cm H2O selon tolérance nocturne.",
+        accent: "bg-[#005b82]",
+        attachment: "SUIVI_JAN24.PDF",
       },
+      {
+        title: "Polysomnographie de contrôle",
+        date: "08 Nov 2023",
+        body: "Indice d'apnées-hypopnées amélioré, mais persistance de microéveils sans hausse majeure du risque.",
+        accent: "bg-slate-300",
+        attachment: "RAPPORT_CONTROLE.XLSX",
+      },
+    ],
+    nextStep: {
+      label: "Contrôle de maintenance",
+      date: "22 Avril 2024",
+      place: "Salle d'Examen A • 09:30",
+    },
+    prescription: [
+      { label: "Traitement CPAP", detail: "Pression: 11cm H2O • Masque complet", ok: true },
+      { label: "Hydratation journalière", detail: "1L d'eau le matin • 30 jours", ok: false },
     ],
   },
   {
-    name: "GARCIA, Elena",
+    id: 28854,
     time: "16:00",
-    id: "#28854",
-    reason: "Résultats Poly",
-    tags: [
+    name: "GARCIA, Elena",
+    date: todayDateLabel,
+    status: "EFFECTUÉ",
+    nature: "Résultats Poly",
+    visitType: "INITIALE",
+    isUrgent: false,
+    patientId: "28854-FR",
+    motif: "Diagnostic et résultats de polysomnographie",
+    priseEnCharge: null,
+    isArrived: true,
+    isReport: true,
+    sexe: "F",
+    age: 35,
+    timeline: [
       {
-        label: "Résultats",
-        className: "bg-surface-container-highest text-on-surface-variant",
+        title: "Résultats de polysomnographie",
+        date: "25 Sep 2023",
+        body: "Apnées obstructives modérées. Indice de saturation particulièrement bas dans les phases REM.",
+        accent: "bg-[#005b82]",
+        attachment: "RESULTATS_POLY.XLSX",
       },
     ],
+    nextStep: {
+      label: "Retour de résultats",
+      date: "30 Avril 2024",
+      place: "Consultation téléphonique",
+    },
+    prescription: [{ label: "Bilan de suivi", detail: "Observation de la tolérance au traitement", ok: false }],
   },
   {
-    name: "DUMONT, Robert",
+    id: 19283,
     time: "16:45",
-    id: "#19283",
-    reason: "Consultation",
-    faded: true,
-    tags: [],
+    name: "DUMONT, Robert",
+    date: todayDateLabel,
+    status: "EN ATTENTE",
+    nature: "Consultation",
+    visitType: "INITIALE",
+    isUrgent: false,
+    patientId: "19283-FR",
+    motif: "Première consultation / bilan d'évaluation",
+    priseEnCharge: { companyName: "Mutuelle Harmonie", isActive: false },
+    isArrived: false,
+    isReport: false,
+    sexe: "M",
+    age: 48,
+    timeline: [
+      {
+        title: "Première consultation",
+        date: "12 Jan 2024",
+        body: "Patient en attente de l'examen médical complet et d'un diagnostic initial.",
+        accent: "bg-slate-300",
+        attachment: "DOSSIER_PDF",
+      },
+    ],
+    nextStep: {
+      label: "Consultation initiale",
+      date: "06 Mai 2024",
+      place: "Salle d'Examen C • 08:30",
+    },
+    prescription: [{ label: "Évaluation initiale", detail: "À compléter pendant la consultation", ok: false }],
   },
 ];
 
-const timeline = [
-  {
-    title: "Consultation de Suivi Trimestriel",
-    date: "12 Jan 2024",
-    body: "Patient rapporte une amélioration significative de la fatigue diurne. Somnolence (Epworth: 6/24). Ajustement de la pression CPAP à 10cm H2O.",
-    dot: "bg-secondary",
-    attachment: { icon: "attachment", label: "ORDONNANCE_JAN24.PDF", className: "bg-tertiary-fixed text-on-tertiary-fixed" },
-  },
-  {
-    title: "Polysomnographie Niveau 1",
-    date: "15 Oct 2023",
-    body: "Diagnostic d'AOS sévère. Saturation moyenne 89%. Présence de ronflements positionnels.",
-    dot: "bg-outline-variant",
-    attachment: {
-      icon: "bar_chart",
-      label: "RAPPORT_EXAMEN.XLSX",
-      className: "bg-secondary-container text-on-secondary-container",
-    },
-  },
-];
+const statusOptions: PatientStatus[] = ["TOUS", "EN ATTENTE", "EN COURS", "EFFECTUÉ"];
+const visitOptions: VisitType[] = ["TOUS", "INITIALE", "CONTROLE"];
 
 export default function ConsultationPage() {
+  const [appointmentsList, setAppointmentsList] = useState<Appointment[]>(initialAppointments);
+  const [viewMode, setViewMode] = useState<"today" | "all">("today");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<PatientStatus>("TOUS");
+  const [visitTypeFilter, setVisitTypeFilter] = useState<VisitType>("TOUS");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [selectedPatient, setSelectedPatient] = useState<Appointment | null>(null);
+  const [reportTarget, setReportTarget] = useState<Appointment | null>(null);
+  const [reportDate, setReportDate] = useState("");
+
+  const handleOpenConsultation = (appointment: Appointment) => {
+    setAppointmentsList((current) =>
+      current.map((item) =>
+        item.id === appointment.id ? { ...item, status: "EN COURS", isArrived: true } : item,
+      ),
+    );
+  };
+
+  const handleOpenPatientInfo = (appointment: Appointment) => {
+    setSelectedPatient(appointment);
+  };
+
+  const handleReportPatient = (appointment: Appointment) => {
+    setReportTarget(appointment);
+    setReportDate("");
+  };
+
+  const submitReport = () => {
+    if (!reportTarget || !reportDate) {
+      return;
+    }
+
+    const nextDate = formatAppointmentDate(new Date(reportDate));
+
+    setAppointmentsList((current) =>
+      current.map((item) =>
+        item.id === reportTarget.id
+          ? {
+              ...item,
+              date: nextDate,
+              status: "EN ATTENTE",
+              isArrived: false,
+              isReport: false,
+            }
+          : item,
+      ),
+    );
+
+    setReportTarget(null);
+    setReportDate("");
+  };
+
+  const filteredAppointments = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+
+    return appointmentsList.filter((appointment) => {
+      const searchableText = [
+        appointment.name,
+        appointment.patientId,
+        appointment.motif,
+        appointment.nature,
+        appointment.status,
+        appointment.visitType,
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      if (query && !searchableText.includes(query)) {
+        return false;
+      }
+
+      if (statusFilter !== "TOUS" && appointment.status !== statusFilter) {
+        return false;
+      }
+
+      if (visitTypeFilter !== "TOUS" && appointment.visitType !== visitTypeFilter) {
+        return false;
+      }
+
+      if (viewMode === "today" && appointment.date !== todayDateLabel) {
+        return false;
+      }
+
+      if (viewMode === "all") {
+        const appointmentDate = new Date(appointment.date);
+
+        if (dateFrom) {
+          const fromDate = new Date(dateFrom);
+          fromDate.setHours(0, 0, 0, 0);
+          if (appointmentDate < fromDate) {
+            return false;
+          }
+        }
+
+        if (dateTo) {
+          const toDate = new Date(dateTo);
+          toDate.setHours(23, 59, 59, 999);
+          if (appointmentDate > toDate) {
+            return false;
+          }
+        }
+      }
+
+      return true;
+    });
+  }, [appointmentsList, searchQuery, statusFilter, visitTypeFilter, viewMode, dateFrom, dateTo]);
+
+  const hasDateRange = Boolean(dateFrom || dateTo);
+  const hasActiveFilters = hasDateRange || searchQuery.trim().length > 0 || statusFilter !== "TOUS" || visitTypeFilter !== "TOUS" || viewMode !== "today";
+
+  const progress = 68;
+
   return (
     <>
       <TopBar
@@ -78,291 +323,381 @@ export default function ConsultationPage() {
         doctorRole="Somnologue Senior"
       />
 
-      <div className="p-container-padding space-y-section-gap">
-        {/* Page Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div>
-            <h2 className="font-headline-md text-headline-md text-primary">
-              Consultation &amp; Suivi Médical
-            </h2>
-            <p className="text-body-md text-on-surface-variant">
-              Gestion des dossiers patients et planification des séances de
-              diagnostic.
-            </p>
-          </div>
-          <div className="flex gap-3">
-            <button className="px-4 py-2 border border-outline-variant rounded-lg text-label-md font-label-md flex items-center gap-2 hover:bg-surface-container-low transition-colors">
-              <span className="material-symbols-outlined text-[20px]">
-                filter_list
-              </span>
-              Filtres
-            </button>
-            <button className="px-4 py-2 bg-secondary text-on-secondary rounded-lg text-label-md font-label-md flex items-center gap-2 shadow-sm hover:brightness-110 active:scale-95 transition-all">
-              <span className="material-symbols-outlined text-[20px]">
-                event_available
-              </span>
-              Planifier Rendez-vous
-            </button>
-          </div>
-        </div>
-
-        {/* Bento Grid Content */}
-        <div className="grid grid-cols-12 gap-gutter">
-          {/* Left Column: Patient Queue */}
-          <div className="col-span-12 lg:col-span-4 space-y-gutter">
-            <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 flex flex-col h-full">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-headline-sm text-headline-sm text-primary">
-                  File d&apos;attente
-                </h3>
-                <span className="bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded text-label-sm">
-                  {queue.length * 2} Patients
-                </span>
+      <div className="min-h-screen bg-slate-50 flex flex-col">
+        <div className="p-4 sm:p-6 lg:p-8 flex-1">
+          <div className="max-w-[1400px] mx-auto grid grid-cols-1 gap-8">
+            <div className="2xl:col-span-1">
+              <div className="mb-6 sm:mb-8 flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h1 className="text-[20px] sm:text-[26px] font-extrabold text-gray-900 leading-tight tracking-tight">
+                    Mes consultations du jour
+                  </h1>
+                  <p className="text-[12px] sm:text-[14px] text-gray-500 mt-1.5 font-medium">
+                    Dr. Jean Dupont
+                  </p>
+                </div>
+                <div className="flex items-center gap-2.5 rounded-2xl border border-gray-100 bg-white px-4 py-2.5 shadow-[0px_4px_16px_rgba(17,17,26,0.05)]">
+                  <div className="relative h-9 w-9 shrink-0">
+                    <svg className="h-9 w-9 -rotate-90" viewBox="0 0 36 36">
+                      <circle cx="18" cy="18" r="15.5" fill="none" stroke="#F1F5F9" strokeWidth="4" />
+                      <circle
+                        cx="18"
+                        cy="18"
+                        r="15.5"
+                        fill="none"
+                        stroke={progress >= 100 ? "#10B981" : "#005b82"}
+                        strokeWidth="4"
+                        strokeDasharray={`${(progress / 100) * 97.4} 97.4`}
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </div>
+                  <div className="leading-tight">
+                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Quota aujourd’hui</p>
+                    <p className="text-[15px] font-black text-[#005b82]">
+                      12<span className="text-gray-300 font-bold">/18</span>
+                    </p>
+                  </div>
+                </div>
               </div>
-              <div className="space-y-3 overflow-y-auto max-h-[600px] pr-2">
-                {queue.map((patient) => (
-                  <div
-                    key={patient.id}
-                    className={`p-3 rounded-lg cursor-pointer transition-colors border ${
-                      patient.active
-                        ? "bg-surface-container-low border-secondary hover:bg-surface-container-high"
-                        : "bg-surface-container-lowest border-outline-variant hover:bg-surface-container-low"
-                    } ${patient.faded ? "opacity-60" : ""}`}
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="text-label-md font-bold text-primary">
-                        {patient.name}
-                      </span>
-                      <span
-                        className={`text-label-sm ${
-                          patient.timeColor ?? "text-on-surface-variant"
-                        }`}
-                      >
-                        {patient.time}
-                      </span>
-                    </div>
-                    <p
-                      className={`text-body-sm text-on-surface-variant ${
-                        patient.tags.length ? "mb-3" : ""
+
+              <div className="mb-6 space-y-2.5 rounded-2xl border border-gray-100 bg-white p-2.5 shadow-[0px_4px_16px_rgba(17,17,26,0.04)]">
+                <div className="flex flex-nowrap items-center gap-2 overflow-x-auto">
+                  <div className="flex items-center gap-1 rounded-xl bg-slate-100 p-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setViewMode("today")}
+                      className={`flex h-7 items-center gap-1.5 rounded-lg px-3 text-[12px] font-semibold transition-colors whitespace-nowrap ${
+                        viewMode === "today" ? "bg-white text-[#005b82] shadow-sm" : "text-slate-500 hover:text-slate-700"
                       }`}
                     >
-                      ID: {patient.id} - {patient.reason}
-                    </p>
-                    {patient.tags.length > 0 && (
-                      <div className="flex gap-2 flex-wrap">
-                        {patient.tags.map((tag) => (
-                          <span
-                            key={tag.label}
-                            className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${tag.className}`}
-                          >
-                            {tag.label}
-                          </span>
-                        ))}
-                      </div>
+                      <span className="text-base leading-none">◌</span>
+                      Aujourd’hui
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setViewMode("all")}
+                      className={`h-7 rounded-lg px-3 text-[12px] font-semibold transition-colors whitespace-nowrap ${
+                        viewMode === "all" ? "bg-white text-[#005b82] shadow-sm" : "text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      Tous
+                    </button>
+                  </div>
+
+                  <div className="hidden h-6 w-px bg-slate-200 sm:block" />
+
+                  <div className="relative min-w-[160px] flex-1">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">⌕</span>
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(event) => setSearchQuery(event.target.value)}
+                      placeholder="Rechercher un patient, un motif..."
+                      className="h-9 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-8 text-[12px] font-medium text-slate-700 placeholder:text-slate-400 transition-colors focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#005b82]/30"
+                    />
+                    {searchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setSearchQuery("")}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                        aria-label="Effacer la recherche"
+                      >
+                        <span className="text-sm">✕</span>
+                      </button>
                     )}
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
+                </div>
 
-          {/* Right Column: Medical History & Details */}
-          <div className="col-span-12 lg:col-span-8 space-y-gutter">
-            <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-4">
-                <span className="flex items-center gap-1 text-green-600 font-label-sm">
-                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                  Dossier Actif
-                </span>
-              </div>
-              <div className="flex items-center gap-6 mb-8">
-                <div className="w-20 h-20 rounded-xl bg-secondary-fixed-dim flex items-center justify-center text-secondary shrink-0">
-                  <span className="material-symbols-outlined filled text-[40px]">
-                    person
-                  </span>
-                </div>
-                <div>
-                  <h3 className="font-headline-md text-headline-md text-primary">
-                    Sophie MARCEL
-                  </h3>
-                  <div className="flex flex-wrap gap-4 mt-1 text-body-sm text-on-surface-variant">
-                    <span className="flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[18px]">
-                        cake
-                      </span>{" "}
-                      42 ans (12/05/1982)
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[18px]">
-                        fingerprint
-                      </span>{" "}
-                      ID: 29481-FR
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[18px]">
-                        male
-                      </span>{" "}
-                      Sexe: F
-                    </span>
-                  </div>
-                </div>
-              </div>
+                <div className="h-px bg-slate-100" />
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter mb-8">
-                <div className="p-4 bg-surface-container-low rounded-lg border border-outline-variant">
-                  <p className="text-label-sm text-on-surface-variant uppercase mb-1">
-                    Dernière Etude
-                  </p>
-                  <p className="text-headline-sm text-primary">15 Oct 2023</p>
-                  <p className="text-label-sm text-secondary mt-1">
-                    Polysomnographie complète
-                  </p>
-                </div>
-                <div className="p-4 bg-surface-container-low rounded-lg border border-outline-variant">
-                  <p className="text-label-sm text-on-surface-variant uppercase mb-1">
-                    Indice IAH
-                  </p>
-                  <p className="text-headline-sm text-error">
-                    32.4 <span className="text-body-sm font-normal">/h</span>
-                  </p>
-                  <p className="text-label-sm text-on-error-container mt-1">
-                    Apnée Sévère
-                  </p>
-                </div>
-                <div className="p-4 bg-surface-container-low rounded-lg border border-outline-variant">
-                  <p className="text-label-sm text-on-surface-variant uppercase mb-1">
-                    Observance CPAP
-                  </p>
-                  <p className="text-headline-sm text-primary">94%</p>
-                  <p className="text-label-sm text-green-600 mt-1">
-                    Excellente
-                  </p>
-                </div>
-              </div>
+                <div className="flex min-w-0 items-center gap-2 overflow-hidden">
+                  <select
+                    value={statusFilter}
+                    onChange={(event) => setStatusFilter(event.target.value as PatientStatus)}
+                    className="h-9 min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 text-[12px] font-semibold text-slate-600 transition-colors focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#005b82]/30"
+                  >
+                    {statusOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option === "TOUS" ? "Tous les statuts" : option}
+                      </option>
+                    ))}
+                  </select>
 
-              {/* Historical Timeline */}
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="font-label-md text-label-md text-primary">
-                    Historique Médical &amp; Consultations
-                  </h4>
-                  <button className="text-secondary text-label-sm hover:underline">
-                    Voir tout l&apos;historique
-                  </button>
-                </div>
-                <div className="relative pl-8 space-y-6 before:content-[''] before:absolute before:left-[11px] before:top-0 before:bottom-0 before:w-0.5 before:bg-outline-variant">
-                  {timeline.map((entry) => (
-                    <div key={entry.title} className="relative">
-                      <div
-                        className={`absolute -left-[27px] top-1 w-4 h-4 rounded-full ${entry.dot} border-4 border-surface`}
+                  <select
+                    value={visitTypeFilter}
+                    onChange={(event) => setVisitTypeFilter(event.target.value as VisitType)}
+                    className="h-9 min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 text-[12px] font-semibold text-slate-600 transition-colors focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#005b82]/30"
+                  >
+                    {visitOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option === "TOUS" ? "Tous les types" : option === "INITIALE" ? "Consultation initiale" : "Contrôle"}
+                      </option>
+                    ))}
+                  </select>
+
+                  {viewMode === "all" && (
+                    <div className="flex h-9 min-w-0 flex-[2] items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-2.5">
+                      <span className="text-slate-400 text-sm">▣</span>
+                      <input
+                        type="date"
+                        value={dateFrom}
+                        onChange={(event) => setDateFrom(event.target.value)}
+                        className="h-full min-w-0 flex-1 bg-transparent text-[12px] font-semibold text-slate-600 focus:outline-none"
                       />
-                      <div className="bg-surface-container-lowest border border-outline-variant rounded-lg p-3 hover:border-secondary transition-all">
-                        <div className="flex justify-between mb-2">
-                          <span className="text-label-md font-bold text-primary">
-                            {entry.title}
-                          </span>
-                          <span className="text-data-mono font-data-mono text-xs text-on-surface-variant">
-                            {entry.date}
-                          </span>
-                        </div>
-                        <p className="text-body-sm text-on-surface-variant mb-3">
-                          {entry.body}
-                        </p>
-                        <div className="flex gap-2">
-                          <button
-                            className={`flex items-center gap-1 text-[10px] px-2 py-1 rounded ${entry.attachment.className}`}
-                          >
-                            <span className="material-symbols-outlined text-[14px]">
-                              {entry.attachment.icon}
-                            </span>{" "}
-                            {entry.attachment.label}
-                          </button>
-                        </div>
-                      </div>
+                      <span className="shrink-0 text-slate-300">→</span>
+                      <input
+                        type="date"
+                        value={dateTo}
+                        onChange={(event) => setDateTo(event.target.value)}
+                        className="h-full min-w-0 flex-1 bg-transparent text-[12px] font-semibold text-slate-600 focus:outline-none"
+                      />
                     </div>
-                  ))}
+                  )}
+
+                  {hasActiveFilters && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setViewMode("today");
+                        setSearchQuery("");
+                        setStatusFilter("TOUS");
+                        setVisitTypeFilter("TOUS");
+                        setDateFrom("");
+                        setDateTo("");
+                      }}
+                      className="flex h-9 shrink-0 items-center gap-1 rounded-xl px-3 text-[12px] font-semibold text-slate-500 transition-colors hover:bg-red-50 hover:text-red-600"
+                    >
+                      <span className="text-sm">✕</span>
+                      Réinitialiser
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div className="overflow-hidden rounded-[26px] border border-gray-100 bg-white shadow-[0px_4px_16px_rgba(17,17,26,0.05)]">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm table-fixed">
+                      <thead className="bg-slate-50 text-left text-gray-500">
+                        <tr>
+                          <th className="px-1.5 py-2.5 font-semibold whitespace-nowrap text-[11px] w-[9%]">Date &amp; heure</th>
+                          <th className="px-1.5 py-2.5 font-semibold whitespace-nowrap text-[11px] w-[16%]">Patient</th>
+                          <th className="px-1.5 py-2.5 font-semibold whitespace-nowrap text-[11px] w-[14%]">Visite</th>
+                          <th className="px-1.5 py-2.5 font-semibold whitespace-nowrap text-[11px] w-[9%]">Urgence</th>
+                          <th className="px-1.5 py-2.5 font-semibold w-[22%]">Motif</th>
+                          <th className="px-1.5 py-2.5 font-semibold whitespace-nowrap text-[11px] w-[12%]">Statut</th>
+                          <th className="px-1.5 py-2.5 font-semibold text-right whitespace-nowrap text-[11px] w-[18%]">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredAppointments.length === 0 ? (
+                          <tr>
+                            <td colSpan={7} className="px-2 py-16 text-center">
+                              <div className="flex flex-col items-center gap-2">
+                                <span className="text-3xl text-slate-200">📅</span>
+                                <p className="text-[14px] font-semibold text-slate-500">
+                                  Aucune consultation ne correspond à ces filtres
+                                </p>
+                              </div>
+                            </td>
+                          </tr>
+                        ) : (
+                          filteredAppointments.map((patient) => (
+                            <tr
+                              key={patient.id}
+                              className={`border-t border-gray-100 hover:bg-slate-50 align-top transition-colors ${
+                                patient.priseEnCharge?.isActive ? "bg-[#EAF3FA]" : ""
+                              }`}
+                            >
+                              <td className={`px-1.5 py-2.5 border-l-[6px] ${patient.priseEnCharge?.isActive ? "border-[#005b82]" : "border-transparent"}`}>
+                                <div className="flex flex-col gap-1">
+                                  <div className="flex items-center gap-1.5">
+                                    {patient.isUrgent && <span className="h-2 w-2 shrink-0 rounded-full bg-amber-500" />}
+                                    <span className={`font-semibold text-[12px] truncate ${patient.status === "EFFECTUÉ" ? "text-slate-400" : "text-[#005b82]"}`}>
+                                      {patient.time}
+                                    </span>
+                                  </div>
+                                  <span className="text-[10px] text-gray-500 truncate">{patient.date}</span>
+                                </div>
+                              </td>
+                              <td className="px-1.5 py-2.5 overflow-hidden">
+                                <p className="font-semibold text-gray-900 leading-tight truncate text-[12px]">{patient.name}</p>
+                                {patient.priseEnCharge && (
+                                  <p className={`mt-0.5 text-[9px] font-bold truncate ${patient.priseEnCharge.isActive ? "text-[#005b82]" : "text-amber-600"}`}>
+                                    {patient.priseEnCharge.companyName}
+                                  </p>
+                                )}
+                              </td>
+                              <td className="px-1.5 py-2.5 overflow-hidden">
+                                <div className="flex flex-wrap gap-1">
+                                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[8px] font-semibold uppercase tracking-wider ${patient.visitType === "CONTROLE" ? "bg-amber-50 text-amber-700" : "bg-slate-100 text-slate-700"}`}>
+                                    {patient.visitType === "CONTROLE" ? "Contrôle" : "Initiale"}
+                                  </span>
+                                  {patient.isReport && (
+                                    <span className="inline-flex items-center rounded-full bg-orange-50 px-2 py-0.5 text-[8px] font-semibold uppercase tracking-wider text-orange-700">
+                                      Reporté
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="px-1.5 py-2.5">
+                                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider whitespace-nowrap ${patient.isUrgent ? "bg-amber-50 text-amber-700" : "bg-slate-100 text-slate-700"}`}>
+                                  {patient.isUrgent ? "Urgent" : "Normal"}
+                                </span>
+                              </td>
+                              <td className="px-1.5 py-2.5 overflow-hidden">
+                                <p className="text-gray-600 line-clamp-2 leading-snug text-[11px]">{patient.motif}</p>
+                              </td>
+                              <td className="px-1.5 py-2.5">
+                                <div className="flex flex-col items-start gap-1">
+                                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider whitespace-nowrap ${patient.status === "EFFECTUÉ" ? "bg-[#E6F4EA] text-[#059669]" : patient.isUrgent ? "bg-amber-50 text-amber-700" : "bg-[#EAF3FA] text-[#006A8C]"}`}>
+                                    {patient.status}
+                                  </span>
+                                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[8px] font-semibold uppercase tracking-wider whitespace-nowrap ${patient.isArrived ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-700"}`}>
+                                    {patient.isArrived ? "Arrivé" : "À confirmer"}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="px-1.5 py-2.5">
+                                <div className="flex flex-wrap justify-end gap-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenConsultation(patient)}
+                                    className="rounded-lg bg-[#005b82] px-2 py-1.5 text-[10px] font-bold text-white hover:bg-[#004a6b]"
+                                  >
+                                    Ouvrir
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenPatientInfo(patient)}
+                                    className="rounded-lg px-1.5 py-1.5 text-[10px] font-bold text-[#005b82] hover:bg-slate-50"
+                                  >
+                                    Infos
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleReportPatient(patient)}
+                                    className="rounded-lg px-1.5 py-1.5 text-[10px] font-bold text-orange-600 hover:bg-orange-50"
+                                    aria-label="Reporter la consultation"
+                                  >
+                                    ⏰
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Actions & Next Steps */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-gutter">
-              <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-6">
-                <h4 className="font-headline-sm text-headline-sm text-primary mb-4">
-                  Prescription Actuelle
-                </h4>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 bg-surface-bright rounded border border-outline-variant">
-                    <div>
-                      <p className="text-label-md text-primary">
-                        Traitement CPAP
-                      </p>
-                      <p className="text-body-sm text-on-surface-variant">
-                        Pression: 10cm H2O • Masque Nasal
-                      </p>
-                    </div>
-                    <span className="material-symbols-outlined text-secondary">
-                      check_circle
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-surface-bright rounded border border-outline-variant">
-                    <div>
-                      <p className="text-label-md text-primary">
-                        Mélatonine 2mg
-                      </p>
-                      <p className="text-body-sm text-on-surface-variant">
-                        1 gélule au coucher • 3 mois
-                      </p>
-                    </div>
-                    <span className="material-symbols-outlined text-on-surface-variant">
-                      history
-                    </span>
-                  </div>
-                </div>
-                <button className="w-full mt-4 py-2 border-2 border-dashed border-outline-variant text-on-surface-variant rounded-lg text-label-md hover:border-secondary hover:text-secondary transition-all flex items-center justify-center gap-2">
-                  <span className="material-symbols-outlined">
-                    add_circle
-                  </span>
-                  Nouvelle Prescription
-                </button>
-              </div>
-
-              <div className="bg-primary text-on-primary rounded-xl p-6 shadow-lg relative overflow-hidden">
-                <div className="absolute -right-4 -bottom-4 opacity-10">
-                  <span className="material-symbols-outlined text-[120px]">
-                    calendar_month
-                  </span>
-                </div>
-                <h4 className="font-headline-sm text-headline-sm mb-4 relative z-10">
-                  Planification Suivant
-                </h4>
-                <div className="space-y-4 relative z-10">
-                  <div>
-                    <p className="text-label-sm text-primary-fixed-dim uppercase">
-                      Prochain Examen Recommandé
-                    </p>
-                    <p className="text-body-lg font-bold">
-                      Contrôle Polygraphique (6 mois)
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-4 py-3 px-4 bg-primary-container rounded-lg">
-                    <span className="material-symbols-outlined">event</span>
-                    <div>
-                      <p className="text-label-md">18 Avril 2024</p>
-                      <p className="text-label-sm text-on-primary-container">
-                        Salle d&apos;Examen B • 21:00
-                      </p>
-                    </div>
-                  </div>
-                  <button className="w-full bg-secondary text-on-secondary py-3 rounded-lg font-label-md text-label-md flex items-center justify-center gap-2 hover:bg-secondary-fixed-dim hover:text-on-secondary-fixed transition-colors active:scale-95 duration-150">
-                    Confirmer le créneau
-                  </button>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
+
+      {selectedPatient && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/35 p-4">
+          <div className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <div className="mb-5 flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">Patient</p>
+                <h2 className="mt-1 text-xl font-extrabold text-slate-900">{selectedPatient.name}</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedPatient(null)}
+                className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-100"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3 text-sm text-slate-600">
+              <div className="flex justify-between gap-4">
+                <span className="font-medium text-slate-500">ID patient</span>
+                <span className="font-semibold text-slate-900">{selectedPatient.patientId}</span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span className="font-medium text-slate-500">Statut</span>
+                <span className="font-semibold text-slate-900">{selectedPatient.status}</span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span className="font-medium text-slate-500">Visite</span>
+                <span className="font-semibold text-slate-900">{selectedPatient.visitType}</span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span className="font-medium text-slate-500">Motif</span>
+                <span className="font-semibold text-slate-900 text-right">{selectedPatient.motif}</span>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  handleOpenConsultation(selectedPatient);
+                  setSelectedPatient(null);
+                }}
+                className="rounded-xl bg-[#005b82] px-4 py-2 text-sm font-bold text-white hover:bg-[#004a6b]"
+              >
+                Commencer la consultation
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {reportTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/35 p-4">
+          <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <div className="mb-5 flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">Reporter</p>
+                <h2 className="mt-1 text-xl font-extrabold text-slate-900">{reportTarget.name}</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setReportTarget(null)}
+                className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-100"
+              >
+                ✕
+              </button>
+            </div>
+
+            <label className="block text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">
+              Nouvelle date
+            </label>
+            <input
+              type="date"
+              value={reportDate}
+              onChange={(event) => setReportDate(event.target.value)}
+              className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#005b82]/30"
+            />
+
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setReportTarget(null)}
+                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                disabled={!reportDate}
+                onClick={submitReport}
+                className="rounded-xl bg-orange-500 px-4 py-2 text-sm font-bold text-white hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-orange-200"
+              >
+                Reporter
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
