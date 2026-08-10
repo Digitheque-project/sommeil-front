@@ -52,7 +52,7 @@ export default function Sidebar() {
           </p>
         </div>
       </div>
-      <nav className="flex-1 space-y-2 overflow-y-auto px-2" aria-label="Main navigation">
+      <nav className="flex-1 space-y-2 overflow-y-auto px-2" aria-label="Navigation principale">
         {NAV_ITEMS.map((item) => {
           const active = pathname === item.href;
           return (
@@ -132,19 +132,29 @@ export default function Sidebar() {
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className={`hidden md:flex ${transformClass} transform transition-transform duration-200 flex-col h-screen fixed left-0 top-0 w-64 py-unit z-40 bg-sidebar-gradient border-r border-white/10 shadow-[4px_0_40px_rgba(15,23,42,0.08)]`}>
+      <aside id="sidebar" className={`hidden md:flex ${transformClass} transform transition-transform duration-200 flex-col h-screen fixed left-0 top-0 w-64 py-unit z-40 bg-sidebar-gradient border-r border-white/10 shadow-[4px_0_40px_rgba(15,23,42,0.08)]`} aria-label="Navigation principale">
         {navContent}
       </aside>
 
       {/* Mobile drawer overlay shown when open */}
       {isMobile && open && (
-        <div className="md:hidden fixed inset-0 z-50 flex">
+        <div className="md:hidden fixed inset-0 z-50 flex" role="dialog" aria-modal="true" aria-label="Navigation principale">
           <div
             className="absolute inset-0 bg-black/40"
             onClick={() => setOpen(false)}
-            aria-hidden
+            aria-hidden="true"
           />
-          <aside className="relative w-72 max-w-full h-full bg-sidebar-gradient border-r border-white/10 p-4 overflow-auto">
+          <aside className="relative w-72 max-w-full h-full bg-sidebar-gradient border-r border-white/10 p-4 overflow-auto" id="sidebar">
+            <div className="flex justify-end mb-4">
+              <button
+                type="button"
+                className="text-white p-2 rounded-full hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                onClick={() => setOpen(false)}
+                aria-label="Fermer la navigation"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
             {navContent}
           </aside>
         </div>

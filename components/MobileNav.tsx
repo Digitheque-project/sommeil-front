@@ -8,7 +8,7 @@ export default function MobileNav() {
   const pathname = usePathname();
 
   return (
-    <nav aria-label="Mobile navigation" className="md:hidden fixed bottom-0 left-0 right-0 bg-surface border-t border-outline-variant h-16 flex items-center justify-around px-2 z-50">
+    <nav aria-label="Navigation mobile principale" className="md:hidden fixed bottom-0 left-0 right-0 bg-surface border-t border-outline-variant h-16 flex items-center justify-around px-2 z-50">
       {NAV_ITEMS.map((item) => {
         const active = pathname === item.href;
         return (

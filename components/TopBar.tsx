@@ -25,8 +25,10 @@ export default function TopBar({
     <header className="flex justify-between items-center w-full px-container-padding h-16 z-30 bg-surface-bright border-b border-outline-variant sticky top-0 shadow-md">
       <div className="flex items-center gap-4">
         <button
+          type="button"
           className="p-2 text-on-surface cursor-pointer"
-          aria-label="Menu"
+          aria-label="Ouvrir le menu de navigation"
+          aria-controls="sidebar"
           onClick={() => {
             if (typeof window !== "undefined") {
               window.dispatchEvent(new CustomEvent("toggle-sidebar"));
