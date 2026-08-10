@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import TopBar from "@/components/TopBar";
 
 type PatientStatus = "TOUS" | "EN ATTENTE" | "EN COURS" | "EFFECTUÉ";
@@ -201,6 +202,7 @@ const statusOptions: PatientStatus[] = ["TOUS", "EN ATTENTE", "EN COURS", "EFFEC
 const visitOptions: VisitType[] = ["TOUS", "INITIALE", "CONTROLE"];
 
 export default function ConsultationPage() {
+  const router = useRouter();
   const [appointmentsList, setAppointmentsList] = useState<Appointment[]>(initialAppointments);
   const [viewMode, setViewMode] = useState<"today" | "all">("today");
   const [searchQuery, setSearchQuery] = useState("");
@@ -218,6 +220,7 @@ export default function ConsultationPage() {
         item.id === appointment.id ? { ...item, status: "EN COURS", isArrived: true } : item,
       ),
     );
+    router.push(`/consultation/traitement?id=${appointment.id}&patient=${encodeURIComponent(appointment.name)}`);
   };
 
   const handleOpenPatientInfo = (appointment: Appointment) => {
