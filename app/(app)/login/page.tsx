@@ -25,5 +25,5 @@ export default async function LoginPage({
     redirectUrl.searchParams.set("redirect_to", redirectTo);
   }
 
-  redirect(redirectUrl);
+  redirect(redirectUrl.toString());
 }
