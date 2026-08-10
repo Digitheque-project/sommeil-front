@@ -5,6 +5,7 @@ const AUTH_LOGIN_URL = process.env.NEXT_PUBLIC_AUTH_LOGIN_URL ?? "https://authen
 const AUTH_COOKIE_NAME = process.env.NEXT_PUBLIC_AUTH_COOKIE_NAME ?? "auth_token";
 
 const PUBLIC_PATHS = [
+  "/",
   "/login",
   "/deconnexion",
   "/favicon.ico",
