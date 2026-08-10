@@ -41,7 +41,17 @@ export function middleware(request: NextRequest) {
   }
 
   const redirectUrl = new URL(AUTH_LOGIN_URL);
-  redirectUrl.searchParams.set("redirect_to", request.nextUrl.href);
+  const redirectTarget = request.nextUrl.href;
+  [
+    "redirect_to",
+    "return_to",
+    "next",
+    "next_url",
+    "redirect",
+    "callback_url",
+    "callbackUrl",
+    "returnUrl",
+  ].forEach((key) => redirectUrl.searchParams.set(key, redirectTarget));
 
   return NextResponse.redirect(redirectUrl);
 }
