@@ -122,17 +122,29 @@ export default function PolysomnographiePage() {
 
       <div className="flex flex-col h-[calc(100vh-64px)]">
         {/* Main Workspace */}
-        <div className="flex-1 overflow-auto p-gutter bg-background grid grid-cols-12 gap-gutter">
+        <div className="flex-1 overflow-auto p-gutter bg-background grid grid-cols-12 gap-gutter animate-fade-in">
           {/* Left Panel: prescriptions */}
           <div className="col-span-12 lg:col-span-12 xl:col-span-12 space-y-6 w-full max-w-full">
             <div className="bg-surface-container-lowest border border-outline-variant rounded-3xl p-8 shadow-sm w-full max-w-full">
-              <div className="mb-6">
-                <p className="text-[22px] font-semibold text-primary">
-                  Prescriptions externes
-                </p>
-                <p className="text-body-sm text-on-surface-variant mt-2 max-w-2xl">
-                  Utilisez les actions pour planifier une date, démarrer l&apos;examen et arrêter quand nécessaire.
-                </p>
+              <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="text-[22px] font-semibold text-primary">
+                    Prescriptions externes
+                  </p>
+                  <p className="text-body-sm text-on-surface-variant mt-2 max-w-2xl">
+                    Utilisez les actions pour planifier une date, démarrer l&apos;examen et arrêter quand nécessaire.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2 shrink-0">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-container px-3 py-1.5 text-label-sm font-semibold text-on-surface-variant">
+                    <span className="material-symbols-outlined text-[16px]">pending_actions</span>
+                    {prescriptions.length} prescription{prescriptions.length > 1 ? "s" : ""}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-label-sm font-semibold text-primary">
+                    <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                    {prescriptions.filter((item) => item.status === "started").length} en cours
+                  </span>
+                </div>
               </div>
               <div className="space-y-6">
                 {prescriptions.map((item) => {

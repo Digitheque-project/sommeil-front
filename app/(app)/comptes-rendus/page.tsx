@@ -178,7 +178,7 @@ export default function CompteRenduPage() {
         showSettings={false}
       />
 
-      <main className="w-full mx-auto px-container-padding py-section-gap">
+      <main className="w-full mx-auto px-container-padding py-section-gap animate-fade-in">
         <section className="bg-surface-container-lowest border border-outline-variant rounded-3xl p-6 mb-6 shadow-sm">
           {selectedPatient ? (
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -243,6 +243,14 @@ export default function CompteRenduPage() {
                         <p className="text-body-sm text-on-surface-variant mt-1">{patient.birthDate} · {patient.age}</p>
                         <p className="text-body-sm text-on-surface-variant mt-1">Dossier {patient.dossier}</p>
                       </div>
+                      <div className="flex flex-col items-end gap-2 shrink-0">
+                        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${selectedPatientId === patient.id ? "bg-primary text-on-primary" : "bg-surface-container-high text-on-surface-variant"}`}>
+                          {patient.examReports.length} examen{patient.examReports.length > 1 ? "s" : ""}
+                        </span>
+                        <span className={`material-symbols-outlined text-[18px] transition-transform ${selectedPatientId === patient.id ? "text-primary rotate-0" : "text-on-surface-variant -rotate-90"}`}>
+                          chevron_right
+                        </span>
+                      </div>
                     </div>
                   </button>
                 ))}
@@ -283,7 +291,7 @@ export default function CompteRenduPage() {
                 <div className="text-body-sm text-on-surface-variant hidden md:block">
                   Votre texte est enregistré localement avant validation. Cliquez sur Enregistrer pour confirmer le rapport.
                 </div>
-                <div className="w-full sm:w-auto rounded-3xl bg-success/10 p-4 flex justify-end">
+                <div className="w-full sm:w-auto rounded-3xl bg-success-container/30 p-4 flex justify-end">
                   <button
                     type="button"
                     onClick={() => selectedPatient && selectedExam && saveExamReport(selectedPatient.id, selectedExam.id)}
@@ -295,9 +303,13 @@ export default function CompteRenduPage() {
                     } ${!selectedExam?.draftReport || selectedExam.saveState === "saving" ? "opacity-60 cursor-not-allowed" : ""}`}
                   >
                     <span className="material-symbols-outlined">
-                      {selectedExam?.saveState === "saving" ? "sync" : "save"}
+                      {selectedExam?.saveState === "saving" ? "sync" : selectedExam?.saveState === "saved" ? "check" : "save"}
                     </span>
-                    {selectedExam?.saveState === "saving" ? "Enregistrement..." : "Enregistrer"}
+                    {selectedExam?.saveState === "saving"
+                      ? "Enregistrement..."
+                      : selectedExam?.saveState === "saved"
+                        ? "Rapport enregistré"
+                        : "Enregistrer"}
                   </button>
                 </div>
               </div>

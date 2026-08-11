@@ -59,17 +59,17 @@ const examVolumeSeries = [
 ];
 
 const examTypes = [
-  { label: "Polysomnographie complète", value: 48, color: "#1d4cff" },
+  { label: "Polysomnographie complète", value: 48, color: "#1e3a8a" },
   { label: "Polygraphie ventilatoire", value: 27, color: "#2563eb" },
   { label: "Actimétrie", value: 16, color: "#7fa6ff" },
-  { label: "Test de Latence (TILE)", value: 9, color: "#c7d8ff" },
+  { label: "Test de Latence (TILE)", value: 9, color: "#bfdbfe" },
 ];
 
 const severity = [
   { label: "Normal (IAH < 5)", value: 22, color: "#22c55e" },
   { label: "Léger (5-15)", value: 34, color: "#eab308" },
   { label: "Modéré (15-30)", value: 28, color: "#f97316" },
-  { label: "Sévère (> 30)", value: 16, color: "#ba1a1a" },
+  { label: "Sévère (> 30)", value: 16, color: "#ef5350" },
 ];
 
 const roomOccupancy = [

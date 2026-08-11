@@ -2,7 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import TopBar from "@/components/TopBar";
+import { Calendar, CalendarRange, CalendarClock, ArrowLeftRight, Search, Filter, X } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { ConsultationTabs } from "@/components/ConsultationTabs";
 
 type PatientStatus = "TOUS" | "EN ATTENTE" | "EN COURS" | "EFFECTUÉ";
 type VisitType = "TOUS" | "INITIALE" | "CONTROLE";
@@ -201,6 +203,22 @@ const initialAppointments: Appointment[] = [
 const statusOptions: PatientStatus[] = ["TOUS", "EN ATTENTE", "EN COURS", "EFFECTUÉ"];
 const visitOptions: VisitType[] = ["TOUS", "INITIALE", "CONTROLE"];
 
+const formatDateKey = (value: string | Date) => {
+  const date = value instanceof Date ? value : new Date(value);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getTodayDateKey = () => formatDateKey(new Date());
+
+const getTomorrowDateKey = () => {
+  const date = new Date();
+  date.setDate(date.getDate() + 1);
+  return formatDateKey(date);
+};
+
 export default function ConsultationPage() {
   const router = useRouter();
   const [appointmentsList, setAppointmentsList] = useState<Appointment[]>(initialAppointments);
@@ -256,6 +274,31 @@ export default function ConsultationPage() {
     setReportTarget(null);
     setReportDate("");
   };
+
+  const handleSetViewMode = (mode: "today" | "all") => {
+    setViewMode(mode);
+    setDateFrom("");
+    setDateTo("");
+  };
+
+  const handleResetFilters = () => {
+    setViewMode("today");
+    setSearchQuery("");
+    setStatusFilter("TOUS");
+    setVisitTypeFilter("TOUS");
+    setDateFrom("");
+    setDateTo("");
+  };
+
+  const doctorName = "Dr. Jean Dupont";
+
+  // Quota d'aujourd'hui
+  const todayKey = getTodayDateKey();
+  const todayTotal = appointmentsList.filter((appt) => appt.date === todayDateLabel).length;
+  const todayCompleted = appointmentsList.filter((appt) => appt.status === "EFFECTUÉ" && appt.date === todayDateLabel).length;
+  const quotaMax = 18;
+
+  const progressPercent = quotaMax > 0 ? Math.min((todayTotal / quotaMax) * 100, 100) : 0;
 
   const filteredAppointments = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -315,326 +358,391 @@ export default function ConsultationPage() {
   const hasDateRange = Boolean(dateFrom || dateTo);
   const hasActiveFilters = hasDateRange || searchQuery.trim().length > 0 || statusFilter !== "TOUS" || visitTypeFilter !== "TOUS" || viewMode !== "today";
 
-  const progress = 68;
-
   return (
-    <>
-      <TopBar
-        title="Consultation"
-        searchPlaceholder="Rechercher un patient (Nom, ID, Date de naissance)..."
-        doctorName="Dr. Jean Dupont"
-        doctorRole="Somnologue Senior"
-      />
+    <div className="min-h-screen bg-slate-50 flex flex-col">
 
-      <div className="min-h-screen bg-slate-50 flex flex-col">
-        <div className="p-4 sm:p-6 lg:p-8 flex-1">
-          <div className="max-w-[1400px] mx-auto grid grid-cols-1 gap-8">
-            <div className="2xl:col-span-1">
-              <div className="mb-6 sm:mb-8 flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <h1 className="text-[20px] sm:text-[26px] font-extrabold text-gray-900 leading-tight tracking-tight">
-                    Mes consultations du jour
-                  </h1>
-                  <p className="text-[12px] sm:text-[14px] text-gray-500 mt-1.5 font-medium">
-                    Dr. Jean Dupont
+      <ConsultationTabs />
+
+      <div className="p-4 sm:p-6 lg:p-8 flex-1">
+        <div className="max-w-[1400px] mx-auto grid grid-cols-1 2xl:grid-cols-3 gap-8">
+
+          {/* Left Column: Consultation List */}
+          <div className="2xl:col-span-2">
+            <div className="mb-6 sm:mb-8 flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h1 className="text-[20px] sm:text-[26px] font-extrabold text-gray-900 leading-tight tracking-tight">Mes consultations du jour</h1>
+                <p className="text-[12px] sm:text-[14px] text-gray-500 mt-1.5 font-medium">{doctorName}</p>
+              </div>
+              <div className="flex items-center gap-2.5 rounded-2xl border border-gray-100 bg-white px-4 py-2.5 shadow-[0px_4px_16px_rgba(17,17,26,0.05)]">
+                <div className="relative h-9 w-9 shrink-0">
+                  <svg className="h-9 w-9 -rotate-90" viewBox="0 0 36 36">
+                    <circle cx="18" cy="18" r="15.5" fill="none" stroke="#F1F5F9" strokeWidth="4" />
+                    <circle
+                      cx="18" cy="18" r="15.5" fill="none"
+                      stroke={progressPercent >= 100 ? "#10B981" : "#005b82"}
+                      strokeWidth="4"
+                      strokeDasharray={`${(progressPercent / 100) * 97.4} 97.4`}
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </div>
+                <div className="leading-tight">
+                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Quota aujourd'hui</p>
+                  <p className="text-[15px] font-black text-[#005b82]">
+                    {todayTotal}<span className="text-gray-300 font-bold">/{quotaMax}</span>
                   </p>
                 </div>
-                <div className="flex items-center gap-2.5 rounded-2xl border border-gray-100 bg-white px-4 py-2.5 shadow-[0px_4px_16px_rgba(17,17,26,0.05)]">
-                  <div className="relative h-9 w-9 shrink-0">
-                    <svg className="h-9 w-9 -rotate-90" viewBox="0 0 36 36">
-                      <circle cx="18" cy="18" r="15.5" fill="none" stroke="#F1F5F9" strokeWidth="4" />
-                      <circle
-                        cx="18"
-                        cy="18"
-                        r="15.5"
-                        fill="none"
-                        stroke={progress >= 100 ? "#10B981" : "#005b82"}
-                        strokeWidth="4"
-                        strokeDasharray={`${(progress / 100) * 97.4} 97.4`}
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                  </div>
-                  <div className="leading-tight">
-                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Quota aujourd’hui</p>
-                    <p className="text-[15px] font-black text-[#005b82]">
-                      12<span className="text-gray-300 font-bold">/18</span>
-                    </p>
-                  </div>
-                </div>
               </div>
+            </div>
 
-              <div className="mb-6 space-y-2.5 rounded-2xl border border-gray-100 bg-white p-2.5 shadow-[0px_4px_16px_rgba(17,17,26,0.04)]">
-                <div className="flex flex-nowrap items-center gap-2 overflow-x-auto">
-                  <div className="flex items-center gap-1 rounded-xl bg-slate-100 p-1 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => setViewMode("today")}
-                      className={`flex h-7 items-center gap-1.5 rounded-lg px-3 text-[12px] font-semibold transition-colors whitespace-nowrap ${
-                        viewMode === "today" ? "bg-white text-[#005b82] shadow-sm" : "text-slate-500 hover:text-slate-700"
-                      }`}
-                    >
-                      <span className="text-base leading-none">◌</span>
-                      Aujourd’hui
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setViewMode("all")}
-                      className={`h-7 rounded-lg px-3 text-[12px] font-semibold transition-colors whitespace-nowrap ${
-                        viewMode === "all" ? "bg-white text-[#005b82] shadow-sm" : "text-slate-500 hover:text-slate-700"
-                      }`}
-                    >
-                      Tous
-                    </button>
-                  </div>
-
-                  <div className="hidden h-6 w-px bg-slate-200 sm:block" />
-
-                  <div className="relative min-w-[160px] flex-1">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">⌕</span>
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(event) => setSearchQuery(event.target.value)}
-                      placeholder="Rechercher un patient, un motif..."
-                      className="h-9 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-8 text-[12px] font-medium text-slate-700 placeholder:text-slate-400 transition-colors focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#005b82]/30"
-                    />
-                    {searchQuery && (
-                      <button
-                        type="button"
-                        onClick={() => setSearchQuery("")}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                        aria-label="Effacer la recherche"
-                      >
-                        <span className="text-sm">✕</span>
-                      </button>
+            <div className="mb-6 space-y-2.5 rounded-2xl border border-gray-100 bg-white p-2.5 shadow-[0px_4px_16px_rgba(17,17,26,0.04)]">
+              {/* Ligne 1 : vue rapide + recherche */}
+              <div className="flex flex-nowrap items-center gap-2 overflow-x-auto">
+                <div className="flex items-center gap-1 rounded-xl bg-slate-100 p-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => handleSetViewMode('today')}
+                    className={cn(
+                      'flex h-7 items-center gap-1.5 rounded-lg px-3 text-[12px] font-semibold transition-colors whitespace-nowrap',
+                      viewMode === 'today' && !hasDateRange ? 'bg-white text-[#005b82] shadow-sm' : 'text-slate-500 hover:text-slate-700'
                     )}
-                  </div>
+                  >
+                    <Filter className="w-3.5 h-3.5" />
+                    Aujourd'hui
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSetViewMode('all')}
+                    className={cn(
+                      'h-7 rounded-lg px-3 text-[12px] font-semibold transition-colors whitespace-nowrap',
+                      viewMode === 'all' && !hasDateRange ? 'bg-white text-[#005b82] shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                    )}
+                  >
+                    Tous
+                  </button>
                 </div>
 
-                <div className="h-px bg-slate-100" />
+                <div className="hidden h-6 w-px bg-slate-200 sm:block" />
 
-                <div className="flex min-w-0 items-center gap-2 overflow-hidden">
-                  <select
-                    value={statusFilter}
-                    onChange={(event) => setStatusFilter(event.target.value as PatientStatus)}
-                    className="h-9 min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 text-[12px] font-semibold text-slate-600 transition-colors focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#005b82]/30"
-                  >
-                    {statusOptions.map((option) => (
-                      <option key={option} value={option}>
-                        {option === "TOUS" ? "Tous les statuts" : option}
-                      </option>
-                    ))}
-                  </select>
-
-                  <select
-                    value={visitTypeFilter}
-                    onChange={(event) => setVisitTypeFilter(event.target.value as VisitType)}
-                    className="h-9 min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 text-[12px] font-semibold text-slate-600 transition-colors focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#005b82]/30"
-                  >
-                    {visitOptions.map((option) => (
-                      <option key={option} value={option}>
-                        {option === "TOUS" ? "Tous les types" : option === "INITIALE" ? "Consultation initiale" : "Contrôle"}
-                      </option>
-                    ))}
-                  </select>
-
-                  {viewMode === "all" && (
-                    <div className="flex h-9 min-w-0 flex-[2] items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-2.5">
-                      <span className="text-slate-400 text-sm">▣</span>
-                      <input
-                        type="date"
-                        value={dateFrom}
-                        onChange={(event) => setDateFrom(event.target.value)}
-                        className="h-full min-w-0 flex-1 bg-transparent text-[12px] font-semibold text-slate-600 focus:outline-none"
-                      />
-                      <span className="shrink-0 text-slate-300">→</span>
-                      <input
-                        type="date"
-                        value={dateTo}
-                        onChange={(event) => setDateTo(event.target.value)}
-                        className="h-full min-w-0 flex-1 bg-transparent text-[12px] font-semibold text-slate-600 focus:outline-none"
-                      />
-                    </div>
-                  )}
-
-                  {hasActiveFilters && (
+                {/* Recherche */}
+                <div className="relative min-w-[160px] flex-1">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    placeholder="Rechercher un patient, un motif..."
+                    className="h-9 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-8 text-[12px] font-medium text-slate-700 placeholder:text-slate-400 transition-colors focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#005b82]/30"
+                  />
+                  {searchQuery && (
                     <button
                       type="button"
-                      onClick={() => {
-                        setViewMode("today");
-                        setSearchQuery("");
-                        setStatusFilter("TOUS");
-                        setVisitTypeFilter("TOUS");
-                        setDateFrom("");
-                        setDateTo("");
-                      }}
-                      className="flex h-9 shrink-0 items-center gap-1 rounded-xl px-3 text-[12px] font-semibold text-slate-500 transition-colors hover:bg-red-50 hover:text-red-600"
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                     >
-                      <span className="text-sm">✕</span>
-                      Réinitialiser
+                      <X className="h-3.5 w-3.5" />
                     </button>
                   )}
                 </div>
               </div>
 
-              <div className="space-y-6">
-                <div className="overflow-hidden rounded-[26px] border border-gray-100 bg-white shadow-[0px_4px_16px_rgba(17,17,26,0.05)]">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm table-fixed">
-                      <thead className="bg-slate-50 text-left text-gray-500">
+              <div className="h-px bg-slate-100" />
+
+              {/* Ligne 2 : statut, type de visite, plage de dates */}
+              <div className="flex min-w-0 items-center gap-2 overflow-hidden">
+                <select
+                  value={statusFilter}
+                  onChange={(event) => setStatusFilter(event.target.value as PatientStatus)}
+                  className="h-9 min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 text-[12px] font-semibold text-slate-600 transition-colors focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#005b82]/30"
+                >
+                  <option value="TOUS">Tous les statuts</option>
+                  <option value="EN ATTENTE">En attente</option>
+                  <option value="EN COURS">En cours</option>
+                  <option value="EFFECTUÉ">Effectué</option>
+                </select>
+
+                <select
+                  value={visitTypeFilter}
+                  onChange={(event) => setVisitTypeFilter(event.target.value as VisitType)}
+                  className="h-9 min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 text-[12px] font-semibold text-slate-600 transition-colors focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#005b82]/30"
+                >
+                  <option value="TOUS">Tous les types</option>
+                  <option value="INITIALE">Consultation initiale</option>
+                  <option value="CONTROLE">Contrôle</option>
+                </select>
+
+                <div className={cn(
+                  "flex h-9 min-w-0 flex-[2] items-center gap-1.5 rounded-xl border px-2.5 transition-colors",
+                  hasDateRange ? "border-[#005b82]/40 bg-[#EAF3FA]" : "border-slate-200 bg-slate-50"
+                )}>
+                  <CalendarRange className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                  <input
+                    type="date"
+                    value={dateFrom}
+                    onChange={(event) => setDateFrom(event.target.value)}
+                    className="h-full min-w-0 flex-1 bg-transparent text-[12px] font-semibold text-slate-600 focus:outline-none"
+                  />
+                  <span className="shrink-0 text-slate-300">→</span>
+                  <input
+                    type="date"
+                    value={dateTo}
+                    onChange={(event) => setDateTo(event.target.value)}
+                    className="h-full min-w-0 flex-1 bg-transparent text-[12px] font-semibold text-slate-600 focus:outline-none"
+                  />
+                </div>
+
+                {hasActiveFilters && (
+                  <button
+                    type="button"
+                    onClick={handleResetFilters}
+                    className="flex h-9 shrink-0 items-center gap-1 rounded-xl px-3 text-[12px] font-semibold text-slate-500 transition-colors hover:bg-red-50 hover:text-red-600"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                    Réinitialiser
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div className="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-[0px_4px_16px_rgba(17,17,26,0.05)]">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm table-fixed">
+                    <thead className="bg-slate-50 text-left text-gray-500">
+                      <tr>
+                        <th className="px-1.5 py-2.5 font-semibold whitespace-nowrap text-[11px] w-[9%]">Date & heure</th>
+                        <th className="px-1.5 py-2.5 font-semibold whitespace-nowrap text-[11px] w-[16%]">Patient</th>
+                        <th className="px-1.5 py-2.5 font-semibold whitespace-nowrap text-[11px] w-[14%]">Visite</th>
+                        <th className="px-1.5 py-2.5 font-semibold whitespace-nowrap text-[11px] w-[9%]">Urgence</th>
+                        <th className="px-1.5 py-2.5 font-semibold w-[22%]">Motif</th>
+                        <th className="px-1.5 py-2.5 font-semibold whitespace-nowrap text-[11px] w-[12%]">Statut</th>
+                        <th className="px-1.5 py-2.5 font-semibold text-right whitespace-nowrap text-[11px] w-[18%]">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredAppointments.length === 0 && (
                         <tr>
-                          <th className="px-1.5 py-2.5 font-semibold whitespace-nowrap text-[11px] w-[9%]">Date &amp; heure</th>
-                          <th className="px-1.5 py-2.5 font-semibold whitespace-nowrap text-[11px] w-[16%]">Patient</th>
-                          <th className="px-1.5 py-2.5 font-semibold whitespace-nowrap text-[11px] w-[14%]">Visite</th>
-                          <th className="px-1.5 py-2.5 font-semibold whitespace-nowrap text-[11px] w-[9%]">Urgence</th>
-                          <th className="px-1.5 py-2.5 font-semibold w-[22%]">Motif</th>
-                          <th className="px-1.5 py-2.5 font-semibold whitespace-nowrap text-[11px] w-[12%]">Statut</th>
-                          <th className="px-1.5 py-2.5 font-semibold text-right whitespace-nowrap text-[11px] w-[18%]">Actions</th>
+                          <td colSpan={7} className="px-2 py-14 text-center">
+                            <div className="flex flex-col items-center gap-2">
+                              <Calendar className="w-8 h-8 text-slate-200" />
+                              <p className="text-[14px] font-semibold text-slate-500">
+                                {viewMode === 'today' && !hasDateRange
+                                  ? 'Aucun patient à traiter aujourd\'hui'
+                                  : 'Aucune consultation ne correspond à ces filtres'}
+                              </p>
+                            </div>
+                          </td>
                         </tr>
-                      </thead>
-                      <tbody>
-                        {filteredAppointments.length === 0 ? (
-                          <tr>
-                            <td colSpan={7} className="px-2 py-16 text-center">
-                              <div className="flex flex-col items-center gap-2">
-                                <span className="text-3xl text-slate-200">📅</span>
-                                <p className="text-[14px] font-semibold text-slate-500">
-                                  Aucune consultation ne correspond à ces filtres
-                                </p>
+                      )}
+                      {filteredAppointments.map((patient) => (
+                        <tr key={patient.id} className={cn(
+                          "border-t border-gray-100 hover:bg-slate-100 align-top transition-colors",
+                          patient.priseEnCharge?.isActive ? "bg-[#EAF3FA]" : ""
+                        )}>
+                          <td className={cn(
+                            "px-1.5 py-2.5 border-l-[6px]",
+                            patient.priseEnCharge?.isActive ? "border-[#005b82]" : "border-transparent"
+                          )}>
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-1.5">
+                                {patient.isUrgent && <span className="h-2 w-2 shrink-0 rounded-full bg-red-500" />}
+                                <span className={cn(
+                                  "font-semibold text-[12px] truncate",
+                                  patient.status === "EFFECTUÉ" ? "text-slate-400" : "text-[#005b82]"
+                                )}>{patient.time}</span>
                               </div>
-                            </td>
-                          </tr>
-                        ) : (
-                          filteredAppointments.map((patient) => (
-                            <tr
-                              key={patient.id}
-                              className={`border-t border-gray-100 hover:bg-slate-50 align-top transition-colors ${
-                                patient.priseEnCharge?.isActive ? "bg-[#EAF3FA]" : ""
-                              }`}
-                            >
-                              <td className={`px-1.5 py-2.5 border-l-[6px] ${patient.priseEnCharge?.isActive ? "border-[#005b82]" : "border-transparent"}`}>
-                                <div className="flex flex-col gap-1">
-                                  <div className="flex items-center gap-1.5">
-                                    {patient.isUrgent && <span className="h-2 w-2 shrink-0 rounded-full bg-amber-500" />}
-                                    <span className={`font-semibold text-[12px] truncate ${patient.status === "EFFECTUÉ" ? "text-slate-400" : "text-[#005b82]"}`}>
-                                      {patient.time}
-                                    </span>
-                                  </div>
-                                  <span className="text-[10px] text-gray-500 truncate">{patient.date}</span>
-                                </div>
-                              </td>
-                              <td className="px-1.5 py-2.5 overflow-hidden">
-                                <p className="font-semibold text-gray-900 leading-tight truncate text-[12px]">{patient.name}</p>
-                                {patient.priseEnCharge && (
-                                  <p className={`mt-0.5 text-[9px] font-bold truncate ${patient.priseEnCharge.isActive ? "text-[#005b82]" : "text-amber-600"}`}>
-                                    {patient.priseEnCharge.companyName}
-                                  </p>
-                                )}
-                              </td>
-                              <td className="px-1.5 py-2.5 overflow-hidden">
-                                <div className="flex flex-wrap gap-1">
-                                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[8px] font-semibold uppercase tracking-wider ${patient.visitType === "CONTROLE" ? "bg-amber-50 text-amber-700" : "bg-slate-100 text-slate-700"}`}>
-                                    {patient.visitType === "CONTROLE" ? "Contrôle" : "Initiale"}
-                                  </span>
-                                  {patient.isReport && (
-                                    <span className="inline-flex items-center rounded-full bg-orange-50 px-2 py-0.5 text-[8px] font-semibold uppercase tracking-wider text-orange-700">
-                                      Reporté
-                                    </span>
-                                  )}
-                                </div>
-                              </td>
-                              <td className="px-1.5 py-2.5">
-                                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider whitespace-nowrap ${patient.isUrgent ? "bg-amber-50 text-amber-700" : "bg-slate-100 text-slate-700"}`}>
-                                  {patient.isUrgent ? "Urgent" : "Normal"}
+                              <span className="text-[10px] text-gray-500 truncate">{patient.date}</span>
+                            </div>
+                          </td>
+                          <td className="px-1.5 py-2.5 overflow-hidden">
+                            <p className="font-semibold text-gray-900 leading-tight truncate text-[12px]">{patient.name}</p>
+                            {patient.priseEnCharge && (
+                              <p className={cn(
+                                "mt-0.5 text-[9px] font-bold truncate",
+                                patient.priseEnCharge.isActive ? "text-[#005b82]" : "text-amber-600"
+                              )}>
+                                {patient.priseEnCharge.companyName}
+                              </p>
+                            )}
+                          </td>
+                          <td className="px-1.5 py-2.5 overflow-hidden">
+                            <div className="flex flex-wrap gap-1">
+                              <span className={cn(
+                                "inline-flex items-center rounded-full px-2 py-0.5 text-[8px] font-semibold uppercase tracking-wider",
+                                patient.visitType === "CONTROLE" ? "bg-amber-50 text-amber-700" : "bg-slate-100 text-slate-700"
+                              )}>
+                                {patient.visitType === "CONTROLE" ? "Contrôle" : "Initiale"}
+                              </span>
+                              {patient.isReport && (
+                                <span className="inline-flex items-center rounded-full bg-orange-50 px-2 py-0.5 text-[8px] font-semibold uppercase tracking-wider text-orange-700">
+                                  Reporté
                                 </span>
-                              </td>
-                              <td className="px-1.5 py-2.5 overflow-hidden">
-                                <p className="text-gray-600 line-clamp-2 leading-snug text-[11px]">{patient.motif}</p>
-                              </td>
-                              <td className="px-1.5 py-2.5">
-                                <div className="flex flex-col items-start gap-1">
-                                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider whitespace-nowrap ${patient.status === "EFFECTUÉ" ? "bg-[#E6F4EA] text-[#059669]" : patient.isUrgent ? "bg-amber-50 text-amber-700" : "bg-[#EAF3FA] text-[#006A8C]"}`}>
-                                    {patient.status}
-                                  </span>
-                                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[8px] font-semibold uppercase tracking-wider whitespace-nowrap ${patient.isArrived ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-700"}`}>
-                                    {patient.isArrived ? "Arrivé" : "À confirmer"}
-                                  </span>
-                                </div>
-                              </td>
-                              <td className="px-1.5 py-2.5">
-                                <div className="flex flex-wrap justify-end gap-1">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleOpenConsultation(patient)}
-                                    className="rounded-lg bg-[#005b82] px-2 py-1.5 text-[10px] font-bold text-white hover:bg-[#004a6b]"
-                                  >
-                                    Ouvrir
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleOpenPatientInfo(patient)}
-                                    className="rounded-lg px-1.5 py-1.5 text-[10px] font-bold text-[#005b82] hover:bg-slate-50"
-                                  >
-                                    Infos
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleReportPatient(patient)}
-                                    className="rounded-lg px-1.5 py-1.5 text-[10px] font-bold text-orange-600 hover:bg-orange-50"
-                                    aria-label="Reporter la consultation"
-                                  >
-                                    ⏰
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-1.5 py-2.5">
+                            <span className={cn(
+                              "inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider whitespace-nowrap",
+                              patient.isUrgent ? "bg-red-50 text-red-700" : "bg-slate-100 text-slate-700"
+                            )}>
+                              {patient.isUrgent ? "Urgent" : "Normal"}
+                            </span>
+                          </td>
+                          <td className="px-1.5 py-2.5 overflow-hidden">
+                            <p className="text-gray-600 line-clamp-2 leading-snug text-[11px]">{patient.motif}</p>
+                          </td>
+                          <td className="px-1.5 py-2.5">
+                            <div className="flex flex-col items-start gap-1">
+                              <span className={cn(
+                                "inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider whitespace-nowrap",
+                                patient.status === "EFFECTUÉ" ? "bg-[#E6F4EA] text-[#059669]" : patient.isUrgent ? "bg-red-50 text-red-700" : "bg-[#EAF3FA] text-[#006A8C]"
+                              )}>
+                                {patient.status}
+                              </span>
+                              <span className={cn(
+                                "inline-flex items-center rounded-full px-2 py-0.5 text-[8px] font-semibold uppercase tracking-wider whitespace-nowrap",
+                                patient.isArrived ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-700"
+                              )}>
+                                {patient.isArrived ? "Arrivé" : "À confirmer"}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-1.5 py-2.5">
+                            <div className="flex flex-wrap justify-end gap-1">
+                              <button
+                                type="button"
+                                onClick={() => handleOpenConsultation(patient)}
+                                className="bg-[#005b82] hover:bg-[#004a6b] text-white rounded-lg px-2 py-1.5 h-auto text-[10px] font-bold whitespace-nowrap"
+                              >
+                                Ouvrir
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleOpenPatientInfo(patient)}
+                                className="text-[#005b82] hover:bg-slate-50 h-auto px-1.5 py-1.5 text-[10px] font-bold whitespace-nowrap"
+                              >
+                                Infos
+                              </button>
+                              <button
+                                type="button"
+                                title="Reporter à un autre jour"
+                                onClick={() => handleReportPatient(patient)}
+                                className="text-orange-600 hover:bg-orange-50 h-auto px-1.5 py-1.5 text-[10px] font-bold whitespace-nowrap"
+                              >
+                                <CalendarClock className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Overview */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-1 gap-6 sticky top-8 self-start">
+            {/* Stats Widget */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-2 text-[#005b82] font-extrabold uppercase tracking-[0.1em] text-[11px] px-1">
+                <Calendar className="w-4 h-4" />
+                <span>Vue d'ensemble</span>
+              </div>
+
+              <div className="bg-white rounded-[28px] sm:rounded-[32px] p-6 sm:p-7 shadow-[0px_4px_16px_rgba(17,17,26,0.05)] border border-gray-100">
+                <div className="flex justify-between items-end mb-4">
+                  <span className="text-[10px] sm:text-[11px] font-bold text-gray-400 uppercase tracking-[0.1em]">MON QUOTA AUJOURD'HUI</span>
+                  <span className="text-[13px] sm:text-[14px] font-black text-[#005b82]">
+                    {todayTotal}/{quotaMax}
+                  </span>
+                </div>
+                <div className="w-full bg-[#F1F5F9] h-2.5 rounded-full overflow-hidden">
+                  <div
+                    className={cn("h-full rounded-full transition-all", progressPercent >= 100 ? "bg-emerald-500" : "bg-[#005b82]")}
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
+
+                <div className="flex justify-between mt-8 gap-4">
+                  <div className="flex-1 bg-[#F8FAFC] rounded-2xl p-4 flex flex-col items-center">
+                    <span className="text-[9px] sm:text-[10px] font-bold text-gray-400 tracking-widest mb-2 uppercase">Aujourd'hui</span>
+                    <span className="text-2xl sm:text-3xl font-black text-[#005b82] leading-none">
+                      {todayTotal < 10 ? `0${todayTotal}` : todayTotal}
+                    </span>
+                  </div>
+                  <div className="flex-1 bg-[#F8FAFC] rounded-2xl p-4 flex flex-col items-center">
+                    <span className="text-[9px] sm:text-[10px] font-bold text-gray-400 tracking-widest mb-2 uppercase">Effectuées</span>
+                    <span className="text-2xl sm:text-3xl font-black text-[#059669] leading-none">
+                      {todayCompleted < 10 ? `0${todayCompleted}` : todayCompleted}
+                    </span>
+                  </div>
+                  <div className="flex-1 bg-[#F8FAFC] rounded-2xl p-4 flex flex-col items-center">
+                    <span className="text-[9px] sm:text-[10px] font-bold text-gray-400 tracking-widest mb-2 uppercase">Quota max</span>
+                    <span className="text-2xl sm:text-3xl font-black text-slate-500 leading-none">
+                      {quotaMax < 10 ? `0${quotaMax}` : quotaMax}
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
 
+            {/* Quick Access */}
+            <div className="bg-[#F5F8FA] rounded-[28px] sm:rounded-[32px] p-5 sm:p-7 border border-[#EAF3FA]">
+              <h3 className="text-[10px] sm:text-[11px] font-extrabold text-[#005b82] uppercase tracking-[0.1em] mb-5 sm:mb-6 px-1">ACCES RAPIDES</h3>
+              <div className="space-y-3">
+                <button
+                  onClick={() => router.push('/consultation/planning-complet')}
+                  className="w-full cursor-pointer bg-white hover:bg-gray-50 transition-colors text-left px-4 sm:px-5 py-3.5 rounded-2xl flex items-center gap-3 shadow-sm border border-transparent"
+                >
+                  <Calendar className="w-5 h-5 text-[#005b82]" strokeWidth={2.5} />
+                  <span className="text-[12px] sm:text-[13px] font-bold text-gray-900 leading-snug">Planning complet</span>
+                </button>
+                <button className="w-full cursor-pointer bg-white hover:bg-gray-50 transition-colors text-left px-4 sm:px-5 py-3.5 rounded-2xl flex items-center gap-3 shadow-sm border border-transparent">
+                  <ArrowLeftRight className="w-5 h-5 text-[#005b82]" strokeWidth={2.5} />
+                  <span className="text-[12px] sm:text-[13px] font-bold text-gray-900 leading-snug">Créneau alternatif</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       {selectedPatient && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/35 p-4">
-          <div className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl">
             <div className="mb-5 flex items-start justify-between gap-3">
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">Patient</p>
-                <h2 className="mt-1 text-xl font-extrabold text-slate-900">{selectedPatient.name}</h2>
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-gray-400">Patient</p>
+                <h2 className="mt-1 text-xl font-extrabold text-gray-900">{selectedPatient.name}</h2>
               </div>
               <button
                 type="button"
                 onClick={() => setSelectedPatient(null)}
-                className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-100"
+                className="rounded-full p-2 text-gray-400 hover:bg-gray-100"
+                aria-label="Fermer"
               >
-                ✕
+                <X className="h-5 w-5" />
               </button>
             </div>
 
-            <div className="space-y-3 text-sm text-slate-600">
+            <div className="space-y-3 text-sm text-gray-600">
               <div className="flex justify-between gap-4">
-                <span className="font-medium text-slate-500">ID patient</span>
-                <span className="font-semibold text-slate-900">{selectedPatient.patientId}</span>
+                <span className="font-medium text-gray-500">ID patient</span>
+                <span className="font-semibold text-gray-900">{selectedPatient.patientId}</span>
               </div>
               <div className="flex justify-between gap-4">
-                <span className="font-medium text-slate-500">Statut</span>
-                <span className="font-semibold text-slate-900">{selectedPatient.status}</span>
+                <span className="font-medium text-gray-500">Statut</span>
+                <span className="font-semibold text-gray-900">{selectedPatient.status}</span>
               </div>
               <div className="flex justify-between gap-4">
-                <span className="font-medium text-slate-500">Visite</span>
-                <span className="font-semibold text-slate-900">{selectedPatient.visitType}</span>
+                <span className="font-medium text-gray-500">Visite</span>
+                <span className="font-semibold text-gray-900">{selectedPatient.visitType}</span>
               </div>
               <div className="flex justify-between gap-4">
-                <span className="font-medium text-slate-500">Motif</span>
-                <span className="font-semibold text-slate-900 text-right">{selectedPatient.motif}</span>
+                <span className="font-medium text-gray-500">Motif</span>
+                <span className="font-semibold text-gray-900 text-right">{selectedPatient.motif}</span>
               </div>
             </div>
 
@@ -645,7 +753,7 @@ export default function ConsultationPage() {
                   handleOpenConsultation(selectedPatient);
                   setSelectedPatient(null);
                 }}
-                className="rounded-xl bg-[#005b82] px-4 py-2 text-sm font-bold text-white hover:bg-[#004a6b]"
+                className="rounded-2xl bg-[#005b82] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#004a6b]"
               >
                 Commencer la consultation
               </button>
@@ -655,37 +763,38 @@ export default function ConsultationPage() {
       )}
 
       {reportTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/35 p-4">
-          <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
             <div className="mb-5 flex items-start justify-between gap-3">
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">Reporter</p>
-                <h2 className="mt-1 text-xl font-extrabold text-slate-900">{reportTarget.name}</h2>
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-gray-400">Reporter</p>
+                <h2 className="mt-1 text-xl font-extrabold text-gray-900">{reportTarget.name}</h2>
               </div>
               <button
                 type="button"
                 onClick={() => setReportTarget(null)}
-                className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-100"
+                className="rounded-full p-2 text-gray-400 hover:bg-gray-100"
+                aria-label="Fermer"
               >
-                ✕
+                <X className="h-5 w-5" />
               </button>
             </div>
 
-            <label className="block text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">
+            <label className="block text-[11px] font-bold uppercase tracking-[0.12em] text-gray-500">
               Nouvelle date
             </label>
             <input
               type="date"
               value={reportDate}
               onChange={(event) => setReportDate(event.target.value)}
-              className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#005b82]/30"
+              className="mt-2 h-11 w-full rounded-2xl border border-gray-200 bg-white px-3 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#005b82]/30"
             />
 
             <div className="mt-6 flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setReportTarget(null)}
-                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50"
+                className="rounded-2xl border border-gray-200 px-4 py-2 text-sm font-bold text-gray-500 hover:bg-gray-50"
               >
                 Annuler
               </button>
@@ -693,7 +802,7 @@ export default function ConsultationPage() {
                 type="button"
                 disabled={!reportDate}
                 onClick={submitReport}
-                className="rounded-xl bg-orange-500 px-4 py-2 text-sm font-bold text-white hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-orange-200"
+                className="rounded-2xl bg-orange-600 px-4 py-2 text-sm font-bold text-white hover:bg-orange-700 disabled:cursor-not-allowed disabled:bg-orange-200"
               >
                 Reporter
               </button>
@@ -701,6 +810,6 @@ export default function ConsultationPage() {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
