@@ -11,3 +11,10 @@ export const API_ROUTES = {
   prescriptionsDocs: `${API_GATEWAY_URL}/prescriptions/api/docs`,
   consultationDocs: `${API_GATEWAY_URL}/consultation/api/docs`,
 };
+
+export const API_BASE_URLS = {
+  consultation: process.env.NEXT_PUBLIC_CONSULTATION_URL ?? "https://consultation-back.onrender.com/consultation/api",
+  accueil: process.env.NEXT_PUBLIC_ACCUEIL_URL ?? "https://acceuil-back.onrender.com/accueil/api",
+  dossierPatient: process.env.NEXT_PUBLIC_DOSSIER_PATIENT_URL ?? "https://dossier-patient-back-ri3e.onrender.com/dossier-patient/api",
+  prescriptions: process.env.NEXT_PUBLIC_PRESCRIPTIONS_URL ?? "https://prescriptionback-production.up.railway.app/prescriptions/api",
+};
