@@ -10,6 +10,7 @@
     "test:visual": "playwright test --project=chromium"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.101.4",
     "clsx": "^2.1.1",
     "lucide-react": "^1.31.0",
     "next": "16.2.12",

@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Calendar, CalendarRange, CalendarClock, Search, Filter, X, Bell, Plus, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAllConsultations, useConsultationEventsSubscription, useTraiterConsultation } from "@/hooks/use-consultations";
+import { consultationApi, getVisiteLabel, type ConsultationApi } from "@/lib/api/consultation";
 
 type PatientStatus = "TOUS" | "EN ATTENTE" | "EN COURS" | "EFFECTUÉ";
 type VisitType = "TOUS" | "INITIALE" | "CONTROLE";
@@ -13,145 +15,47 @@ type Appointment = {
   time: string;
   name: string;
   date: string;
+  dateKey: string;
   status: Exclude<PatientStatus, "TOUS">;
   nature: "Consultation initiale" | "Contrôle" | "Suivi CPAP" | "Résultats Poly" | "Consultation";
   visitType: Exclude<VisitType, "TOUS">;
   isUrgent: boolean;
+  isControl: boolean;
   patientId: string;
   motif: string;
   priseEnCharge?: { companyName: string; isActive: boolean } | null;
   isArrived: boolean;
   isReport: boolean;
   dossier: string;
-  allergies: string;
-  timeline: Array<{
+  searchText: string;
+  medecinId: string;
+  allergies?: string;
+  timeline?: Array<{
     title: string;
     date: string;
     body: string;
   }>;
 };
 
+const formatDateKey = (value: string | Date) => {
+  const date = value instanceof Date ? value : new Date(value);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getTodayDateKey = () => formatDateKey(new Date());
+
 const formatAppointmentDate = (date: Date) =>
-  new Intl.DateTimeFormat("en-GB", {
+  new Intl.DateTimeFormat("fr-FR", {
     day: "numeric",
     month: "short",
     year: "numeric",
-  }).format(date).replace(/,/g, "");
-
-const todayDateLabel = formatAppointmentDate(new Date());
-
-const initialAppointments: Appointment[] = [
-  {
-    id: 29481,
-    time: "14:30",
-    name: "MARCEL, Sophie",
-    date: todayDateLabel,
-    status: "EN ATTENTE",
-    nature: "Consultation initiale",
-    visitType: "INITIALE",
-    isUrgent: true,
-    patientId: "29481-FR",
-    motif: "Apnée suspectée / fatigue diurne",
-    priseEnCharge: { companyName: "Axa Santé", isActive: true },
-    isArrived: false,
-    isReport: false,
-    dossier: "#29481-FR",
-    allergies: "Aucune signalée",
-    timeline: [
-      {
-        title: "Consultation de suivi trimestriel",
-        date: "12 Jan 2024",
-        body: "Patient rapporte une amélioration significative de la fatigue diurne. Somnolence (Epworth: 6/24). Ajustement de la pression CPAP à 10cm H2O.",
-      },
-      {
-        title: "Polysomnographie Niveau 1",
-        date: "15 Oct 2023",
-        body: "Diagnostic d'AOS sévère. Saturation moyenne 89%. Présence de ronflements positionnels.",
-      },
-    ],
-  },
-  {
-    id: 30122,
-    time: "15:15",
-    name: "LEFEBVRE, Thomas",
-    date: todayDateLabel,
-    status: "EN COURS",
-    nature: "Suivi CPAP",
-    visitType: "CONTROLE",
-    isUrgent: false,
-    patientId: "30122-FR",
-    motif: "Suivi CPAP / contrôle trimestriel",
-    priseEnCharge: { companyName: "MGEN", isActive: true },
-    isArrived: true,
-    isReport: false,
-    dossier: "#30122-FR",
-    allergies: "Aucune signalée",
-    timeline: [
-      {
-        title: "Suivi de traitement CPAP",
-        date: "12 Jan 2024",
-        body: "Amélioration de la fatigue diurne. Pression CPAP ajustée à 11 cm H2O selon tolérance nocturne.",
-      },
-      {
-        title: "Polysomnographie de contrôle",
-        date: "08 Nov 2023",
-        body: "Indice d'apnées-hypopnées amélioré, mais persistance de microéveils sans hausse majeure du risque.",
-      },
-    ],
-  },
-  {
-    id: 28854,
-    time: "16:00",
-    name: "GARCIA, Elena",
-    date: todayDateLabel,
-    status: "EFFECTUÉ",
-    nature: "Résultats Poly",
-    visitType: "INITIALE",
-    isUrgent: false,
-    patientId: "28854-FR",
-    motif: "Diagnostic et résultats de polysomnographie",
-    priseEnCharge: null,
-    isArrived: true,
-    isReport: true,
-    dossier: "#28854-FR",
-    allergies: "Aucune signalée",
-    timeline: [
-      {
-        title: "Résultats de polysomnographie",
-        date: "25 Sep 2023",
-        body: "Apnées obstructives modérées. Indice de saturation particulièrement bas dans les phases REM.",
-      },
-    ],
-  },
-  {
-    id: 19283,
-    time: "16:45",
-    name: "DUMONT, Robert",
-    date: todayDateLabel,
-    status: "EN ATTENTE",
-    nature: "Consultation",
-    visitType: "INITIALE",
-    isUrgent: false,
-    patientId: "19283-FR",
-    motif: "Première consultation / bilan d'évaluation",
-    priseEnCharge: { companyName: "Mutuelle Harmonie", isActive: false },
-    isArrived: false,
-    isReport: false,
-    dossier: "#19283-FR",
-    allergies: "Aucune signalée",
-    timeline: [
-      {
-        title: "Première consultation",
-        date: "12 Jan 2024",
-        body: "Patient en attente de l'examen médical complet et d'un diagnostic initial.",
-      },
-    ],
-  },
-];
+  }).format(date);
 
 export default function ConsultationPage() {
   const router = useRouter();
-  const [appointmentsList, setAppointmentsList] = useState<Appointment[]>(initialAppointments);
   const [selectedPatient, setSelectedPatient] = useState<Appointment | null>(null);
   const [viewMode, setViewMode] = useState<"today" | "all">("today");
   const [searchQuery, setSearchQuery] = useState("");
@@ -159,14 +63,21 @@ export default function ConsultationPage() {
   const [visitTypeFilter, setVisitTypeFilter] = useState<VisitType>("TOUS");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  
+  useConsultationEventsSubscription();
+  const { mutateAsync: traiterMutation } = useTraiterConsultation();
 
-  const handleOpenConsultation = (appointment: Appointment) => {
-    setSelectedPatient(appointment);
-  };
+  const hasDateRange = Boolean(dateFrom || dateTo);
+  const hasActiveFilters = hasDateRange || searchQuery.trim().length > 0 || statusFilter !== 'TOUS' || visitTypeFilter !== 'TOUS' || viewMode !== 'today';
 
-  const handleOpenPatientInfo = (appointment: Appointment) => {
-    setSelectedPatient(appointment);
-  };
+  const queryFilters = hasDateRange
+    ? { dateFrom: dateFrom || undefined, dateTo: dateTo || undefined }
+    : viewMode === 'today'
+      ? { date: getTodayDateKey() }
+      : undefined;
+
+  const { data: consultations = [], isLoading, error } = useAllConsultations(queryFilters);
+  const { data: todayConsultationsRaw = [] } = useAllConsultations({ date: getTodayDateKey() });
 
   const handleSetViewMode = (mode: "today" | "all") => {
     setViewMode(mode);
@@ -183,19 +94,112 @@ export default function ConsultationPage() {
     setDateTo("");
   };
 
-  const doctorName = "Sarobidy RAMAMPIONOSON";
+  const handleStart = async (appt: Appointment) => {
+    try {
+      await consultationApi.traiterConsultation(appt.id, 'ouvrir');
+    } catch (error) {
+      console.error('Impossible de marquer la consultation comme en cours:', error);
+    }
+    router.push(`/consultation/traitement?id=${appt.id}`);
+  };
+
+  const handleOpenPatientInfo = (appt: Appointment) => {
+    setSelectedPatient(appt);
+  };
+
+  const handleClosePatientInfo = () => {
+    setSelectedPatient(null);
+  };
+
+  const doctorName = "Dr. Sarobidy RAMAMPIONOSON";
 
   // Quota d'aujourd'hui
-  const todayTotal = appointmentsList.filter((appt) => appt.date === todayDateLabel).length;
-  const todayCompleted = appointmentsList.filter((appt) => appt.status === "EFFECTUÉ" && appt.date === todayDateLabel).length;
+  const todayTotal = todayConsultationsRaw.length;
+  const todayCompleted = todayConsultationsRaw.filter(
+    (c: ConsultationApi) => c.termine || c.statut?.toUpperCase() === 'TERMINE' || c.statut?.toUpperCase() === 'TERMINÉ'
+  ).length;
   const quotaMax = 18;
 
   const progressPercent = quotaMax > 0 ? Math.min((todayTotal / quotaMax) * 100, 100) : 0;
 
+  const patients: Appointment[] = useMemo(() => {
+    const mapped = consultations.map((consultation: ConsultationApi) => {
+      const normalizedStatus = consultation.termine ? "EFFECTUÉ" : (consultation.statut?.toUpperCase().replace(/_/g, ' ') || "EN ATTENTE");
+      const formattedDate = new Date(consultation.date).toLocaleDateString('fr-FR');
+      const dateKey = formatDateKey(consultation.date);
+      const visitLabel = getVisiteLabel(consultation);
+      const isControl =
+        consultation.typeVisite?.toUpperCase() === 'CONTROLE' ||
+        (consultation.ordreControle !== null && consultation.ordreControle !== undefined) ||
+        (consultation.consultationParenteId !== null && consultation.consultationParenteId !== undefined);
+      
+      const searchText = [
+        consultation.patient?.displayName ?? ([consultation.patient?.prenom, consultation.patient?.nom].filter(Boolean).join(' ') || 'Patient inconnu'),
+        consultation.observation?.diagnostic ?? '',
+        consultation.observation?.notes ?? '',
+        visitLabel,
+        normalizedStatus,
+        formattedDate,
+        consultation.heure,
+        consultation.motif ?? '',
+        consultation.patient?.prenom ?? '',
+        consultation.patient?.nom ?? '',
+        consultation.patient?.dossier ?? '',
+      ].join(' ').toLowerCase();
+
+      return {
+        id: consultation.id,
+        time: consultation.heure,
+        name: consultation.patient?.displayName ?? ([consultation.patient?.prenom, consultation.patient?.nom].filter(Boolean).join(' ') || 'Patient inconnu'),
+        date: formattedDate,
+        dateKey,
+        status: normalizedStatus,
+        nature: isControl ? "Contrôle" : "Consultation initiale",
+        visitType: isControl ? "CONTROLE" : "INITIALE",
+        isUrgent: consultation.urgence,
+        isControl,
+        patientId: consultation.patientId,
+        motif: consultation.motif || consultation.observation?.diagnostic || '',
+        priseEnCharge: consultation.patient?.priseEnCharge ?? null,
+        isArrived: Boolean(consultation.arriveeAccueil),
+        isReport: Boolean(consultation.estReport),
+        dossier: consultation.patient?.dossier || consultation.patientId,
+        searchText,
+        medecinId: consultation.medecinId,
+        allergies: 'Aucune signalée',
+        timeline: [],
+      };
+    });
+
+    return mapped.sort((a: Appointment, b: Appointment) => {
+      const aUrgent = a.isUrgent && a.status !== "EFFECTUÉ";
+      const bUrgent = b.isUrgent && b.status !== "EFFECTUÉ";
+      if (aUrgent && !bUrgent) return -1;
+      if (!aUrgent && bUrgent) return 1;
+
+      const aCompleted = a.status === "EFFECTUÉ";
+      const bCompleted = b.status === "EFFECTUÉ";
+      if (aCompleted && !bCompleted) return 1;
+      if (!aCompleted && bCompleted) return -1;
+
+      const aReport = a.isReport && !aCompleted;
+      const bReport = b.isReport && !bCompleted;
+      if (aReport && !bReport) return -1;
+      if (!aReport && bReport) return 1;
+
+      const aArrived = a.isArrived && !aCompleted;
+      const bArrived = b.isArrived && !bCompleted;
+      if (aArrived && !bArrived) return -1;
+      if (!aArrived && bArrived) return 1;
+
+      return a.time.localeCompare(b.time);
+    });
+  }, [consultations]);
+
   const filteredAppointments = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
 
-    return appointmentsList.filter((appointment) => {
+    return patients.filter((appointment) => {
       const searchableText = [
         appointment.name,
         appointment.patientId,
@@ -219,7 +223,7 @@ export default function ConsultationPage() {
         return false;
       }
 
-      if (viewMode === "today" && appointment.date !== todayDateLabel) {
+      if (viewMode === "today" && appointment.dateKey !== getTodayDateKey()) {
         return false;
       }
 
@@ -245,10 +249,7 @@ export default function ConsultationPage() {
 
       return true;
     });
-  }, [appointmentsList, searchQuery, statusFilter, visitTypeFilter, viewMode, dateFrom, dateTo]);
-
-  const hasDateRange = Boolean(dateFrom || dateTo);
-  const hasActiveFilters = hasDateRange || searchQuery.trim().length > 0 || statusFilter !== "TOUS" || visitTypeFilter !== "TOUS" || viewMode !== "today";
+  }, [patients, searchQuery, statusFilter, visitTypeFilter, viewMode, dateFrom, dateTo]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -522,7 +523,7 @@ export default function ConsultationPage() {
                               <div className="flex flex-wrap justify-end gap-1">
                                 <button
                                   type="button"
-                                  onClick={() => handleOpenConsultation(patient)}
+                                  onClick={() => handleStart(patient)}
                                   className="bg-[#005b82] hover:bg-[#004a6b] text-white rounded-lg px-2 py-1.5 h-auto text-[10px] font-bold whitespace-nowrap"
                                 >
                                   Ouvrir
@@ -736,7 +737,7 @@ export default function ConsultationPage() {
                       <div>
                         <p className="text-xs font-medium text-gray-500 uppercase">Historique clinique</p>
                         <div className="mt-2 space-y-2">
-                          {selectedPatient.timeline.map((item, index) => (
+                          {selectedPatient.timeline?.map((item, index) => (
                             <div key={index} className="border-l-2 border-blue-500 pl-3">
                               <p className="text-xs font-semibold text-gray-900">{item.title}</p>
                               <p className="text-xs text-gray-500">{item.date}</p>

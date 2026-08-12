@@ -1,8 +1,8 @@
 // Filet de secours pour le dev local uniquement (correspond au port par défaut du
-// backend, cf. BACKEND_PORT). En production, l'absence de configuration doit être
+// backend sommeil-back). En production, l'absence de configuration doit être
 // visible immédiatement — voir l'avertissement ci-dessous — pas silencieuse.
-const DEFAULT_CONSULTATION_BASE_URL = 'http://localhost:3333';
-const DEFAULT_API_PREFIX = 'consultation/api';
+const DEFAULT_CONSULTATION_BASE_URL = 'http://localhost:5000';
+const DEFAULT_API_PREFIX = '';
 
 const normalizeBaseUrl = (value: string) => value.replace(/\/+$/, '');
 

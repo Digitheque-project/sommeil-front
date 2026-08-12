@@ -4,15 +4,8 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import TopBar from "@/components/TopBar";
-
-const fakeConsultation = {
-  patientName: "MARCEL, Sophie",
-  status: "EN COURS",
-  visitType: "INITIALE",
-  motif: "Apnée suspectée / fatigue diurne",
-  diagnosis: "AOS légère à modérée, suspicion de troubles respiratoires nocturnes",
-  doctor: "Dr. Jean Dupont",
-};
+import { useConsultation, useFinalizeConsultation, usePatientConsultationHistory } from "@/hooks/use-consultations";
+import { consultationApi } from "@/lib/api/consultation";
 
 export default function ConsultationTraitementClient({
   patient,
@@ -21,23 +14,75 @@ export default function ConsultationTraitementClient({
   patient: string;
   consultationId: string;
 }>) {
-  const [activeTab, setActiveTab] = useState<"medicament" | "non-medicament">("medicament");
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState<"observation" | "parametres" | "prescriptions">("observation");
+  const [observation, setObservation] = useState("");
+  const [diagnostic, setDiagnostic] = useState("");
+  const [parametres, setParametres] = useState<Array<{ nom: string; valeur: string; unite?: string }>>([
+    { nom: 'Tension', valeur: '', unite: 'mmHg' },
+    { nom: 'Température', valeur: '', unite: '°C' },
+    { nom: 'Poids', valeur: '', unite: 'kg' },
+    { nom: 'Taille', valeur: '', unite: 'cm' },
+    { nom: 'Fréquence cardiaque', valeur: '', unite: 'bpm' },
+    { nom: 'Saturation O2', valeur: '', unite: '%' },
+  ]);
+
+  const { data: consultation, isLoading } = useConsultation(consultationId);
+  const { data: historyData = [] } = usePatientConsultationHistory(consultation?.patientId ?? null);
+  const finalizeMutation = useFinalizeConsultation();
+
   const tabs = useMemo(
     () => [
-      { key: "medicament", label: "Médicament" },
-      { key: "non-medicament", label: "Non médicamenteux" },
+      { key: "observation", label: "Observation" },
+      { key: "parametres", label: "Paramètres cliniques" },
+      { key: "prescriptions", label: "Prescriptions" },
     ],
     [],
   );
 
-  const router = useRouter();
+  const handleFinalize = async () => {
+    try {
+      await finalizeMutation.mutateAsync({
+        id: consultationId,
+        data: {
+          observation: {
+            diagnostic,
+            notes: observation,
+          },
+          parametres,
+          nonMedicaments: {
+            recommandationsNotes: observation,
+          },
+        },
+      });
+      router.push('/consultation');
+    } catch (error) {
+      console.error('Erreur lors de la finalisation:', error);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p>Chargement...</p>
+      </div>
+    );
+  }
+
+  const consultationData = consultation || {
+    motif: "Apnée suspectée / fatigue diurne",
+    observation: { diagnostic: "AOS légère à modérée", notes: "" },
+    patient: { displayName: patient },
+    statut: "EN COURS",
+    typeVisite: "INITIALE",
+  };
 
   return (
     <>
       <TopBar
         title="Consultation"
         searchPlaceholder="Rechercher un patient..."
-        doctorName="Dr. Jean Dupont"
+        doctorName="Dr. Sarobidy RAMAMPIONOSON"
         doctorRole="Somnologue Senior"
       />
 
@@ -65,14 +110,14 @@ export default function ConsultationTraitementClient({
             <div className="flex flex-col gap-5 border-b border-outline-variant pb-6 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-on-surface-variant">Patient</p>
-                <h1 className="mt-2 text-2xl font-black tracking-tight text-on-surface">{patient}</h1>
+                <h1 className="mt-2 text-2xl font-black tracking-tight text-on-surface">{consultationData.patient?.displayName || patient}</h1>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="rounded-full bg-secondary-container/20 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-secondary">
-                  {fakeConsultation.status}
+                  {consultationData.statut}
                 </span>
                 <span className="rounded-full bg-amber-50 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-amber-700">
-                  {fakeConsultation.visitType}
+                  {consultationData.typeVisite}
                 </span>
                 <span className="rounded-full bg-surface-container px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-on-surface-variant">
                   Consultation #{consultationId}
@@ -83,17 +128,17 @@ export default function ConsultationTraitementClient({
             <div className="mt-6 grid gap-4 md:grid-cols-2">
               <div className="rounded-2xl border border-outline-variant bg-surface-container p-4">
                 <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-on-surface-variant">Motif</p>
-                <p className="mt-2 text-sm font-semibold text-on-surface">{fakeConsultation.motif}</p>
+                <p className="mt-2 text-sm font-semibold text-on-surface">{consultationData.motif}</p>
               </div>
               <div className="rounded-2xl border border-outline-variant bg-surface-container p-4">
                 <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-on-surface-variant">Médecin traitant</p>
-                <p className="mt-2 text-sm font-semibold text-on-surface">{fakeConsultation.doctor}</p>
+                <p className="mt-2 text-sm font-semibold text-on-surface">Dr. Sarobidy RAMAMPIONOSON</p>
               </div>
             </div>
 
             <div className="mt-6 rounded-2xl border border-outline-variant bg-surface-bright p-4">
-              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-on-surface-variant">Diagnostic</p>
-              <p className="mt-2 text-sm text-on-surface">{fakeConsultation.diagnosis}</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-on-surface-variant">Diagnostic actuel</p>
+              <p className="mt-2 text-sm text-on-surface">{consultationData.observation?.diagnostic || 'Non renseigné'}</p>
             </div>
 
             <div className="mt-6">
@@ -102,7 +147,7 @@ export default function ConsultationTraitementClient({
                   <button
                     key={tab.key}
                     type="button"
-                    onClick={() => setActiveTab(tab.key as "medicament" | "non-medicament")}
+                    onClick={() => setActiveTab(tab.key as "observation" | "parametres" | "prescriptions")}
                     className={`flex-1 rounded-full px-3 py-2 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary ${
                       activeTab === tab.key
                         ? "bg-white text-secondary shadow-sm"
@@ -115,37 +160,63 @@ export default function ConsultationTraitementClient({
               </div>
 
               <div className="mt-5 rounded-2xl border border-outline-variant bg-surface-container-lowest p-4">
-                {activeTab === "medicament" ? (
+                {activeTab === "observation" && (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-[10px] font-bold uppercase tracking-[0.12em] text-on-surface-variant">Diagnostic</label>
+                      <textarea
+                        value={diagnostic}
+                        onChange={(e) => setDiagnostic(e.target.value)}
+                        className="mt-2 w-full rounded-xl border border-outline-variant bg-surface-container p-3 text-sm text-on-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary"
+                        rows={3}
+                        placeholder="Saisir le diagnostic..."
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold uppercase tracking-[0.12em] text-on-surface-variant">Notes d'observation</label>
+                      <textarea
+                        value={observation}
+                        onChange={(e) => setObservation(e.target.value)}
+                        className="mt-2 w-full rounded-xl border border-outline-variant bg-surface-container p-3 text-sm text-on-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary"
+                        rows={4}
+                        placeholder="Saisir les notes d'observation..."
+                      />
+                    </div>
+                  </div>
+                )}
+                {activeTab === "parametres" && (
                   <div className="space-y-3">
-                    {[
-                      { title: "Traitement CPAP", detail: "Pression 10 cm H2O" },
-                      { title: "Melatonine 2 mg", detail: "1 gélule au coucher" },
-                      { title: "Suivi à 3 mois", detail: "Consultation de contrôle" },
-                    ].map((item) => (
-                      <div key={item.title} className="flex items-center justify-between gap-3 rounded-xl border border-outline-variant bg-surface-container p-3">
-                        <div>
-                          <p className="text-sm font-semibold text-on-surface">{item.title}</p>
-                          <p className="text-[12px] text-on-surface-variant">{item.detail}</p>
+                    {parametres.map((param, index) => (
+                      <div key={index} className="flex items-center gap-3 rounded-xl border border-outline-variant bg-surface-container p-3">
+                        <div className="flex-1">
+                          <label className="text-[10px] font-bold uppercase tracking-[0.12em] text-on-surface-variant">{param.nom}</label>
+                          <input
+                            type="text"
+                            value={param.valeur}
+                            onChange={(e) => {
+                              const newParametres = [...parametres];
+                              newParametres[index].valeur = e.target.value;
+                              setParametres(newParametres);
+                            }}
+                            className="mt-1 w-full rounded-lg border border-outline-variant bg-surface-bright p-2 text-sm text-on-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary"
+                            placeholder="Valeur"
+                          />
                         </div>
-                        <span className="material-symbols-outlined text-on-surface-variant">medication</span>
+                        <span className="text-xs text-on-surface-variant">{param.unite}</span>
                       </div>
                     ))}
                   </div>
-                ) : (
+                )}
+                {activeTab === "prescriptions" && (
                   <div className="space-y-3">
-                    {[
-                      { title: "Hygiène du sommeil", detail: "Horaires réguliers, sieste limitée" },
-                      { title: "Réduction de l’alcool en soirée", detail: "Aucune consommation 4h avant le coucher" },
-                      { title: "Contrôle du poids et activité physique", detail: "30 min de marche quotidienne" },
-                    ].map((item) => (
-                      <div key={item.title} className="flex items-center justify-between gap-3 rounded-xl border border-outline-variant bg-surface-container p-3">
-                        <div>
-                          <p className="text-sm font-semibold text-on-surface">{item.title}</p>
-                          <p className="text-[12px] text-on-surface-variant">{item.detail}</p>
-                        </div>
-                        <span className="material-symbols-outlined text-on-surface-variant">self_improvement</span>
-                      </div>
-                    ))}
+                    <p className="text-sm text-on-surface-variant">Les prescriptions seront intégrées via le service prescription externe.</p>
+                    <button
+                      type="button"
+                      onClick={() => window.open(`/prescriptions?patientId=${consultation?.patientId}&consultationId=${consultationId}`, '_blank')}
+                      className="rounded-xl bg-secondary px-4 py-2 text-sm font-bold text-on-secondary hover:bg-secondary/90"
+                    >
+                      Ouvrir le module de prescription
+                    </button>
                   </div>
                 )}
               </div>
@@ -157,14 +228,15 @@ export default function ConsultationTraitementClient({
                 onClick={() => router.push("/consultation")}
                 className="rounded-2xl border border-outline-variant bg-white px-4 py-2.5 text-sm font-bold text-on-surface-variant hover:bg-surface-container focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
-                Enregistrer et revenir
+                Annuler
               </button>
               <button
                 type="button"
-                onClick={() => router.push("/consultation")}
-                className="rounded-2xl bg-secondary px-4 py-2.5 text-sm font-bold text-on-secondary hover:bg-secondary/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary"
+                onClick={handleFinalize}
+                disabled={finalizeMutation.isPending}
+                className="rounded-2xl bg-secondary px-4 py-2.5 text-sm font-bold text-on-secondary hover:bg-secondary/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary disabled:opacity-50"
               >
-                Valider la consultation
+                {finalizeMutation.isPending ? 'Finalisation...' : 'Finaliser la consultation'}
               </button>
             </div>
           </div>
