@@ -141,8 +141,9 @@ export default function DashboardPage() {
                   <p className="p-5 text-sm text-[#64748B]">Aucune activité clinique enregistrée.</p>
                 )}
                 {activityFeed.map((item) => (
-                  <div
+                  <Link
                     key={item.id}
+                    href={`/consultation/traitement?id=${item.id}`}
                     className="p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between hover:bg-[#F8FAFC] transition-colors"
                   >
                     <div className="flex items-start gap-4">
@@ -172,7 +173,7 @@ export default function DashboardPage() {
                         </span>
                       )}
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </div>
