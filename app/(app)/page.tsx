@@ -1,6 +1,5 @@
 import Link from "next/link";
 import TopBar from "@/components/TopBar";
-import BarChart from "@/components/charts/BarChart";
 
 const activityFeed = [
   {
@@ -30,30 +29,6 @@ const activityFeed = [
     time: "Il y a 2h",
     badge: undefined as string | undefined,
   },
-];
-
-const weeklyExamTrend = [
-  { label: "S1", values: { courant: 38 } },
-  { label: "S2", values: { courant: 41 } },
-  { label: "S3", values: { courant: 29 } },
-  { label: "S4", values: { courant: 44 } },
-  { label: "S5", values: { courant: 52 } },
-];
-
-const calendarDays = [
-  { day: 25, muted: true },
-  { day: 26, muted: true },
-  { day: 27, muted: true },
-  { day: 28, muted: true },
-  { day: 29, muted: true },
-  { day: 30, muted: true },
-  ...Array.from({ length: 24 }, (_, i) => ({ day: i + 1, muted: false })),
-];
-
-const quickActions = [
-  { icon: "assignment_ind", label: "Dossier Patient", href: "/consultation" },
-  { icon: "monitor_heart", label: "Direct Chambre 04", href: "/polysomnographie" },
-  { icon: "science", label: "Protocoles", href: "/polysomnographie" },
 ];
 
 export default function DashboardPage() {
@@ -206,146 +181,10 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Exam Volume Chart */}
-            <div className="bg-white border border-[#E0E4E8] rounded-[24px] p-6 shadow-sm">
-              <div className="flex items-start justify-between gap-4 mb-6">
-                <div>
-                  <h3 className="text-[20px] font-extrabold text-[#0F172A] font-headline">
-                    Volume d&apos;Examens
-                  </h3>
-                  <p className="text-sm text-[#64748B] mt-1">
-                    Tendance hebdomadaire
-                  </p>
-                </div>
-                <Link
-                  href="/rapports"
-                  className="shrink-0 flex items-center gap-1 text-[#2563EB] text-sm font-semibold hover:underline"
-                >
-                  Rapport
-                  <span className="material-symbols-outlined text-[16px]">
-                    arrow_forward
-                  </span>
-                </Link>
-              </div>
-              <BarChart
-                data={weeklyExamTrend}
-                series={[{ key: "courant", label: "Examens", color: "#2563eb" }]}
-                height={140}
-              />
-            </div>
           </div>
 
-          {/* Right Column: Calendar & Quick Tools */}
+          {/* Right Column */}
           <div className="space-y-8">
-            {/* Calendar */}
-            <div className="bg-white border border-[#E0E4E8] rounded-[24px] overflow-hidden shadow-sm">
-              <div className="p-4 border-b border-[#E0E4E8] flex items-center justify-between bg-[#2563EB] text-white">
-                <h3 className="text-xs font-bold uppercase tracking-wider">
-                  Octobre 2023
-                </h3>
-                <div className="flex gap-2">
-                  <button
-                    className="hover:bg-white/20 rounded-full p-2 transition-colors"
-                    aria-label="Mois précédent"
-                  >
-                    <span className="material-symbols-outlined text-[18px]">
-                      chevron_left
-                    </span>
-                  </button>
-                  <button
-                    className="hover:bg-white/20 rounded-full p-2 transition-colors"
-                    aria-label="Mois suivant"
-                  >
-                    <span className="material-symbols-outlined text-[18px]">
-                      chevron_right
-                    </span>
-                  </button>
-                </div>
-              </div>
-              <div className="p-5">
-                <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-[#64748B] uppercase tracking-[0.2em] mb-4">
-                  {["L", "M", "M", "J", "V", "S", "D"].map((d, i) => (
-                    <span key={`${d}-${i}`} className={i >= 5 ? 'text-[#EF5350]' : ''}>
-                      {d}
-                    </span>
-                  ))}
-                </div>
-                <div className="grid grid-cols-7 gap-1 text-center text-sm">
-                  {calendarDays.map((cell, idx) => {
-                    if (cell.muted) {
-                      return (
-                        <div
-                          key={`${cell.day}-${idx}`}
-                          className="aspect-square rounded-lg bg-[#F1F5F9] text-[#94A3B8] flex items-center justify-center"
-                        >
-                          {cell.day}
-                        </div>
-                      );
-                    }
-                    if (cell.day === 24) {
-                      return (
-                        <div
-                          key={`${cell.day}-${idx}`}
-                          className="aspect-square rounded-lg bg-[#2563EB] text-white font-bold flex items-center justify-center relative"
-                        >
-                          {cell.day}
-                          <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-white" />
-                        </div>
-                      );
-                    }
-                    if (cell.day === 25) {
-                      return (
-                        <div
-                          key={`${cell.day}-${idx}`}
-                          className="aspect-square rounded-lg border-2 border-[#2563EB]/30 bg-[#F1F5F9] font-semibold text-[#2563EB] flex items-center justify-center"
-                        >
-                          {cell.day}
-                        </div>
-                      );
-                    }
-                    return (
-                      <div
-                        key={`${cell.day}-${idx}`}
-                        className="aspect-square rounded-lg text-[#0F172A] flex items-center justify-center hover:bg-[#F1F5F9] transition-colors cursor-pointer"
-                      >
-                        {cell.day}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-
-            {/* Quick Actions */}
-            <div className="bg-white border border-[#E0E4E8] rounded-[24px] p-6 shadow-sm">
-              <h3 className="text-[20px] font-extrabold text-[#0F172A] font-headline mb-4">
-                Accès Rapide
-              </h3>
-              <div className="space-y-3">
-                {quickActions.map((action) => (
-                  <Link
-                    key={action.label}
-                    href={action.href}
-                    className="flex items-center gap-4 p-4 rounded-2xl border border-[#E0E4E8] hover:bg-[#F8FAFC] hover:border-[#2563EB] transition-all group"
-                  >
-                    <div className="p-3 rounded-xl bg-[#DBEAFE] text-[#2563EB] group-hover:bg-[#2563EB] group-hover:text-white transition-colors">
-                      <span className="material-symbols-outlined text-[20px]">
-                        {action.icon}
-                      </span>
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-semibold text-[#0F172A] text-sm">
-                        {action.label}
-                      </p>
-                    </div>
-                    <span className="material-symbols-outlined text-[#94A3B8] group-hover:text-[#2563EB] transition-colors">
-                      arrow_forward
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-
             {/* Prochain RDV */}
             <div className="bg-gradient-to-br from-[#2563EB] to-[#1E3A8A] rounded-[24px] p-6 shadow-sm text-white overflow-hidden relative">
               <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/5 rounded-full" />
