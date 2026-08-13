@@ -213,7 +213,7 @@ export default function ConsultationTraitementClient({
                     <button
                       type="button"
                       onClick={() => window.open(`/prescriptions?patientId=${consultation?.patientId}&consultationId=${consultationId}`, '_blank')}
-                      className="rounded-xl bg-secondary px-4 py-2 text-sm font-bold text-on-secondary hover:bg-secondary/90"
+                      className="action-primary rounded-xl px-4 py-2 text-sm font-bold"
                     >
                       Ouvrir le module de prescription
                     </button>
@@ -226,7 +226,7 @@ export default function ConsultationTraitementClient({
               <button
                 type="button"
                 onClick={() => router.push("/consultation")}
-                className="rounded-2xl border border-outline-variant bg-white px-4 py-2.5 text-sm font-bold text-on-surface-variant hover:bg-surface-container focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className="action-secondary rounded-2xl px-4 py-2.5 text-sm font-bold"
               >
                 Annuler
               </button>
@@ -234,7 +234,7 @@ export default function ConsultationTraitementClient({
                 type="button"
                 onClick={handleFinalize}
                 disabled={finalizeMutation.isPending}
-                className="rounded-2xl bg-secondary px-4 py-2.5 text-sm font-bold text-on-secondary hover:bg-secondary/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary disabled:opacity-50"
+                className="action-success rounded-2xl px-4 py-2.5 text-sm font-bold disabled:opacity-50"
               >
                 {finalizeMutation.isPending ? 'Finalisation...' : 'Finaliser la consultation'}
               </button>

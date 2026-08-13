@@ -220,7 +220,7 @@ export default function ArchivesPage() {
             </div>
             <div className="flex items-center gap-2">
               <button
-                className="p-2.5 bg-surface-container-low border border-outline-variant rounded-lg hover:bg-surface-container-high transition-colors"
+                className="action-secondary p-2.5 rounded-lg"
                 title="Exporter vers Excel"
               >
                 <span className="material-symbols-outlined text-on-surface-variant">
@@ -228,7 +228,7 @@ export default function ArchivesPage() {
                 </span>
               </button>
               <button
-                className="p-2.5 bg-surface-container-low border border-outline-variant rounded-lg hover:bg-surface-container-high transition-colors"
+                className="action-secondary p-2.5 rounded-lg"
                 title="Imprimer la sélection"
               >
                 <span className="material-symbols-outlined text-on-surface-variant">
@@ -307,7 +307,7 @@ export default function ArchivesPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <button
-                        className={`text-secondary hover:underline flex items-center justify-center gap-1 mx-auto font-label-sm ${
+                        className={`${record.reportAction === "Signer" ? "text-warning" : "text-secondary"} hover:underline flex items-center justify-center gap-1 mx-auto font-label-sm ${
                           record.urgent ? "font-bold" : ""
                         }`}
                       >
@@ -324,7 +324,7 @@ export default function ArchivesPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-right">
                       <div className="flex items-center justify-end gap-1">
                         <button
-                          className="p-2 hover:bg-surface-container-highest rounded-lg text-secondary transition-colors"
+                          className={`p-2 rounded-lg transition-colors ${record.reportAction === "Signer" ? "text-warning hover:bg-orange-50" : "text-secondary hover:bg-secondary-container"}`}
                           title={record.reportAction}
                           aria-label={record.reportAction}
                         >
@@ -333,7 +333,7 @@ export default function ArchivesPage() {
                           </span>
                         </button>
                         <button
-                          className="p-2 hover:bg-surface-container-highest rounded-lg text-on-surface-variant transition-colors"
+                          className="action-secondary p-2 rounded-lg"
                           title="Télécharger le rapport"
                           aria-label="Télécharger le rapport"
                         >

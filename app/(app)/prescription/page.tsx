@@ -242,7 +242,7 @@ export default function PrescriptionPage() {
                             <button
                               type="button"
                               onClick={() => openSchedule(item)}
-                              className="px-3 py-2 text-secondary hover:bg-surface-container rounded-lg text-label-md font-label-md flex items-center gap-1.5 transition-colors"
+                              className="action-warning px-3 py-2 rounded-lg text-label-md font-label-md flex items-center gap-1.5"
                               title="Modifier le rendez-vous"
                             >
                               <span className="material-symbols-outlined text-[18px]">edit_calendar</span>
@@ -253,7 +253,7 @@ export default function PrescriptionPage() {
                           <button
                             type="button"
                             onClick={() => openSchedule(item)}
-                            className="bg-secondary text-on-secondary px-4 py-2.5 rounded-lg text-label-md font-label-md flex items-center gap-1.5 shadow-sm hover:brightness-110 active:scale-95 transition-all ml-auto"
+                            className="action-primary px-4 py-2.5 rounded-lg text-label-md font-label-md flex items-center gap-1.5 shadow-sm ml-auto"
                           >
                             <span className="material-symbols-outlined text-[18px]">event</span>
                             Planifier
@@ -323,7 +323,7 @@ export default function PrescriptionPage() {
               <button
                 type="button"
                 onClick={() => setScheduleTarget(null)}
-                className="rounded-2xl border border-outline-variant px-4 py-2 text-sm font-bold text-on-surface-variant hover:bg-surface-container"
+                className="action-secondary rounded-2xl px-4 py-2 text-sm font-bold"
               >
                 Annuler
               </button>
@@ -331,7 +331,7 @@ export default function PrescriptionPage() {
                 type="button"
                 disabled={!rdvDate || scheduleMutation.isPending}
                 onClick={submitSchedule}
-                className="rounded-2xl bg-secondary px-4 py-2 text-sm font-bold text-on-secondary hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                className="action-primary rounded-2xl px-4 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {scheduleMutation.isPending ? "Planification..." : "Confirmer le rendez-vous"}
               </button>

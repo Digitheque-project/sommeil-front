@@ -23,6 +23,35 @@ h1,h2,h3,h4,.font-headline { font-family: 'Manrope', sans-serif; }
   color: #ffffff; border-radius: 0.5rem;
 }
 .btn-primary-gradient:hover { filter: brightness(1.08); }
+
+/* Boutons d'action : couleurs sémantiques homogènes dans tout le parcours clinique. */
+.action-primary,
+.action-success,
+.action-warning,
+.action-danger,
+.action-secondary {
+  transition: background-color .18s ease, border-color .18s ease, color .18s ease,
+    box-shadow .18s ease, transform .18s ease;
+}
+.action-primary { background: #2563EB; color: #fff; }
+.action-primary:hover { background: #1E3A8A; }
+.action-success { background: #15803D; color: #fff; }
+.action-success:hover { background: #166534; }
+.action-warning { background: #C2410C; color: #fff; }
+.action-warning:hover { background: #9A3412; }
+.action-danger { background: #DC2626; color: #fff; }
+.action-danger:hover { background: #B91C1C; }
+.action-secondary { background: #EFF6FF; border: 1px solid #BFDBFE; color: #1E3A8A; }
+.action-secondary:hover { background: #DBEAFE; }
+.action-primary:focus-visible,
+.action-success:focus-visible,
+.action-warning:focus-visible,
+.action-danger:focus-visible,
+.action-secondary:focus-visible { outline: 3px solid rgba(37, 99, 235, .28); outline-offset: 2px; }
+.action-primary:active,
+.action-success:active,
+.action-warning:active,
+.action-danger:active { transform: translateY(1px); }
 .accent-in-stock  { width:4px; border-radius:4px; background:#93f2f2; flex-shrink:0; }
 .accent-low-stock { width:4px; border-radius:4px; background:#f97316; flex-shrink:0; }
 .accent-rupture   { width:4px; border-radius:4px; background:#ba1a1a; flex-shrink:0; }

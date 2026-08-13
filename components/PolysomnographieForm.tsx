@@ -145,7 +145,7 @@ export default function PolysomnographieForm({ patient, prescripteur }: Props) {
           <button
             onClick={handleSubmit}
             disabled={!isFormValid || loading}
-            className="w-full rounded-2xl bg-[#005b82] px-4 py-3 text-sm font-semibold text-white hover:bg-[#004a6b] disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-gray-300"
+            className="action-success w-full rounded-2xl px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-gray-300"
           >
             {loading ? "Envoi..." : "Valider"}
           </button>

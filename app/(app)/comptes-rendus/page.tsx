@@ -299,7 +299,7 @@ export default function CompteRenduPage() {
                     className={`inline-flex items-center justify-center gap-2 rounded-3xl px-6 py-3 text-body-md font-semibold transition-colors focus:outline-none focus:ring-0 ${
                       selectedExam?.saveState === "saving"
                         ? "bg-surface-container text-on-surface-variant"
-                        : "bg-secondary text-on-secondary hover:bg-secondary/90"
+                        : "action-success"
                     } ${!selectedExam?.draftReport || selectedExam.saveState === "saving" ? "opacity-60 cursor-not-allowed" : ""}`}
                   >
                     <span className="material-symbols-outlined">

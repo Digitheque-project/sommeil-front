@@ -119,7 +119,7 @@ export default function RapportsPage() {
                 </button>
               ))}
             </div>
-            <button className="bg-secondary text-on-secondary px-4 py-2 rounded-lg text-label-md font-label-md flex items-center gap-2 shadow-sm hover:brightness-110 active:scale-95 transition-all">
+            <button className="action-secondary px-4 py-2 rounded-lg text-label-md font-label-md flex items-center gap-2 shadow-sm">
               <span className="material-symbols-outlined text-[20px]">
                 download
               </span>

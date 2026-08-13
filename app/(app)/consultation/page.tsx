@@ -406,7 +406,7 @@ export default function ConsultationPage() {
                     <button
                       type="button"
                       onClick={handleResetFilters}
-                      className="flex h-9 shrink-0 items-center gap-1 rounded-xl px-3 text-[12px] font-semibold text-slate-500 transition-colors hover:bg-red-50 hover:text-red-600"
+                      className="action-danger flex h-9 shrink-0 items-center gap-1 rounded-xl px-3 text-[12px] font-semibold"
                     >
                       <X className="h-3.5 w-3.5" />
                       Réinitialiser
@@ -641,7 +641,7 @@ export default function ConsultationPage() {
                         </div>
                       </div>
                     </div>
-                    <button className="mt-4 flex items-center gap-2 text-blue-600 text-sm font-medium hover:text-blue-700">
+                    <button className="action-primary mt-4 flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium">
                       <Plus className="w-4 h-4" />
                       Ajouter
                     </button>
@@ -755,7 +755,7 @@ export default function ConsultationPage() {
                     <p className="text-sm text-blue-700 mb-4">
                       Consultez les antécédents médicaux complets du patient pour affiner votre diagnostic.
                     </p>
-                    <button className="flex items-center gap-2 text-blue-600 text-sm font-medium hover:text-blue-700">
+                    <button className="action-secondary flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium">
                       Consulter le dossier historique
                       <ChevronRight className="w-4 h-4" />
                     </button>
@@ -763,7 +763,7 @@ export default function ConsultationPage() {
 
                   {/* Save Button */}
                   <button
-                    className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                    className="action-success w-full py-3 rounded-lg font-semibold"
                   >
                     Sauvegarder la consultation
                   </button>
