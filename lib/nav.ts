@@ -14,16 +14,16 @@ export const NAV_ITEMS: NavItem[] = [
     shortLabel: "Consults",
   },
   {
-    label: "Polysomnographie",
-    href: "/polysomnographie",
-    icon: "sleep",
-    shortLabel: "PSG",
-  },
-  {
     label: "Prescription",
     href: "/prescription",
     icon: "medication",
     shortLabel: "Rx",
+  },
+  {
+    label: "Polysomnographie",
+    href: "/polysomnographie",
+    icon: "sleep",
+    shortLabel: "PSG",
   },
   {
     label: "Compte rendu",
