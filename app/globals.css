@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @config "../tailwind.config.js";
+@import "../components/prescription/prescription.css";
 
 /* === THE CURATED CLINICAL === */
 body { font-family: 'Inter', sans-serif; color: #3A3F44; background: #FFFFFF; }

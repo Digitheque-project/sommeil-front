@@ -14,7 +14,9 @@ export default async function Page({
 }>) {
   const params = await searchParams;
   const patient = getFirstParamValue(params.patient);
-  const consultationId = getFirstParamValue(params.id);
+  const consultationId = getFirstParamValue(params.consultationId) ?? getFirstParamValue(params.id);
+  const mode = getFirstParamValue(params.mode);
+  const origin = getFirstParamValue(params.origin);
 
-  return <ConsultationTraitementClient patient={patient} consultationId={consultationId} />;
+  return <ConsultationTraitementClient patient={patient} consultationId={consultationId} mode={mode} origin={origin} />;
 }
