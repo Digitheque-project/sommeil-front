@@ -1,4 +1,4 @@
-import { getConsultationBaseUrl } from './consultation-config';
+import { getSommeilApiUrl } from './consultation-config';
 
 export type ConsultationHistoryEntry = {
   id: number;
@@ -146,42 +146,42 @@ export const consultationApi = {
     if (filters?.archived) params.set('archived', 'true');
     
     const queryString = params.toString();
-    const res = await fetch(`${getConsultationBaseUrl()}/consultations${queryString ? `?${queryString}` : ''}`, {
+    const res = await fetch(`${getSommeilApiUrl('/consultations')}${queryString ? `?${queryString}` : ''}`, {
       headers: authHeaders(),
     });
     return handleResponse(res);
   },
 
   async getWaitingConsultations() {
-    const res = await fetch(`${getConsultationBaseUrl()}/consultations/waiting`, {
+    const res = await fetch(getSommeilApiUrl('/consultations/waiting'), {
       headers: authHeaders(),
     });
     return handleResponse(res);
   },
 
   async getControlConsultations() {
-    const res = await fetch(`${getConsultationBaseUrl()}/consultations/controls`, {
+    const res = await fetch(getSommeilApiUrl('/consultations/controls'), {
       headers: authHeaders(),
     });
     return handleResponse(res);
   },
 
   async getConsultationById(id: string | number) {
-    const res = await fetch(`${getConsultationBaseUrl()}/consultations/${id}`, {
+    const res = await fetch(getSommeilApiUrl(`/consultations/${id}`), {
       headers: authHeaders(),
     });
     return handleResponse(res);
   },
 
   async getPatientConsultationHistory(patientId: string | number) {
-    const res = await fetch(`${getConsultationBaseUrl()}/consultations/patient/${patientId}/history`, {
+    const res = await fetch(getSommeilApiUrl(`/consultations/patient/${patientId}/history`), {
       headers: authHeaders(),
     });
     return handleResponse(res);
   },
 
   async markConsultationArrival(id: string | number, payload: { arriveeAccueil?: boolean; arriveeAccueilAt?: string | Date | null }) {
-    const res = await fetch(`${getConsultationBaseUrl()}/consultations/${id}/arrival`, {
+    const res = await fetch(getSommeilApiUrl(`/consultations/${id}/arrival`), {
       method: 'PATCH',
       headers: authHeaders(),
       body: JSON.stringify(payload),
@@ -190,7 +190,7 @@ export const consultationApi = {
   },
 
   async finalizeConsultation(id: string | number, payload: any) {
-    const res = await fetch(`${getConsultationBaseUrl()}/consultations/${id}/finalize`, {
+    const res = await fetch(getSommeilApiUrl(`/consultations/${id}/finalize`), {
       method: 'POST',
       headers: authHeaders(),
       body: JSON.stringify(payload),
@@ -199,7 +199,7 @@ export const consultationApi = {
   },
 
   async saveControlNote(id: string | number, note: string) {
-    const res = await fetch(`${getConsultationBaseUrl()}/consultations/${id}/control-note`, {
+    const res = await fetch(getSommeilApiUrl(`/consultations/${id}/control-note`), {
       method: 'PATCH',
       headers: authHeaders(),
       body: JSON.stringify({ note }),
@@ -208,7 +208,7 @@ export const consultationApi = {
   },
 
   async traiterConsultation(id: string | number, action: 'ouvrir' | 'annuler' | 'terminer' | 'controle' | 'examen' | 'hospitalisation' | 'reporter', extra?: Record<string, any>) {
-    const res = await fetch(`${getConsultationBaseUrl()}/consultations/${id}/traiter`, {
+    const res = await fetch(getSommeilApiUrl(`/consultations/${id}/traiter`), {
       method: 'POST',
       headers: authHeaders(),
       body: JSON.stringify({ action, ...extra }),
@@ -217,7 +217,7 @@ export const consultationApi = {
   },
 
   async getHospitalisationServices() {
-    const res = await fetch(`${getConsultationBaseUrl()}/services/hospitalisation`, {
+    const res = await fetch(getSommeilApiUrl('/services/hospitalisation'), {
       headers: authHeaders(),
     });
     if (!res.ok) return [];

@@ -6,24 +6,25 @@ This document describes the integration between the sommeil project and the cons
 ## Architecture
 
 ### Backend (sommeil-back)
-- **Port**: 3000
+- **Port**: 8888 (default)
 - **Technology**: NestJS
-- **Purpose**: Acts as a proxy/gateway to the consultation externe backend
+- **Purpose**: Acts as a proxy/gateway to the consultation externe backend with fallback to mock data
 - **Key Files**:
   - `src/consultations/consultations.module.ts` - Module definition
   - `src/consultations/consultations.controller.ts` - API endpoints
-  - `src/consultations/consultations.service.ts` - Service layer with HTTP client
+  - `src/consultations/consultations.service.ts` - Service layer with HTTP client and mock data fallback
 
 ### Frontend (sommeil-front)
-- **Port**: 3001 (default Next.js)
+- **Port**: 3000 (default Next.js)
 - **Technology**: Next.js + React Query
 - **Purpose**: UI for sleep consultations with integration to consultation externe
 - **Key Files**:
   - `hooks/use-consultations.ts` - React Query hooks for API calls
   - `lib/api/consultation.ts` - API client functions
-  - `lib/api/consultation-config.ts` - Configuration for API endpoints
+  - `lib/api/consultation-config.ts` - Configuration for API endpoints (default: http://localhost:8888)
   - `app/(app)/consultation/page.tsx` - Main consultation list page
   - `app/(app)/consultation/traitement/page.tsx` - Consultation treatment page
+  - `app/providers.tsx` - React Query provider
 
 ## Configuration
 
@@ -33,12 +34,12 @@ This document describes the integration between the sommeil project and the cons
 ```
 CONSULTATION_EXTERNE_URL=http://localhost:3001
 CONSULTATION_EXTERNE_TOKEN=
-PORT=3000
+PORT=8888
 ```
 
 **sommeil-front (.env.local)**:
 ```
-NEXT_PUBLIC_CONSULTATION_URL=http://localhost:3000
+NEXT_PUBLIC_CONSULTATION_URL=http://localhost:8888
 ```
 
 ## Features Integrated
@@ -71,10 +72,12 @@ NEXT_PUBLIC_CONSULTATION_URL=http://localhost:3000
 4. **sommeil-back** returns response to frontend
 5. **Frontend** displays data with sleep-specific UI
 
+**Fallback Mode**: If consultation externe backend is unavailable, sommeil-back returns mock data automatically.
+
 ## Running the Integration
 
 ### Prerequisites
-- consultation externe backend running on port 3001
+- consultation externe backend running on port 3001 (optional - fallback to mock data if unavailable)
 - prescription service running (for prescriptions integration)
 
 ### Start sommeil-back
@@ -84,12 +87,25 @@ npm install
 npm run start:dev
 ```
 
+The backend will start on port 8888 (configurable via PORT env var).
+
 ### Start sommeil-front
 ```bash
 cd D:\sommeil\sommeil-front
 npm install
 npm run dev
 ```
+
+The frontend will start on port 3000.
+
+## Mock Data Fallback
+
+When the consultation externe backend is not available, the service automatically returns mock data:
+- 3 sample consultations with different statuses
+- Patient information with insurance details
+- Consultation details with diagnosis and notes
+
+This allows development and testing without requiring the external consultation service to be running.
 
 ## Future Enhancements
 

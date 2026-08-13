@@ -20,6 +20,12 @@ export const NAV_ITEMS: NavItem[] = [
     shortLabel: "PSG",
   },
   {
+    label: "Prescription",
+    href: "/prescription",
+    icon: "medication",
+    shortLabel: "Rx",
+  },
+  {
     label: "Compte rendu",
     href: "/comptes-rendus",
     icon: "description",
