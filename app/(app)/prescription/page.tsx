@@ -32,6 +32,7 @@ export default function PrescriptionPage() {
   const [scheduleTarget, setScheduleTarget] = useState<PolysomnographieItem | null>(null);
   const [rdvDate, setRdvDate] = useState("");
   const [rdvHeure, setRdvHeure] = useState("");
+  const [scheduleError, setScheduleError] = useState<string | null>(null);
 
   const { data: polysomnographies = [], isLoading } = usePolysomnographies();
   const scheduleMutation = useSchedulePolysomnographie();
@@ -55,6 +56,7 @@ export default function PrescriptionPage() {
   }, [polysomnographies, searchQuery, statusFilter]);
 
   const openSchedule = (item: PolysomnographieItem) => {
+    setScheduleError(null);
     setScheduleTarget(item);
     setRdvDate(item.rdvDate ?? "");
     setRdvHeure(item.rdvHeure ?? "20:00");
@@ -68,7 +70,7 @@ export default function PrescriptionPage() {
       setRdvDate("");
       setRdvHeure("");
     } catch (error) {
-      console.error("Erreur lors de la planification du rendez-vous:", error);
+      setScheduleError(error instanceof Error ? error.message : "La planification a échoué. Veuillez réessayer.");
     }
   };
 
@@ -294,6 +296,11 @@ export default function PrescriptionPage() {
             </div>
 
             <div className="space-y-4">
+              {scheduleError && (
+                <p role="alert" className="rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
+                  {scheduleError}
+                </p>
+              )}
               <div>
                 <label className="block text-[11px] font-bold uppercase tracking-[0.12em] text-on-surface-variant mb-2">
                   Date du rendez-vous

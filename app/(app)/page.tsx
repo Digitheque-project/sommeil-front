@@ -1,37 +1,30 @@
+"use client";
+
 import Link from "next/link";
 import TopBar from "@/components/TopBar";
-
-const activityFeed = [
-  {
-    icon: "upload_file",
-    iconBg: "bg-[#E2E8F0]",
-    iconColor: "text-[#2563EB]",
-    title: "Données PSG téléchargées",
-    subtitle: "Patient: Mme. Sophie Martin · ID #4429",
-    time: "Il y a 12 min",
-    badge: undefined as string | undefined,
-  },
-  {
-    icon: "verified",
-    iconBg: "bg-[#D1FAE5]",
-    iconColor: "text-[#059669]",
-    title: "Compte-rendu validé",
-    subtitle: "Par Dr. Leroy · Patient: M. Pierre Adam",
-    time: "Il y a 1h",
-    badge: "TERMINÉ",
-  },
-  {
-    icon: "edit_calendar",
-    iconBg: "bg-[#FEE2E2]",
-    iconColor: "text-[#DC2626]",
-    title: "Nouvelle Consultation",
-    subtitle: "Patient: Emma Bernard · Demain à 09:00",
-    time: "Il y a 2h",
-    badge: undefined as string | undefined,
-  },
-];
+import { useAllConsultations } from "@/hooks/use-consultations";
+import type { ConsultationApi } from "@/lib/api/consultation";
 
 export default function DashboardPage() {
+  const { data: consultations = [], isLoading } = useAllConsultations();
+  const today = new Date().toISOString().slice(0, 10);
+  const todayConsultations = (consultations as ConsultationApi[]).filter((item) => item.date.slice(0, 10) === today);
+  const completed = todayConsultations.filter((item) => item.termine).length;
+  const urgent = todayConsultations.filter((item) => item.urgence).length;
+  const activityFeed = [...(consultations as ConsultationApi[])]
+    .sort((a, b) => new Date(b.createdAt ?? b.date).getTime() - new Date(a.createdAt ?? a.date).getTime())
+    .slice(0, 5)
+    .map((item) => ({
+      id: item.id,
+      icon: item.termine ? "verified" : "edit_calendar",
+      iconBg: item.termine ? "bg-[#D1FAE5]" : item.urgence ? "bg-[#FEE2E2]" : "bg-[#E2E8F0]",
+      iconColor: item.termine ? "text-[#059669]" : item.urgence ? "text-[#DC2626]" : "text-[#2563EB]",
+      title: item.termine ? "Consultation terminée" : "Consultation planifiée",
+      subtitle: `Patient : ${item.patient?.displayName ?? "Patient inconnu"} · ${item.heure ?? "Heure non renseignée"}`,
+      time: new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(item.createdAt ?? item.date)),
+      badge: item.urgence ? "URGENT" : item.termine ? "TERMINÉ" : undefined,
+    }));
+
   return (
     <>
       <TopBar title="Tableau de bord" />
@@ -68,12 +61,12 @@ export default function DashboardPage() {
             </div>
             <div>
               <h3 className="text-white font-extrabold text-[48px] leading-none mb-1 font-headline">
-                14
+                {isLoading ? "…" : todayConsultations.length}
               </h3>
               <p className="text-[#94A3B8] font-semibold text-[11px] uppercase tracking-wide mb-1">
-                EXAMENS (AUJOURD'HUI)
+                CONSULTATIONS (AUJOURD&apos;HUI)
               </p>
-              <p className="text-[#64748B] text-[11px]">vs 12 hier à la même heure</p>
+              <p className="text-[#64748B] text-[11px]">Données synchronisées avec le planning</p>
             </div>
           </div>
 
@@ -91,13 +84,13 @@ export default function DashboardPage() {
             </div>
             <div>
               <h3 className="text-[#0F172A] font-extrabold text-[48px] leading-none mb-1 font-headline">
-                08
+                {isLoading ? "…" : completed}
               </h3>
               <p className="text-[#64748B] font-semibold text-[11px] uppercase tracking-wider mb-4">
-                COMPTES-RENDUS À VALIDER
+                CONSULTATIONS TERMINÉES
               </p>
               <span className="text-[10px] font-semibold bg-[#FEE2E2] text-[#DC2626] px-3 py-1 rounded-lg">
-                3 prioritaires
+                {urgent} urgente{urgent > 1 ? "s" : ""}
               </span>
             </div>
           </div>
@@ -116,12 +109,12 @@ export default function DashboardPage() {
             </div>
             <div>
               <h3 className="text-[#0F172A] font-extrabold text-[48px] leading-none mb-1 font-headline">
-                92%
+                {isLoading ? "…" : `${urgent}`}
               </h3>
               <p className="text-[#64748B] font-semibold text-[11px] uppercase tracking-wider">
-                OCCUPATION LITS
+                CONSULTATIONS URGENTES
               </p>
-              <p className="text-[#64748B] text-[11px] mt-2">11 sur 12 lits réservés</p>
+              <p className="text-[#64748B] text-[11px] mt-2">Parmi les consultations du jour</p>
             </div>
           </div>
         </div>
@@ -144,9 +137,12 @@ export default function DashboardPage() {
                 </Link>
               </div>
               <div className="divide-y divide-[#E0E4E8]">
+                {!isLoading && activityFeed.length === 0 && (
+                  <p className="p-5 text-sm text-[#64748B]">Aucune activité clinique enregistrée.</p>
+                )}
                 {activityFeed.map((item) => (
                   <div
-                    key={item.title}
+                    key={item.id}
                     className="p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between hover:bg-[#F8FAFC] transition-colors"
                   >
                     <div className="flex items-start gap-4">

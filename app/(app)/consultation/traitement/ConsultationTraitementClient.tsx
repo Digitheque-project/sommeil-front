@@ -11,8 +11,8 @@ export default function ConsultationTraitementClient({
   patient,
   consultationId,
 }: Readonly<{
-  patient: string;
-  consultationId: string;
+  patient?: string;
+  consultationId?: string;
 }>) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"observation" | "parametres" | "prescriptions">("observation");
@@ -27,7 +27,7 @@ export default function ConsultationTraitementClient({
     { nom: 'Saturation O2', valeur: '', unite: '%' },
   ]);
 
-  const { data: consultation, isLoading } = useConsultation(consultationId);
+  const { data: consultation, isLoading, error } = useConsultation(consultationId ?? '');
   const { data: historyData = [] } = usePatientConsultationHistory(consultation?.patientId ?? null);
   const finalizeMutation = useFinalizeConsultation();
 
@@ -43,7 +43,7 @@ export default function ConsultationTraitementClient({
   const handleFinalize = async () => {
     try {
       await finalizeMutation.mutateAsync({
-        id: consultationId,
+        id: consultationId!,
         data: {
           observation: {
             diagnostic,
@@ -69,13 +69,15 @@ export default function ConsultationTraitementClient({
     );
   }
 
-  const consultationData = consultation || {
-    motif: "Apnée suspectée / fatigue diurne",
-    observation: { diagnostic: "AOS légère à modérée", notes: "" },
-    patient: { displayName: patient },
-    statut: "EN COURS",
-    typeVisite: "INITIALE",
-  };
+  if (!consultationId || error || !consultation) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6 text-center">
+        <p className="text-on-surface-variant">La consultation demandée est introuvable ou ne peut pas être chargée.</p>
+      </div>
+    );
+  }
+
+  const consultationData = consultation;
 
   return (
     <>
@@ -102,7 +104,7 @@ export default function ConsultationTraitementClient({
             </Link>
             <span className="material-symbols-outlined text-[14px] text-outline">chevron_right</span>
             <span aria-current="page" className="px-1 text-secondary">
-              Traitement — {patient}
+              Traitement — {consultationData.patient?.displayName ?? patient ?? "Patient"}
             </span>
           </nav>
 
@@ -110,7 +112,7 @@ export default function ConsultationTraitementClient({
             <div className="flex flex-col gap-5 border-b border-outline-variant pb-6 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-on-surface-variant">Patient</p>
-                <h1 className="mt-2 text-2xl font-black tracking-tight text-on-surface">{consultationData.patient?.displayName || patient}</h1>
+                <h1 className="mt-2 text-2xl font-black tracking-tight text-on-surface">{consultationData.patient?.displayName ?? patient ?? "Patient"}</h1>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="rounded-full bg-secondary-container/20 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-secondary">

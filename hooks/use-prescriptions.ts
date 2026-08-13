@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { prescriptionApi } from '@/lib/api/prescription';
+import { prescriptionApi, type PolysomnographieItem } from '@/lib/api/prescription';
 
 export function usePatientPrescriptions(patientId: string, chuId?: string) {
   return useQuery({
@@ -25,6 +25,7 @@ export function usePolysomnographies() {
   return useQuery({
     queryKey: ['polysomnographies'],
     queryFn: () => prescriptionApi.getPolysomnographies(),
+    refetchOnMount: 'always',
   });
 }
 
@@ -34,7 +35,22 @@ export function useSchedulePolysomnographie() {
   return useMutation({
     mutationFn: ({ id, rdvDate, rdvHeure }: { id: string; rdvDate: string; rdvHeure?: string }) =>
       prescriptionApi.schedulePolysomnographie(id, { rdvDate, rdvHeure }),
-    onSuccess: () => {
+    onSuccess: (scheduled, variables) => {
+      queryClient.setQueryData<PolysomnographieItem[]>(['polysomnographies'], (current = []) => {
+        const updated = scheduled as PolysomnographieItem;
+        const exists = current.some((item) => item.id === variables.id);
+        const nextItem: PolysomnographieItem = {
+          ...(exists ? current.find((item) => item.id === variables.id)! : updated),
+          ...updated,
+          id: variables.id,
+          statut: 'PLANIFIE',
+          rdvDate: variables.rdvDate,
+          rdvHeure: variables.rdvHeure ?? updated.rdvHeure,
+        };
+        return exists
+          ? current.map((item) => item.id === variables.id ? nextItem : item)
+          : [...current, nextItem];
+      });
       queryClient.invalidateQueries({ queryKey: ['polysomnographies'] });
     },
   });

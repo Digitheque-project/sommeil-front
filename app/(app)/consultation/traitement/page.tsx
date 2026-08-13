@@ -1,14 +1,5 @@
 import ConsultationTraitementClient from "./ConsultationTraitementClient";
 
-const fakeConsultation = {
-  patientName: "MARCEL, Sophie",
-  status: "EN COURS",
-  visitType: "INITIALE",
-  motif: "Apnée suspectée / fatigue diurne",
-  diagnosis: "AOS légère à modérée, suspicion de troubles respiratoires nocturnes",
-  doctor: "Dr. Jean Dupont",
-};
-
 function getFirstParamValue(value: string | string[] | undefined) {
   if (!value) {
     return undefined;
@@ -21,8 +12,8 @@ export default function Page({
 }: Readonly<{
   searchParams: Record<string, string | string[] | undefined>;
 }>) {
-  const patient = getFirstParamValue(searchParams.patient) ?? fakeConsultation.patientName;
-  const consultationId = getFirstParamValue(searchParams.id) ?? "29481";
+  const patient = getFirstParamValue(searchParams.patient);
+  const consultationId = getFirstParamValue(searchParams.id);
 
   return <ConsultationTraitementClient patient={patient} consultationId={consultationId} />;
 }
