@@ -18,15 +18,6 @@ const kpis = [
     iconColor: "text-secondary",
   },
   {
-    label: "IAH moyen",
-    value: "24.6",
-    suffix: "/h",
-    note: "Sévérité modérée",
-    icon: "monitor_heart",
-    iconBg: "bg-tertiary-fixed",
-    iconColor: "text-primary",
-  },
-  {
     label: "Comptes-rendus validés",
     value: "96",
     suffix: "%",

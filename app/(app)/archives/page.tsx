@@ -1,3 +1,6 @@
+"use client";
+
+import { useMemo, useState } from "react";
 import TopBar from "@/components/TopBar";
 
 const stats = [
@@ -24,14 +27,6 @@ const stats = [
     iconBg: "bg-error-container",
     iconColor: "text-error",
     valueColor: "text-error",
-  },
-  {
-    label: "Stockage Cloud",
-    value: "68%",
-    icon: "cloud_done",
-    iconBg: "bg-secondary-fixed",
-    iconColor: "text-secondary",
-    valueColor: "text-secondary",
   },
 ];
 
@@ -99,6 +94,13 @@ const records = [
   },
 ];
 
+type RecordStatus = "Tous" | "Terminés" | "En attente";
+
+const parseRecordDate = (value: string) => {
+  const [day, month, year] = value.split("/").map(Number);
+  return new Date(year, month - 1, day);
+};
+
 const auditLog = [
   {
     icon: "history_edu",
@@ -129,6 +131,44 @@ const auditLog = [
 ];
 
 export default function ArchivesPage() {
+  const [statusFilter, setStatusFilter] = useState<RecordStatus>("Tous");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showDateRange, setShowDateRange] = useState(false);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [urgentOnly, setUrgentOnly] = useState(false);
+  const [page, setPage] = useState(1);
+  const pageSize = 5;
+
+  const filteredRecords = useMemo(() => records.filter((record) => {
+    const query = searchQuery.trim().toLowerCase();
+    if (query && ![record.name, record.id, record.exam, record.status].join(" ").toLowerCase().includes(query)) return false;
+    if (statusFilter === "Terminés" && record.status !== "Validé") return false;
+    if (statusFilter === "En attente" && record.status === "Validé") return false;
+    if (urgentOnly && !record.urgent) return false;
+    const recordDate = parseRecordDate(record.date);
+    if (dateFrom && recordDate < new Date(`${dateFrom}T00:00:00`)) return false;
+    if (dateTo && recordDate > new Date(`${dateTo}T23:59:59`)) return false;
+    return true;
+  }), [searchQuery, statusFilter, urgentOnly, dateFrom, dateTo]);
+  const totalPages = Math.max(1, Math.ceil(filteredRecords.length / pageSize));
+  const visibleRecords = filteredRecords.slice((page - 1) * pageSize, page * pageSize);
+
+  const selectStatus = (status: RecordStatus) => {
+    setStatusFilter(status);
+    setPage(1);
+  };
+  const exportRecords = () => {
+    const csv = ["Patient;ID;Examen;Date;Statut", ...filteredRecords.map((record) => [record.name, record.id, record.exam, record.date, record.status].join(";"))].join("\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "archives-sommeil.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <>
       <TopBar
@@ -152,23 +192,19 @@ export default function ArchivesPage() {
           </div>
           <div className="flex flex-wrap gap-3">
             <div className="bg-surface-container-lowest border border-outline-variant p-1 rounded-lg flex items-center">
-              <button className="px-4 py-1.5 text-secondary font-semibold bg-secondary-container rounded-md font-label-md text-label-md">
-                Tous
-              </button>
-              <button className="px-4 py-1.5 text-on-surface-variant hover:bg-surface-container-low rounded-md font-label-md text-label-md">
-                Terminés
-              </button>
-              <button className="px-4 py-1.5 text-on-surface-variant hover:bg-surface-container-low rounded-md font-label-md text-label-md">
-                En attente
-              </button>
+              {(["Tous", "Terminés", "En attente"] as RecordStatus[]).map((status) => (
+                <button key={status} type="button" onClick={() => selectStatus(status)} className={`px-4 py-1.5 rounded-md font-label-md text-label-md ${statusFilter === status ? "text-secondary font-semibold bg-secondary-container" : "text-on-surface-variant hover:bg-surface-container-low"}`}>
+                  {status}
+                </button>
+              ))}
             </div>
-            <button className="bg-surface-container-lowest border border-outline-variant px-4 py-2 flex items-center gap-2 font-label-md text-label-md rounded-lg hover:bg-surface-container-high transition-all">
+            <button type="button" onClick={() => setShowDateRange((open) => !open)} aria-expanded={showDateRange} className="bg-surface-container-lowest border border-outline-variant px-4 py-2 flex items-center gap-2 font-label-md text-label-md rounded-lg hover:bg-surface-container-high transition-all">
               <span className="material-symbols-outlined text-lg">
                 calendar_month
               </span>
               <span>Date Range</span>
             </button>
-            <button className="bg-surface-container-lowest border border-outline-variant px-4 py-2 flex items-center gap-2 font-label-md text-label-md rounded-lg hover:bg-surface-container-high transition-all">
+            <button type="button" onClick={() => setShowAdvancedFilters((open) => !open)} aria-expanded={showAdvancedFilters} className="bg-surface-container-lowest border border-outline-variant px-4 py-2 flex items-center gap-2 font-label-md text-label-md rounded-lg hover:bg-surface-container-high transition-all">
               <span className="material-symbols-outlined text-lg">
                 filter_list
               </span>
@@ -176,6 +212,14 @@ export default function ArchivesPage() {
             </button>
           </div>
         </div>
+
+        {(showDateRange || showAdvancedFilters) && (
+          <div className="mb-6 flex flex-wrap items-end gap-4 rounded-xl border border-outline-variant bg-surface-container-low p-4">
+            {showDateRange && <><label className="text-sm font-semibold text-on-surface-variant">Du<input type="date" value={dateFrom} onChange={(event) => { setDateFrom(event.target.value); setPage(1); }} className="ml-2 rounded-lg border border-outline-variant bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-on-surface-variant">Au<input type="date" value={dateTo} onChange={(event) => { setDateTo(event.target.value); setPage(1); }} className="ml-2 rounded-lg border border-outline-variant bg-white px-2 py-1.5" /></label></>}
+            {showAdvancedFilters && <label className="flex items-center gap-2 text-sm font-semibold text-on-surface"><input type="checkbox" checked={urgentOnly} onChange={(event) => { setUrgentOnly(event.target.checked); setPage(1); }} /> Urgences uniquement</label>}
+            <button type="button" onClick={() => { setDateFrom(""); setDateTo(""); setUrgentOnly(false); setStatusFilter("Tous"); setPage(1); }} className="action-secondary rounded-lg px-3 py-2 text-sm font-semibold">Réinitialiser</button>
+          </div>
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-gutter mb-section-gap">
@@ -213,6 +257,8 @@ export default function ArchivesPage() {
                 search
               </span>
               <input
+                value={searchQuery}
+                onChange={(event) => { setSearchQuery(event.target.value); setPage(1); }}
                 className="w-full pl-10 pr-4 py-2.5 bg-surface-container border border-outline-variant rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none font-body-sm text-body-sm transition-all"
                 placeholder="Rechercher par nom, ID patient ou type d'examen..."
                 type="text"
@@ -222,6 +268,8 @@ export default function ArchivesPage() {
               <button
                 className="action-secondary p-2.5 rounded-lg"
                 title="Exporter vers Excel"
+                type="button"
+                onClick={exportRecords}
               >
                 <span className="material-symbols-outlined text-on-surface-variant">
                   file_download
@@ -230,6 +278,8 @@ export default function ArchivesPage() {
               <button
                 className="action-secondary p-2.5 rounded-lg"
                 title="Imprimer la sélection"
+                type="button"
+                onClick={() => window.print()}
               >
                 <span className="material-symbols-outlined text-on-surface-variant">
                   print
@@ -263,7 +313,7 @@ export default function ArchivesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant">
-                {records.map((record) => (
+                {visibleRecords.map((record) => (
                   <tr
                     key={record.id}
                     className="hover:bg-tertiary-fixed transition-colors group"
@@ -354,6 +404,7 @@ export default function ArchivesPage() {
                     </td>
                   </tr>
                 ))}
+                {visibleRecords.length === 0 && <tr><td colSpan={6} className="px-6 py-12 text-center text-on-surface-variant">Aucune archive ne correspond aux filtres sélectionnés.</td></tr>}
               </tbody>
             </table>
           </div>
@@ -361,34 +412,25 @@ export default function ArchivesPage() {
           {/* Pagination */}
           <div className="p-4 bg-surface-container-low flex flex-wrap items-center justify-between gap-4">
             <span className="text-body-sm text-on-surface-variant">
-              Affichage de 1-4 sur 1,284 résultats
+              Affichage de {filteredRecords.length ? (page - 1) * pageSize + 1 : 0}-{Math.min(page * pageSize, filteredRecords.length)} sur {filteredRecords.length} résultats
             </span>
             <div className="flex items-center gap-1">
               <button
                 className="p-2 hover:bg-surface-container-high rounded-lg disabled:opacity-30"
-                disabled
+                disabled={page === 1}
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
                 aria-label="Page précédente"
               >
                 <span className="material-symbols-outlined">
                   chevron_left
                 </span>
               </button>
-              <button className="w-8 h-8 flex items-center justify-center bg-secondary text-white rounded-lg font-label-md text-label-md">
-                1
-              </button>
-              <button className="w-8 h-8 flex items-center justify-center hover:bg-surface-container-high rounded-lg font-label-md text-label-md">
-                2
-              </button>
-              <button className="w-8 h-8 flex items-center justify-center hover:bg-surface-container-high rounded-lg font-label-md text-label-md">
-                3
-              </button>
-              <span className="px-2">...</span>
-              <button className="w-8 h-8 flex items-center justify-center hover:bg-surface-container-high rounded-lg font-label-md text-label-md">
-                321
-              </button>
+              {Array.from({ length: totalPages }, (_, index) => index + 1).map((number) => <button key={number} type="button" onClick={() => setPage(number)} className={`w-8 h-8 flex items-center justify-center rounded-lg font-label-md text-label-md ${page === number ? "bg-secondary text-white" : "hover:bg-surface-container-high"}`}>{number}</button>)}
               <button
                 className="p-2 hover:bg-surface-container-high rounded-lg"
                 aria-label="Page suivante"
+                disabled={page === totalPages}
+                onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
               >
                 <span className="material-symbols-outlined">
                   chevron_right
