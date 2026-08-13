@@ -322,13 +322,30 @@ export default function ArchivesPage() {
                       </button>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button className="p-2 hover:bg-surface-container-highest rounded-lg text-secondary">
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          className="p-2 hover:bg-surface-container-highest rounded-lg text-secondary transition-colors"
+                          title={record.reportAction}
+                          aria-label={record.reportAction}
+                        >
+                          <span className="material-symbols-outlined">
+                            {record.reportIcon}
+                          </span>
+                        </button>
+                        <button
+                          className="p-2 hover:bg-surface-container-highest rounded-lg text-on-surface-variant transition-colors"
+                          title="Télécharger le rapport"
+                          aria-label="Télécharger le rapport"
+                        >
                           <span className="material-symbols-outlined">
                             download
                           </span>
                         </button>
-                        <button className="p-2 hover:bg-surface-container-highest rounded-lg text-on-surface-variant">
+                        <button
+                          className="p-2 hover:bg-surface-container-highest rounded-lg text-on-surface-variant transition-colors"
+                          title="Plus d'options"
+                          aria-label="Plus d'options"
+                        >
                           <span className="material-symbols-outlined">
                             more_vert
                           </span>

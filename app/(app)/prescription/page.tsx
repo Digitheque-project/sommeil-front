@@ -242,9 +242,10 @@ export default function PrescriptionPage() {
                             <button
                               type="button"
                               onClick={() => openSchedule(item)}
-                              className="px-3 py-2 text-secondary hover:bg-surface-container rounded-lg text-label-md font-label-md transition-colors"
+                              className="px-3 py-2 text-secondary hover:bg-surface-container rounded-lg text-label-md font-label-md flex items-center gap-1.5 transition-colors"
                               title="Modifier le rendez-vous"
                             >
+                              <span className="material-symbols-outlined text-[18px]">edit_calendar</span>
                               Modifier
                             </button>
                           </div>
