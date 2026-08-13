@@ -4,10 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NAV_ITEMS, isPathActive } from "@/lib/nav";
 import { useSidebar } from "@/components/AppShell";
+import { useAuth } from "@/context/AuthContext";
+import { roleLabel } from "@/lib/auth";
 
 export default function Sidebar() {
   const pathname = usePathname();
   const { desktopOpen, mobileOpen, closeMobile } = useSidebar();
+  const { user } = useAuth();
 
   const linkClass = (active: boolean, extra = "") =>
     `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-150 border-l-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 ${
@@ -33,7 +36,7 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex-1 space-y-2 overflow-y-auto px-2 pb-4" aria-label="Navigation principale">
-        {NAV_ITEMS.map((item) => {
+        {NAV_ITEMS.filter((item) => !user || item.roles.includes(user.role)).map((item) => {
           const active = isPathActive(pathname, item.href);
           return (
             <Link
@@ -55,6 +58,12 @@ export default function Sidebar() {
       </nav>
 
       <div className="mt-auto border-t border-white/15 px-2 pt-4 pb-4">
+        {user && (
+          <div className="mb-3 rounded-xl bg-white/10 px-4 py-3 text-white">
+            <p className="truncate text-sm font-semibold">{user.firstName} {user.lastName}</p>
+            <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wider text-white/70">{roleLabel(user.role)}</p>
+          </div>
+        )}
         <Link
           href="/deconnexion"
           onClick={closeMobile}

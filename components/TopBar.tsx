@@ -5,6 +5,8 @@ import { useState } from "react";
 import { useSidebar } from "@/components/AppShell";
 import { useMarkNotificationsRead, useNotifications } from "@/hooks/use-notifications";
 import type { NotificationItem } from "@/lib/api/notifications";
+import { useAuth } from "@/context/AuthContext";
+import { roleLabel } from "@/lib/auth";
 
 type TopBarProps = {
   title: string;
@@ -45,6 +47,7 @@ export default function TopBar({
   showSettings = true,
 }: Readonly<TopBarProps>) {
   const { toggleSidebar } = useSidebar();
+  const { user } = useAuth();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const { data: notifications = [], isLoading } = useNotifications();
   const markReadMutation = useMarkNotificationsRead();
@@ -62,6 +65,9 @@ export default function TopBar({
   const markOneRead = (item: NotificationItem) => {
     if (!item.read) markReadMutation.mutate([item.id]);
   };
+
+  const displayName = user ? `${user.firstName} ${user.lastName}`.trim() : doctorName;
+  const displayRole = user ? roleLabel(user.role) : doctorRole;
 
   return (
     <header className="app-shell-header sticky top-0 z-30 flex h-[84px] w-full items-center justify-between border-b border-slate-200 px-4 md:px-8 print:hidden">
@@ -210,7 +216,7 @@ export default function TopBar({
             <Image
               className="w-8 h-8 rounded-full object-cover"
               src={avatarSrc}
-              alt={doctorName}
+              alt={displayName}
               width={32}
               height={32}
             />
@@ -222,9 +228,9 @@ export default function TopBar({
             </div>
           )}
           <div className="hidden sm:block">
-            <p className="text-label-sm font-bold text-primary">{doctorName}</p>
+            <p className="text-label-sm font-bold text-primary">{displayName}</p>
             <p className="text-[10px] text-on-surface-variant uppercase tracking-wider">
-              {doctorRole}
+              {displayRole}
             </p>
           </div>
         </div>

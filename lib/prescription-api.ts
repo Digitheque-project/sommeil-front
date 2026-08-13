@@ -1,5 +1,6 @@
 const PRESCRIPTION_URL = process.env.NEXT_PUBLIC_PRESCRIPTION_URL || 'http://localhost:3334';
 const PHARMACIE_URL = process.env.NEXT_PUBLIC_PHARMACIE_URL || 'http://localhost:3335';
+const SERVICE_REGISTRY_URL = (process.env.NEXT_PUBLIC_SERVICE_REGISTRY_URL || 'https://service-service-0f7p.onrender.com').replace(/\/+$/, '');
 
 const URGENCE_MAP: Record<string, string> = {
   n: 'NORMAL',
@@ -59,13 +60,13 @@ let servicesCache: { chuId: string; list: ServiceDest[] } | null = null;
 async function fetchServicesForChu(chuId: string): Promise<ServiceDest[]> {
   if (servicesCache && servicesCache.chuId === chuId) return servicesCache.list;
   try {
-    const res = await fetch(`${PRESCRIPTION_URL}/services?chuId=${encodeURIComponent(chuId)}`, {
+    const res = await fetch(`${SERVICE_REGISTRY_URL}/services?chuId=${encodeURIComponent(chuId)}`, {
       headers: authHeaders(),
     });
     if (!res.ok) return [];
     const data = await res.json();
     const list: ServiceDest[] = Array.isArray(data)
-      ? data.map((s: any) => ({ id: s.serviceId || s.id, name: s.name }))
+      ? data.filter((s: any) => s.isActive !== false).map((s: any) => ({ id: s.serviceId || s.id, name: s.name }))
       : [];
     servicesCache = { chuId, list };
     return list;
@@ -106,7 +107,10 @@ function getToken(): string | null {
 function authHeaders(): Record<string, string> {
   const token = getToken();
   const h: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (token) h['Authorization'] = `Bearer ${token}`;
+  if (token) {
+    h['Authorization'] = `Bearer ${token}`;
+    h['access-token'] = token;
+  }
   return h;
 }
 

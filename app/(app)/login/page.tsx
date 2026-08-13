@@ -1,8 +1,12 @@
-import { redirect } from "next/navigation";
+"use client";
 
-// L'application Centre de Sommeil fonctionne sans écran ni redirection
-// d'authentification. Cette route est conservée afin que les anciens liens
-// vers /login restent valides.
+import { useEffect } from "react";
+import { AUTH_LOGIN_URL } from "@/lib/auth";
+
 export default function LoginPage() {
-  redirect("/");
+  useEffect(() => {
+    window.location.replace(AUTH_LOGIN_URL);
+  }, []);
+
+  return <main className="grid min-h-screen place-items-center text-sm text-slate-500">Redirection vers la connexion sécurisée…</main>;
 }

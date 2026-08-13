@@ -3,6 +3,9 @@
 import { useRouter } from "next/navigation";
 import PrescriptionLayout from "@/components/prescription/PrescriptionLayout";
 
+const CHU_ID = process.env.NEXT_PUBLIC_CHU_ID ?? "1e5bbbb7-fa10-4d59-8848-2d0ce96a9394";
+const SLEEP_SERVICE_ID = process.env.NEXT_PUBLIC_SLEEP_SERVICE_ID ?? process.env.NEXT_PUBLIC_NOTIFICATION_SERVICE_ID;
+
 export default function PrescriptionModuleFrame({ params }: Readonly<{ params: Record<string, string> }>) {
   const router = useRouter();
 
@@ -28,7 +31,7 @@ export default function PrescriptionModuleFrame({ params }: Readonly<{ params: R
       <div className="rx-scope" style={{ minHeight: "calc(100vh - 4.25rem)", background: "var(--bg)" }}>
         <PrescriptionLayout
           patient={{ id: params.patientId ?? "", nom: params.patientNom, prenom: params.patientPrenom, sexe: params.patientSexe, dateNaissance: params.patientDateNaissance }}
-          prescripteur={{ id: params.prescripteurId, nom: "Centre de Sommeil", service: "Centre de Sommeil" }}
+          prescripteur={{ id: params.prescripteurId, nom: "Centre de Sommeil", service: "Centre de Sommeil", chuId: CHU_ID, serviceId: SLEEP_SERVICE_ID }}
           onBack={() => router.push(`/consultation/traitement?id=${encodeURIComponent(params.consultationId ?? "")}${params.origin ? `&origin=${encodeURIComponent(params.origin)}` : ""}`)}
         />
       </div>
