@@ -7,13 +7,14 @@ function getFirstParamValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
 
-export default function Page({
+export default async function Page({
   searchParams,
 }: Readonly<{
-  searchParams: Record<string, string | string[] | undefined>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }>) {
-  const patient = getFirstParamValue(searchParams.patient);
-  const consultationId = getFirstParamValue(searchParams.id);
+  const params = await searchParams;
+  const patient = getFirstParamValue(params.patient);
+  const consultationId = getFirstParamValue(params.id);
 
   return <ConsultationTraitementClient patient={patient} consultationId={consultationId} />;
 }
