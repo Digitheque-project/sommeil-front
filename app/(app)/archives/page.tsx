@@ -3,142 +3,32 @@
 import { useMemo, useState } from "react";
 import TopBar from "@/components/TopBar";
 
-const stats = [
-  {
-    label: "Total Dossiers",
-    value: "1,284",
-    icon: "folder_shared",
-    iconBg: "bg-secondary-container",
-    iconColor: "text-on-secondary-container",
-    valueColor: "text-primary",
-  },
-  {
-    label: "Analyses PDF",
-    value: "842",
-    icon: "picture_as_pdf",
-    iconBg: "bg-tertiary-fixed",
-    iconColor: "text-primary",
-    valueColor: "text-primary",
-  },
-  {
-    label: "Taux d'Urgence",
-    value: "4.2%",
-    icon: "priority_high",
-    iconBg: "bg-error-container",
-    iconColor: "text-error",
-    valueColor: "text-error",
-  },
-];
+type RecordStatus = "Tous" | "Terminés" | "En attente";
 
 const records = [
-  {
-    initials: "JD",
-    initialsBg: "bg-secondary-fixed",
-    initialsColor: "text-secondary",
-    name: "Jean Dupont",
-    id: "#SLEEP-2023-8941",
-    exam: "Polysomnographie (Nuit)",
-    examTag: "Diagnostic Initial",
-    examTagColor: "text-secondary",
-    date: "12/10/2023",
-    status: "Validé",
-    statusColor: "bg-green-100 text-green-800",
-    reportAction: "Consulter",
-    reportIcon: "visibility",
-  },
-  {
-    initials: "ML",
-    initialsBg: "bg-tertiary-fixed",
-    initialsColor: "text-primary",
-    name: "Marie Laurent",
-    id: "#SLEEP-2023-9002",
-    exam: "Actimétrie (7 jours)",
-    examTag: "Suivi CPAP",
-    examTagColor: "text-primary",
-    date: "08/10/2023",
-    status: "Archivé",
-    statusColor: "bg-blue-100 text-blue-800",
-    reportAction: "Consulter",
-    reportIcon: "visibility",
-  },
-  {
-    initials: "PB",
-    initialsBg: "bg-error-container",
-    initialsColor: "text-error",
-    name: "Pierre Bernard",
-    id: "#SLEEP-2023-9115",
-    exam: "Polygraphie Ventilatoire",
-    examTag: "Critique / SAOS",
-    examTagColor: "text-error",
-    date: "05/10/2023",
-    status: "Signature Requise",
-    statusColor: "bg-orange-100 text-orange-800",
-    reportAction: "Signer",
-    reportIcon: "edit_note",
-    urgent: true,
-  },
-  {
-    initials: "SM",
-    initialsBg: "bg-surface-container-high",
-    initialsColor: "text-primary",
-    name: "Sophie Martin",
-    id: "#SLEEP-2023-8822",
-    exam: "Test de Latence (TILE)",
-    examTag: "Évaluation Diurne",
-    examTagColor: "text-on-surface-variant",
-    date: "02/10/2023",
-    status: "Validé",
-    statusColor: "bg-green-100 text-green-800",
-    reportAction: "Consulter",
-    reportIcon: "visibility",
-  },
+  { initials: "JD", initialsBg: "bg-[#DBEAFE]", initialsColor: "text-[#1D4ED8]", name: "Jean Dupont", id: "#SLEEP-2023-8941", exam: "Polysomnographie (Nuit)", examTag: "Diagnostic initial", examTagColor: "text-[#2563EB]", date: "12/10/2023", status: "Validé" },
+  { initials: "ML", initialsBg: "bg-[#E0E7FF]", initialsColor: "text-[#4338CA]", name: "Marie Laurent", id: "#SLEEP-2023-9002", exam: "Actimétrie (7 jours)", examTag: "Suivi CPAP", examTagColor: "text-[#4F46E5]", date: "08/10/2023", status: "Archivé" },
+  { initials: "PB", initialsBg: "bg-[#FEE2E2]", initialsColor: "text-[#DC2626]", name: "Pierre Bernard", id: "#SLEEP-2023-9115", exam: "Polygraphie ventilatoire", examTag: "Critique / SAOS", examTagColor: "text-[#DC2626]", date: "05/10/2023", status: "Signature requise", urgent: true },
+  { initials: "SM", initialsBg: "bg-[#E2E8F0]", initialsColor: "text-[#475569]", name: "Sophie Martin", id: "#SLEEP-2023-8822", exam: "Test de latence (TILE)", examTag: "Évaluation diurne", examTagColor: "text-[#64748B]", date: "02/10/2023", status: "Validé" },
 ];
-
-type RecordStatus = "Tous" | "Terminés" | "En attente";
 
 const parseRecordDate = (value: string) => {
   const [day, month, year] = value.split("/").map(Number);
   return new Date(year, month - 1, day);
 };
 
-const auditLog = [
-  {
-    icon: "history_edu",
-    iconBg: "bg-secondary-fixed",
-    iconColor: "text-secondary",
-    id: 'audit-1',
-    text: (
-      <>
-        <span className="font-bold">Dr. Lefebvre</span> a validé le rapport de
-        Jean Dupont.
-      </>
-    ),
-    meta: "Il y a 14 minutes • IP: 192.168.1.45",
-  },
-  {
-    id: 'audit-2',
-    icon: "download",
-    iconBg: "bg-surface-container-high",
-    iconColor: "text-on-surface-variant",
-    text: (
-      <>
-        <span className="font-bold">Admin Clinique</span> a téléchargé
-        l&apos;archive mensuelle (Septembre 2023).
-      </>
-    ),
-    meta: "Aujourd'hui, 09:24 • IP: 192.168.1.12",
-  },
-];
+const formatRecordDate = (value: string) =>
+  parseRecordDate(value).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" });
 
 export default function ArchivesPage() {
   const [statusFilter, setStatusFilter] = useState<RecordStatus>("Tous");
   const [searchQuery, setSearchQuery] = useState("");
-  const [showDateRange, setShowDateRange] = useState(false);
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [examFilter, setExamFilter] = useState("all");
   const [urgentOnly, setUrgentOnly] = useState(false);
   const [page, setPage] = useState(1);
+  const [selectedRecord, setSelectedRecord] = useState<(typeof records)[number] | null>(null);
   const pageSize = 5;
 
   const filteredRecords = useMemo(() => records.filter((record) => {
@@ -146,363 +36,82 @@ export default function ArchivesPage() {
     if (query && ![record.name, record.id, record.exam, record.status].join(" ").toLowerCase().includes(query)) return false;
     if (statusFilter === "Terminés" && record.status !== "Validé") return false;
     if (statusFilter === "En attente" && record.status === "Validé") return false;
+    if (examFilter !== "all" && record.exam !== examFilter) return false;
     if (urgentOnly && !record.urgent) return false;
-    const recordDate = parseRecordDate(record.date);
-    if (dateFrom && recordDate < new Date(`${dateFrom}T00:00:00`)) return false;
-    if (dateTo && recordDate > new Date(`${dateTo}T23:59:59`)) return false;
+    const date = parseRecordDate(record.date);
+    if (dateFrom && date < new Date(`${dateFrom}T00:00:00`)) return false;
+    if (dateTo && date > new Date(`${dateTo}T23:59:59`)) return false;
     return true;
-  }), [searchQuery, statusFilter, urgentOnly, dateFrom, dateTo]);
+  }), [dateFrom, dateTo, examFilter, searchQuery, statusFilter, urgentOnly]);
+
   const totalPages = Math.max(1, Math.ceil(filteredRecords.length / pageSize));
   const visibleRecords = filteredRecords.slice((page - 1) * pageSize, page * pageSize);
+  const validatedCount = records.filter((record) => record.status === "Validé").length;
+  const latestRecord = records.reduce((latest, record) => parseRecordDate(record.date) > parseRecordDate(latest.date) ? record : latest);
 
-  const selectStatus = (status: RecordStatus) => {
-    setStatusFilter(status);
-    setPage(1);
+  const resetFilters = () => {
+    setStatusFilter("Tous"); setSearchQuery(""); setDateFrom(""); setDateTo(""); setExamFilter("all"); setUrgentOnly(false); setPage(1);
   };
   const exportRecords = () => {
     const csv = ["Patient;ID;Examen;Date;Statut", ...filteredRecords.map((record) => [record.name, record.id, record.exam, record.date, record.status].join(";"))].join("\n");
     const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
     const link = document.createElement("a");
-    link.href = url;
-    link.download = "archives-sommeil.csv";
-    link.click();
-    URL.revokeObjectURL(url);
+    link.href = url; link.download = "archives-sommeil.csv"; link.click(); URL.revokeObjectURL(url);
   };
+  const setFilterPage = (callback: () => void) => { callback(); setPage(1); };
 
   return (
     <>
-      <TopBar
-        title="Archives"
-        searchPlaceholder="Rechercher un dossier..."
-        doctorName="Dr. Morel"
-        doctorRole="Spécialiste Sommeil"
-      />
-
-      <div className="p-container-padding">
-        {/* Page Header & Filters */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
-          <div>
-            <h2 className="font-display-lg text-display-lg text-primary mb-1">
-              Archives Médicales
-            </h2>
-            <p className="text-on-surface-variant font-body-md">
-              Consultez et gérez l&apos;historique complet des diagnostics et
-              rapports de sommeil.
-            </p>
+      <TopBar title="Archives" searchPlaceholder="Rechercher un dossier..." doctorName="Dr. Morel" doctorRole="Spécialiste Sommeil" />
+      <div className="min-h-[calc(100vh-4rem)] max-w-[1400px] mx-auto space-y-8 bg-[#F8FAFC] p-6 md:p-8">
+        <div className="flex flex-col lg:flex-row justify-between items-start gap-6">
+          <div className="space-y-1">
+            <h1 className="text-[32px] font-extrabold text-[#0F172A] tracking-tight leading-tight">Registre des Archives</h1>
+            <p className="text-[#64748B] text-sm">Consultation et traçabilité des dossiers médicaux du centre du sommeil.</p>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <div className="bg-surface-container-lowest border border-outline-variant p-1 rounded-lg flex items-center">
-              {(["Tous", "Terminés", "En attente"] as RecordStatus[]).map((status) => (
-                <button key={status} type="button" onClick={() => selectStatus(status)} className={`px-4 py-1.5 rounded-md font-label-md text-label-md ${statusFilter === status ? "text-secondary font-semibold bg-secondary-container" : "text-on-surface-variant hover:bg-surface-container-low"}`}>
-                  {status}
-                </button>
-              ))}
-            </div>
-            <button type="button" onClick={() => setShowDateRange((open) => !open)} aria-expanded={showDateRange} className="bg-surface-container-lowest border border-outline-variant px-4 py-2 flex items-center gap-2 font-label-md text-label-md rounded-lg hover:bg-surface-container-high transition-all">
-              <span className="material-symbols-outlined text-lg">
-                calendar_month
-              </span>
-              <span>Date Range</span>
-            </button>
-            <button type="button" onClick={() => setShowAdvancedFilters((open) => !open)} aria-expanded={showAdvancedFilters} className="bg-surface-container-lowest border border-outline-variant px-4 py-2 flex items-center gap-2 font-label-md text-label-md rounded-lg hover:bg-surface-container-high transition-all">
-              <span className="material-symbols-outlined text-lg">
-                filter_list
-              </span>
-              <span>Filtres</span>
-            </button>
+          <div className="bg-[#EBF5FF] border border-[#BFDBFE] p-4 rounded-xl flex items-start gap-3 max-w-md">
+            <span className="material-symbols-outlined text-[#3B82F6] text-xl mt-0.5">info</span>
+            <p className="text-xs text-[#1E40AF] font-medium leading-relaxed">Les dossiers archivés sont scellés et conservés conformément aux règles hospitalières et au RGPD médical.</p>
           </div>
         </div>
 
-        {(showDateRange || showAdvancedFilters) && (
-          <div className="mb-6 flex flex-wrap items-end gap-4 rounded-xl border border-outline-variant bg-surface-container-low p-4">
-            {showDateRange && <><label className="text-sm font-semibold text-on-surface-variant">Du<input type="date" value={dateFrom} onChange={(event) => { setDateFrom(event.target.value); setPage(1); }} className="ml-2 rounded-lg border border-outline-variant bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-on-surface-variant">Au<input type="date" value={dateTo} onChange={(event) => { setDateTo(event.target.value); setPage(1); }} className="ml-2 rounded-lg border border-outline-variant bg-white px-2 py-1.5" /></label></>}
-            {showAdvancedFilters && <label className="flex items-center gap-2 text-sm font-semibold text-on-surface"><input type="checkbox" checked={urgentOnly} onChange={(event) => { setUrgentOnly(event.target.checked); setPage(1); }} /> Urgences uniquement</label>}
-            <button type="button" onClick={() => { setDateFrom(""); setDateTo(""); setUrgentOnly(false); setStatusFilter("Tous"); setPage(1); }} className="action-secondary rounded-lg px-3 py-2 text-sm font-semibold">Réinitialiser</button>
-          </div>
-        )}
-
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-gutter mb-section-gap">
-          {stats.map((stat) => (
-            <div
-              key={stat.label}
-              className="col-span-1 bg-surface-container-lowest border border-outline-variant p-6 rounded-xl flex flex-col justify-between"
-            >
-              <span className="text-on-surface-variant font-label-md text-label-md uppercase tracking-wider mb-2">
-                {stat.label}
-              </span>
-              <div className="flex items-end justify-between">
-                <span
-                  className={`text-display-lg font-display-lg ${stat.valueColor}`}
-                >
-                  {stat.value}
-                </span>
-                <div className={`p-2 ${stat.iconBg} rounded-lg`}>
-                  <span
-                    className={`material-symbols-outlined ${stat.iconColor}`}
-                  >
-                    {stat.icon}
-                  </span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Table */}
-        <div className="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden mb-container-padding shadow-sm">
-          <div className="p-4 border-b border-outline-variant flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="relative w-full max-w-md">
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">
-                search
-              </span>
-              <input
-                value={searchQuery}
-                onChange={(event) => { setSearchQuery(event.target.value); setPage(1); }}
-                className="w-full pl-10 pr-4 py-2.5 bg-surface-container border border-outline-variant rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none font-body-sm text-body-sm transition-all"
-                placeholder="Rechercher par nom, ID patient ou type d'examen..."
-                type="text"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                className="action-secondary p-2.5 rounded-lg"
-                title="Exporter vers Excel"
-                type="button"
-                onClick={exportRecords}
-              >
-                <span className="material-symbols-outlined text-on-surface-variant">
-                  file_download
-                </span>
-              </button>
-              <button
-                className="action-secondary p-2.5 rounded-lg"
-                title="Imprimer la sélection"
-                type="button"
-                onClick={() => window.print()}
-              >
-                <span className="material-symbols-outlined text-on-surface-variant">
-                  print
-                </span>
-              </button>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-3">
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.08em] text-[#64748B]"><span className="material-symbols-outlined text-sm">calendar_month</span>PÉRIODE D&apos;EXAMEN</div>
+            <div className="space-y-2">
+              <label className="flex items-center gap-2"><span className="text-[9px] font-bold text-[#94A3B8] w-4">DU</span><input type="date" value={dateFrom} onChange={(e) => setFilterPage(() => setDateFrom(e.target.value))} className="flex-1 bg-[#F8FAFC] border border-slate-200 rounded-lg py-1.5 px-2 text-[11px] outline-none focus:ring-1 focus:ring-[#2563EB]/20" /></label>
+              <label className="flex items-center gap-2"><span className="text-[9px] font-bold text-[#94A3B8] w-4">AU</span><input type="date" value={dateTo} onChange={(e) => setFilterPage(() => setDateTo(e.target.value))} className="flex-1 bg-[#F8FAFC] border border-slate-200 rounded-lg py-1.5 px-2 text-[11px] outline-none focus:ring-1 focus:ring-[#2563EB]/20" /></label>
             </div>
           </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-tertiary-fixed border-b border-outline-variant">
-                  <th className="px-6 py-4 font-label-md text-label-md text-on-surface uppercase tracking-wider">
-                    Patient &amp; ID
-                  </th>
-                  <th className="px-6 py-4 font-label-md text-label-md text-on-surface uppercase tracking-wider">
-                    Type d&apos;Examen
-                  </th>
-                  <th className="px-6 py-4 font-label-md text-label-md text-on-surface uppercase tracking-wider text-right">
-                    Date d&apos;Examen
-                  </th>
-                  <th className="px-6 py-4 font-label-md text-label-md text-on-surface uppercase tracking-wider text-center">
-                    Status
-                  </th>
-                  <th className="px-6 py-4 font-label-md text-label-md text-on-surface uppercase tracking-wider text-center">
-                    Rapport
-                  </th>
-                  <th className="px-6 py-4 font-label-md text-label-md text-on-surface uppercase tracking-wider text-right">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-outline-variant">
-                {visibleRecords.map((record) => (
-                  <tr
-                    key={record.id}
-                    className="hover:bg-tertiary-fixed transition-colors group"
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`w-10 h-10 rounded-full ${record.initialsBg} flex items-center justify-center ${record.initialsColor} font-bold`}
-                        >
-                          {record.initials}
-                        </div>
-                        <div>
-                          <div className="font-semibold text-primary">
-                            {record.name}
-                          </div>
-                          <div className="text-xs font-data-mono text-on-surface-variant">
-                            {record.id}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-on-surface-variant">
-                        {record.exam}
-                      </div>
-                      <div
-                        className={`text-[10px] uppercase font-bold ${record.examTagColor}`}
-                      >
-                        {record.examTag}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right font-data-mono text-on-surface-variant">
-                      {record.date}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <span
-                        className={`px-2.5 py-1 ${record.statusColor} text-[11px] font-bold rounded-full uppercase`}
-                      >
-                        {record.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <button
-                        className={`${record.reportAction === "Signer" ? "text-warning" : "text-secondary"} hover:underline flex items-center justify-center gap-1 mx-auto font-label-sm ${
-                          record.urgent ? "font-bold" : ""
-                        }`}
-                      >
-                        <span
-                          className={`material-symbols-outlined text-lg ${
-                            record.urgent ? "filled" : ""
-                          }`}
-                        >
-                          {record.reportIcon}
-                        </span>
-                        <span>{record.reportAction}</span>
-                      </button>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          className={`p-2 rounded-lg transition-colors ${record.reportAction === "Signer" ? "text-warning hover:bg-orange-50" : "text-secondary hover:bg-secondary-container"}`}
-                          title={record.reportAction}
-                          aria-label={record.reportAction}
-                        >
-                          <span className="material-symbols-outlined">
-                            {record.reportIcon}
-                          </span>
-                        </button>
-                        <button
-                          className="action-secondary p-2 rounded-lg"
-                          title="Télécharger le rapport"
-                          aria-label="Télécharger le rapport"
-                        >
-                          <span className="material-symbols-outlined">
-                            download
-                          </span>
-                        </button>
-                        <button
-                          className="p-2 hover:bg-surface-container-highest rounded-lg text-on-surface-variant transition-colors"
-                          title="Plus d'options"
-                          aria-label="Plus d'options"
-                        >
-                          <span className="material-symbols-outlined">
-                            more_vert
-                          </span>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {visibleRecords.length === 0 && <tr><td colSpan={6} className="px-6 py-12 text-center text-on-surface-variant">Aucune archive ne correspond aux filtres sélectionnés.</td></tr>}
-              </tbody>
-            </table>
+          <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.08em] text-[#64748B]"><span className="material-symbols-outlined text-sm">biotech</span>TYPE D&apos;EXAMEN</div>
+            <div className="relative"><select value={examFilter} onChange={(e) => setFilterPage(() => setExamFilter(e.target.value))} className="w-full bg-[#F8FAFC] border border-slate-200 rounded-lg py-2.5 px-3 text-xs font-semibold text-[#475569] appearance-none outline-none"><option value="all">Tous les examens</option>{Array.from(new Set(records.map((record) => record.exam))).map((exam) => <option key={exam} value={exam}>{exam}</option>)}</select><span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[#94A3B8] pointer-events-none text-sm">expand_more</span></div>
           </div>
-
-          {/* Pagination */}
-          <div className="p-4 bg-surface-container-low flex flex-wrap items-center justify-between gap-4">
-            <span className="text-body-sm text-on-surface-variant">
-              Affichage de {filteredRecords.length ? (page - 1) * pageSize + 1 : 0}-{Math.min(page * pageSize, filteredRecords.length)} sur {filteredRecords.length} résultats
-            </span>
-            <div className="flex items-center gap-1">
-              <button
-                className="p-2 hover:bg-surface-container-high rounded-lg disabled:opacity-30"
-                disabled={page === 1}
-                onClick={() => setPage((current) => Math.max(1, current - 1))}
-                aria-label="Page précédente"
-              >
-                <span className="material-symbols-outlined">
-                  chevron_left
-                </span>
-              </button>
-              {Array.from({ length: totalPages }, (_, index) => index + 1).map((number) => <button key={number} type="button" onClick={() => setPage(number)} className={`w-8 h-8 flex items-center justify-center rounded-lg font-label-md text-label-md ${page === number ? "bg-secondary text-white" : "hover:bg-surface-container-high"}`}>{number}</button>)}
-              <button
-                className="p-2 hover:bg-surface-container-high rounded-lg"
-                aria-label="Page suivante"
-                disabled={page === totalPages}
-                onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
-              >
-                <span className="material-symbols-outlined">
-                  chevron_right
-                </span>
-              </button>
-            </div>
+          <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.08em] text-[#64748B]"><span className="material-symbols-outlined text-sm">verified</span>ÉTAT DU DOSSIER</div>
+            <select value={statusFilter} onChange={(e) => setFilterPage(() => setStatusFilter(e.target.value as RecordStatus))} className="w-full bg-[#F8FAFC] border border-slate-200 rounded-lg py-2.5 px-3 text-xs font-semibold text-[#475569] outline-none"><option>Tous</option><option>Terminés</option><option>En attente</option></select>
+          </div>
+          <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.08em] text-[#64748B]"><span className="material-symbols-outlined text-sm">filter_alt</span>FILTRES RAPIDES</div>
+            <label className="flex items-center justify-between gap-3 text-xs font-semibold text-[#475569]"><span>Urgences uniquement</span><input type="checkbox" checked={urgentOnly} onChange={(e) => setFilterPage(() => setUrgentOnly(e.target.checked))} className="accent-[#2563EB] h-4 w-4" /></label>
+            <button type="button" onClick={resetFilters} className="text-[11px] font-bold text-[#2563EB] hover:underline">Réinitialiser les filtres</button>
           </div>
         </div>
 
-        {/* Footer Details */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
-          <div className="lg:col-span-2 bg-surface-container-lowest border border-outline-variant p-6 rounded-xl">
-            <h3 className="font-headline-sm text-headline-sm text-primary mb-4">
-              Journal d&apos;Audit Récent
-            </h3>
-              <div className="space-y-4">
-              {auditLog.map((entry) => (
-                <div
-                  key={entry.id}
-                  className="flex items-start gap-4 pb-4 border-b border-outline-variant last:border-b-0 last:pb-0"
-                >
-                  <div
-                    className={`mt-1 p-1.5 ${entry.iconBg} rounded-full ${entry.iconColor}`}
-                  >
-                    <span className="material-symbols-outlined text-base">
-                      {entry.icon}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-body-sm text-on-surface">
-                      {entry.text}
-                    </p>
-                    <p className="text-xs text-on-surface-variant font-data-mono">
-                      {entry.meta}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
+        <div className="bg-white rounded-[24px] shadow-sm border border-slate-100 overflow-hidden">
+          <div className="px-8 py-6 flex flex-col sm:flex-row justify-between items-center border-b border-slate-100 gap-4">
+            <div><h2 className="text-[#0F172A] font-extrabold text-lg flex items-center gap-3">Résultats de la recherche <span className="bg-[#F1F5F9] text-[#64748B] text-[11px] font-bold px-2.5 py-1 rounded-full border border-slate-200">{filteredRecords.length} Documents</span></h2><div className="relative mt-3 max-w-md"><span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#94A3B8] text-lg">search</span><input value={searchQuery} onChange={(e) => setFilterPage(() => setSearchQuery(e.target.value))} placeholder="Patient, identifiant ou examen..." className="w-full bg-[#F8FAFC] border border-slate-200 rounded-lg py-2 pl-9 pr-3 text-xs outline-none focus:ring-1 focus:ring-[#2563EB]/20" /></div></div>
+            <button type="button" onClick={exportRecords} className="flex items-center gap-2 text-[#2563EB] text-xs font-extrabold uppercase tracking-widest hover:bg-[#F1F5F9] px-4 py-2 rounded-xl transition-all"><span className="material-symbols-outlined text-lg">download</span>EXPORTER LE REGISTRE (CSV)</button>
           </div>
-
-          <div className="bg-primary text-white p-6 rounded-xl shadow-lg relative overflow-hidden group">
-            <div className="relative z-10">
-              <h3 className="font-headline-sm text-headline-sm mb-4">
-                Intégrité des Données
-              </h3>
-              <p className="text-on-primary-container mb-6 text-body-sm leading-relaxed">
-                Vos archives sont protégées par un cryptage AES-256 et
-                conformes aux normes RGPD médicales. Les sauvegardes sont
-                effectuées toutes les 4 heures.
-              </p>
-              <div className="flex items-center gap-3">
-                <div className="flex-1 bg-primary-container h-2 rounded-full overflow-hidden">
-                  <div className="bg-secondary-container w-[88%] h-full rounded-full" />
-                </div>
-                <span className="font-data-mono text-xs">88% Capacity</span>
-              </div>
-              <button className="mt-8 w-full py-3 bg-white text-primary font-bold rounded-lg hover:bg-opacity-90 transition-all flex items-center justify-center gap-2">
-                <span className="material-symbols-outlined">
-                  verified_user
-                </span>
-                <span>Vérifier l&apos;Intégrité</span>
-              </button>
-            </div>
-            <div className="absolute -right-12 -bottom-12 opacity-10 transform rotate-12 group-hover:scale-110 transition-transform duration-700">
-              <span className="material-symbols-outlined text-[160px]">
-                security
-              </span>
-            </div>
-          </div>
+          <div className="overflow-x-auto"><table className="w-full text-left"><thead><tr className="bg-[#F8FAFC]"><th className="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-[#64748B]">PATIENT / IDENTIFIANT</th><th className="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-[#64748B]">TYPE D&apos;EXAMEN</th><th className="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-[#64748B]">DATE D&apos;EXAMEN</th><th className="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-[#64748B]">STATUT</th><th className="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-[#64748B] text-right">ACTIONS</th></tr></thead><tbody className="divide-y divide-slate-100">
+            {visibleRecords.length ? visibleRecords.map((record) => <tr key={record.id} className="hover:bg-[#F1F5F9]/30 transition-colors group"><td className="px-8 py-5"><div className="flex items-center gap-3"><div className={`w-10 h-10 rounded-xl ${record.initialsBg} flex items-center justify-center ${record.initialsColor} font-bold text-sm`}>{record.initials}</div><div><span className="text-sm font-bold text-[#1E293B] block leading-tight">{record.name}</span><span className="text-[11px] font-medium text-[#94A3B8]">{record.id}</span></div></div></td><td className="px-8 py-5"><span className="text-sm font-semibold text-[#475569] block">{record.exam}</span><span className={`text-[10px] uppercase font-bold ${record.examTagColor}`}>{record.examTag}</span></td><td className="px-8 py-5"><span className="text-sm font-medium text-[#64748B]">{formatRecordDate(record.date)}</span></td><td className="px-8 py-5"><div className="flex items-center gap-2"><span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#DCFCE7] text-[#166534] text-[10px] font-extrabold uppercase tracking-widest border border-[#BBF7D0]"><span className="material-symbols-outlined text-[10px] filled">lock</span>SCELLÉ</span><span className="inline-flex items-center px-2.5 py-1 rounded-full bg-[#F1F5F9] text-[#475569] text-[10px] font-extrabold uppercase tracking-widest border border-slate-200">IMMUABLE</span></div></td><td className="px-8 py-5 text-right"><div className="flex justify-end gap-3"><button type="button" onClick={() => setSelectedRecord(record)} title="Voir le détail" className="p-2 text-[#94A3B8] hover:text-[#2563EB] hover:bg-white rounded-lg shadow-sm border border-transparent hover:border-slate-100"><span className="material-symbols-outlined text-xl">visibility</span></button><button type="button" onClick={() => window.print()} title="Imprimer" className="p-2 text-[#94A3B8] hover:text-[#2563EB] hover:bg-white rounded-lg shadow-sm border border-transparent hover:border-slate-100"><span className="material-symbols-outlined text-xl">print</span></button><button type="button" onClick={exportRecords} title="Exporter en CSV" className="p-2 text-[#94A3B8] hover:text-[#2563EB] hover:bg-white rounded-lg shadow-sm border border-transparent hover:border-slate-100"><span className="material-symbols-outlined text-xl">download</span></button></div></td></tr>) : <tr><td colSpan={5} className="px-8 py-12 text-center text-[#94A3B8] font-medium">Aucun document trouvé.</td></tr>}
+          </tbody></table></div>
+          <div className="px-8 py-5 bg-[#F8FAFC] flex justify-between items-center border-t border-slate-100"><span className="text-xs font-semibold text-[#64748B]">Affichage de {filteredRecords.length ? (page - 1) * pageSize + 1 : 0} à {Math.min(page * pageSize, filteredRecords.length)} sur {filteredRecords.length} documents</span><div className="flex gap-1.5"><button type="button" disabled={page === 1} onClick={() => setPage((current) => current - 1)} className="w-8 h-8 rounded-lg flex items-center justify-center text-[#94A3B8] hover:bg-white border border-transparent hover:border-slate-200 disabled:opacity-40"><span className="material-symbols-outlined text-base">chevron_left</span></button><button type="button" className="w-8 h-8 rounded-lg flex items-center justify-center bg-[#2563EB] text-white font-extrabold text-xs shadow-md">{page}</button><button type="button" disabled={page === totalPages} onClick={() => setPage((current) => current + 1)} className="w-8 h-8 rounded-lg flex items-center justify-center text-[#94A3B8] hover:bg-white border border-transparent hover:border-slate-200 disabled:opacity-40"><span className="material-symbols-outlined text-base">chevron_right</span></button></div></div>
         </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6"><div className="bg-white p-7 rounded-[28px] relative overflow-hidden border border-slate-100 shadow-sm min-h-[160px]"><div className="absolute top-0 left-0 w-1.5 h-full bg-[#2563EB]" /><div className="flex justify-between items-start"><p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#64748B]">DOSSIERS ARCHIVÉS</p><span className="material-symbols-outlined text-[#2563EB] text-2xl">folder_copy</span></div><p className="text-3xl font-black text-[#0F172A] tracking-tight mt-8">{records.length.toLocaleString("fr-FR")}</p><p className="text-[11px] text-[#94A3B8] font-medium mt-1 uppercase tracking-wider">Historique des examens</p></div><div className="bg-white p-7 rounded-[28px] relative overflow-hidden border border-slate-100 shadow-sm min-h-[160px]"><div className="absolute top-0 left-0 w-1.5 h-full bg-[#10B981]" /><div className="flex justify-between items-start"><p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#64748B]">DOCUMENTS VALIDÉS</p><span className="material-symbols-outlined text-[#10B981] text-2xl filled">verified</span></div><p className="text-3xl font-black text-[#0F172A] tracking-tight mt-8">{Math.round((validatedCount / records.length) * 100)}%</p><p className="text-[11px] text-[#94A3B8] font-medium mt-1 uppercase tracking-wider">{validatedCount}/{records.length} dossiers validés</p></div><div className="bg-white p-7 rounded-[28px] relative overflow-hidden border border-slate-100 shadow-sm min-h-[160px]"><div className="absolute top-0 left-0 w-1.5 h-full bg-[#F59E0B]" /><div className="flex justify-between items-start"><p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#64748B]">DERNIER ARCHIVAGE</p><span className="material-symbols-outlined text-[#F59E0B] text-2xl">schedule</span></div><p className="text-xl font-black text-[#0F172A] tracking-tight mt-8">{formatRecordDate(latestRecord.date)}</p><p className="text-[11px] text-[#94A3B8] font-medium mt-1 uppercase tracking-wider">{latestRecord.name} ({latestRecord.id})</p></div></div>
       </div>
+      {selectedRecord && <><div className="fixed inset-0 bg-slate-900/50 backdrop-blur-[2px] z-40" onClick={() => setSelectedRecord(null)} /><div className="fixed inset-0 z-50 flex items-center justify-center p-4"><div role="dialog" aria-modal="true" aria-label="Détail de l'archive" className="w-full max-w-xl bg-white rounded-[24px] shadow-2xl overflow-hidden"><div className="px-8 py-6 border-b border-slate-100 flex items-start justify-between gap-4 bg-[#F8FAFC]"><div className="flex items-center gap-4"><div className={`w-12 h-12 rounded-2xl ${selectedRecord.initialsBg} flex items-center justify-center ${selectedRecord.initialsColor} font-bold`}>{selectedRecord.initials}</div><div><h3 className="text-lg font-extrabold text-[#0F172A]">{selectedRecord.name}</h3><p className="text-sm text-[#64748B] font-semibold">{selectedRecord.id}</p></div></div><button type="button" onClick={() => setSelectedRecord(null)} className="p-2 text-[#94A3B8] hover:text-[#0F172A] hover:bg-white rounded-lg"><span className="material-symbols-outlined">close</span></button></div><div className="p-8 grid grid-cols-2 gap-4"><div className="bg-[#F8FAFC] rounded-xl p-4"><p className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Examen</p><p className="text-sm font-bold text-[#0F172A] mt-1">{selectedRecord.exam}</p></div><div className="bg-[#F8FAFC] rounded-xl p-4"><p className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Date d&apos;examen</p><p className="text-sm font-bold text-[#0F172A] mt-1">{formatRecordDate(selectedRecord.date)}</p></div><div className="bg-[#F8FAFC] rounded-xl p-4"><p className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Catégorie</p><p className="text-sm font-bold text-[#0F172A] mt-1">{selectedRecord.examTag}</p></div><div className="bg-[#F8FAFC] rounded-xl p-4"><p className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Statut</p><p className="text-sm font-bold text-[#0F172A] mt-1">{selectedRecord.status}</p></div></div><div className="px-8 py-5 border-t border-slate-100 bg-[#F8FAFC] flex justify-end gap-3"><button type="button" onClick={() => setSelectedRecord(null)} className="px-5 py-2.5 rounded-xl text-sm font-bold text-[#64748B] hover:bg-white">Fermer</button><button type="button" onClick={() => window.print()} className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#2563EB] text-white text-sm font-bold hover:bg-[#1E3A8A]"><span className="material-symbols-outlined text-lg">print</span>Imprimer</button></div></div></div></>}
     </>
   );
 }
