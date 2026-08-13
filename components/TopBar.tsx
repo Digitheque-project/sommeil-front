@@ -1,7 +1,10 @@
 "use client";
 
 import Image from "next/image";
+import { useState } from "react";
 import { useSidebar } from "@/components/AppShell";
+import { useMarkNotificationsRead, useNotifications } from "@/hooks/use-notifications";
+import type { NotificationItem } from "@/lib/api/notifications";
 
 type TopBarProps = {
   title: string;
@@ -19,6 +22,19 @@ const todayLabel = new Intl.DateTimeFormat("fr-FR", {
   month: "short",
 }).format(new Date());
 
+const timeFormatter = new Intl.DateTimeFormat("fr-FR", {
+  day: "2-digit",
+  month: "short",
+  hour: "2-digit",
+  minute: "2-digit",
+});
+
+const PRIORITY_STYLES: Record<NotificationItem["priority"], { dot: string; label: string }> = {
+  critical: { dot: "bg-red-500", label: "Critique" },
+  urgent: { dot: "bg-amber-500", label: "Urgent" },
+  normal: { dot: "bg-emerald-500", label: "Normal" },
+};
+
 export default function TopBar({
   title,
   searchPlaceholder = "Rechercher un dossier patient...",
@@ -29,6 +45,23 @@ export default function TopBar({
   showSettings = true,
 }: Readonly<TopBarProps>) {
   const { toggleSidebar } = useSidebar();
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const { data: notifications = [], isLoading } = useNotifications();
+  const markReadMutation = useMarkNotificationsRead();
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
+  const visibleNotifications = [...notifications]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 15);
+
+  const markAllRead = () => {
+    const ids = notifications.filter((n) => !n.read).map((n) => n.id);
+    if (ids.length > 0) markReadMutation.mutate(ids);
+  };
+
+  const markOneRead = (item: NotificationItem) => {
+    if (!item.read) markReadMutation.mutate([item.id]);
+  };
 
   return (
     <header className="app-shell-header sticky top-0 z-30 flex h-[84px] w-full items-center justify-between border-b border-slate-200 px-4 md:px-8 print:hidden">
@@ -67,12 +100,101 @@ export default function TopBar({
           />
         </div>
 
-        <button
-          className="w-10 h-10 flex items-center justify-center text-primary hover:bg-primary/10 rounded-full transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          aria-label="Notifications"
-        >
-          <span className="material-symbols-outlined">notifications</span>
-        </button>
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setNotificationsOpen((open) => !open)}
+            className="relative w-10 h-10 flex items-center justify-center text-primary hover:bg-primary/10 rounded-full transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} non lues` : ""}`}
+            aria-expanded={notificationsOpen}
+          >
+            <span className="material-symbols-outlined">notifications</span>
+            {unreadCount > 0 && (
+              <span className="absolute top-0 right-0 min-w-[18px] h-[18px] px-1 rounded-full bg-red-600 text-white text-[10px] font-bold flex items-center justify-center">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
+          </button>
+
+          {notificationsOpen && (
+            <>
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setNotificationsOpen(false)}
+                aria-hidden="true"
+              />
+              <div className="absolute right-0 top-12 z-50 w-[380px] max-w-[92vw] rounded-2xl border border-outline-variant bg-white shadow-[0px_12px_40px_rgba(15,23,42,0.15)] overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-outline-variant">
+                  <p className="text-sm font-black text-on-surface">Notifications</p>
+                  {unreadCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={markAllRead}
+                      disabled={markReadMutation.isPending}
+                      className="text-[11px] font-bold text-secondary hover:underline disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary rounded"
+                    >
+                      Tout marquer comme lu
+                    </button>
+                  )}
+                </div>
+
+                <div className="max-h-[360px] overflow-y-auto">
+                  {isLoading && notifications.length === 0 ? (
+                    <p className="px-4 py-6 text-center text-sm text-on-surface-variant">
+                      Chargement des notifications...
+                    </p>
+                  ) : visibleNotifications.length === 0 ? (
+                    <p className="px-4 py-6 text-center text-sm text-on-surface-variant">
+                      Aucune notification pour le moment.
+                    </p>
+                  ) : (
+                    <ul className="divide-y divide-outline-variant/60">
+                      {visibleNotifications.map((item) => {
+                        const priority = PRIORITY_STYLES[item.priority] ?? PRIORITY_STYLES.normal;
+                        return (
+                          <li key={item.id}>
+                            <button
+                              type="button"
+                              onClick={() => markOneRead(item)}
+                              className={`w-full text-left px-4 py-3 hover:bg-surface-container transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                                item.read ? "opacity-60" : ""
+                              }`}
+                            >
+                              <div className="flex items-start gap-2.5">
+                                <span
+                                  className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${priority.dot}`}
+                                  title={`Priorité ${priority.label}`}
+                                />
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-baseline justify-between gap-2">
+                                    <p className="text-[13px] font-bold text-on-surface truncate">
+                                      {item.title}
+                                    </p>
+                                    <span className="shrink-0 text-[10px] text-on-surface-variant">
+                                      {timeFormatter.format(new Date(item.createdAt))}
+                                    </span>
+                                  </div>
+                                  <p className="mt-0.5 text-xs text-on-surface-variant line-clamp-2">
+                                    {item.message}
+                                  </p>
+                                  {item.source && (
+                                    <p className="mt-1 text-[10px] uppercase tracking-wider text-secondary">
+                                      {item.source}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
         {showSettings && (
           <button
             className="w-10 h-10 flex items-center justify-center text-primary hover:bg-primary/10 rounded-full transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
