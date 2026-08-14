@@ -29,7 +29,7 @@ const getInitials = (item: PolysomnographieItem) => {
 
 export default function PrescriptionPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"TOUS" | "EN_ATTENTE" | "PLANIFIE">("TOUS");
+  const [urgentOnly, setUrgentOnly] = useState(false);
   const [scheduleTarget, setScheduleTarget] = useState<PolysomnographieItem | null>(null);
   const [rdvDate, setRdvDate] = useState("");
   const [rdvHeure, setRdvHeure] = useState("");
@@ -46,15 +46,19 @@ export default function PrescriptionPage() {
     return { total, planned, waiting, urgent };
   }, [polysomnographies]);
 
+  // Une prescription planifiée quitte cette page : elle devient un examen et
+  // se gère depuis la page Polysomnographie. Ne restent ici que les
+  // prescriptions reçues qui attendent encore un rendez-vous.
   const filtered = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     return polysomnographies.filter((item) => {
+      if (item.statut === "PLANIFIE") return false;
       const searchableText = [item.patientNom, item.patientPrenom, item.patientId, item.motif].join(" ").toLowerCase();
       if (query && !searchableText.includes(query)) return false;
-      if (statusFilter !== "TOUS" && item.statut !== statusFilter) return false;
+      if (urgentOnly && !item.urgence) return false;
       return true;
     });
-  }, [polysomnographies, searchQuery, statusFilter]);
+  }, [polysomnographies, searchQuery, urgentOnly]);
 
   const openSchedule = (item: PolysomnographieItem) => {
     setScheduleError(null);
@@ -132,6 +136,21 @@ export default function PrescriptionPage() {
           ))}
         </div>
 
+        {stats.planned > 0 && (
+          <Link
+            href="/polysomnographie"
+            className="mb-6 flex items-center gap-3 rounded-xl border border-green-200 bg-green-50 px-5 py-4 transition-colors hover:bg-green-100"
+          >
+            <span className="material-symbols-outlined text-green-700">event_available</span>
+            <p className="flex-1 text-sm font-semibold text-green-900">
+              {stats.planned} examen{stats.planned > 1 ? "s" : ""} déjà planifié
+              {stats.planned > 1 ? "s" : ""} — {stats.planned > 1 ? "ils ont quitté" : "il a quitté"} cette
+              liste et se {stats.planned > 1 ? "gèrent" : "gère"} désormais depuis la page Polysomnographie.
+            </p>
+            <span className="material-symbols-outlined text-green-700">arrow_forward</span>
+          </Link>
+        )}
+
         {/* Filters */}
         <div className="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden mb-6 shadow-sm">
           <div className="p-4 border-b border-outline-variant flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -147,18 +166,15 @@ export default function PrescriptionPage() {
                 className="w-full pl-10 pr-4 py-2.5 bg-surface-container border border-outline-variant rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none font-body-sm text-body-sm transition-all"
               />
             </div>
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-on-surface-variant">filter_list</span>
-              <select
-                value={statusFilter}
-                onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}
-                className="px-3 py-2.5 bg-surface-container border border-outline-variant rounded-lg text-sm font-semibold text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary"
-              >
-                <option value="TOUS">Tous les statuts</option>
-                <option value="EN_ATTENTE">En attente</option>
-                <option value="PLANIFIE">Planifiées</option>
-              </select>
-            </div>
+            <label className="flex items-center gap-2 text-sm font-semibold text-on-surface whitespace-nowrap">
+              <input
+                type="checkbox"
+                checked={urgentOnly}
+                onChange={(event) => setUrgentOnly(event.target.checked)}
+                className="h-4 w-4 accent-[#2563EB]"
+              />
+              Urgentes uniquement
+            </label>
           </div>
 
           {/* Table */}
@@ -186,14 +202,17 @@ export default function PrescriptionPage() {
                     <td colSpan={5} className="px-6 py-14 text-center">
                       <div className="flex flex-col items-center gap-2">
                         <span className="material-symbols-outlined text-3xl text-on-surface-variant/50">inventory_2</span>
-                        <p className="font-semibold text-on-surface">Aucune prescription trouvée</p>
-                        <p className="text-sm text-on-surface-variant">Aucune prescription de polysomnographie reçue pour le moment.</p>
+                        <p className="font-semibold text-on-surface">Aucune prescription à planifier</p>
+                        <p className="text-sm text-on-surface-variant">
+                          {stats.planned > 0
+                            ? "Toutes les prescriptions reçues ont été planifiées : retrouvez-les dans la page Polysomnographie."
+                            : "Aucune prescription de polysomnographie reçue pour le moment."}
+                        </p>
                       </div>
                     </td>
                   </tr>
                 )}
                 {filtered.map((item) => {
-                  const isPlanned = item.statut === "PLANIFIE";
                   return (
                     <tr key={item.id} className="hover:bg-tertiary-fixed transition-colors group">
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -222,46 +241,22 @@ export default function PrescriptionPage() {
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {isPlanned ? (
-                          <span className="px-2.5 py-1 bg-green-100 text-green-800 text-[11px] font-bold rounded-full uppercase">
-                            RDV planifié
-                          </span>
-                        ) : (
-                          <span className="px-2.5 py-1 bg-amber-100 text-amber-800 text-[11px] font-bold rounded-full uppercase">
-                            En attente
-                          </span>
-                        )}
+                        <span className="px-2.5 py-1 bg-amber-100 text-amber-800 text-[11px] font-bold rounded-full uppercase">
+                          À planifier
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap font-data-mono text-on-surface-variant text-sm">
                         {formatReceivedAt(item.createdAt)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
-                        {isPlanned ? (
-                          <div className="flex items-center justify-end gap-3">
-                            <span className="text-sm text-on-surface-variant">
-                              {formatDate(item.rdvDate ?? "")}
-                              {item.rdvHeure ? ` · ${item.rdvHeure}` : ""}
-                            </span>
-                            <ActionButton
-                              permission="psg:update"
-                              onClick={() => openSchedule(item)}
-                              className="action-warning px-3 py-2 rounded-lg text-label-md font-label-md flex items-center gap-1.5"
-                              title="Modifier le rendez-vous"
-                            >
-                              <span className="material-symbols-outlined text-[18px]">edit_calendar</span>
-                              Modifier
-                            </ActionButton>
-                          </div>
-                        ) : (
-                          <ActionButton
-                            permission="psg:create"
-                            onClick={() => openSchedule(item)}
-                            className="action-primary px-4 py-2.5 rounded-lg text-label-md font-label-md flex items-center gap-1.5 shadow-sm ml-auto"
-                          >
-                            <span className="material-symbols-outlined text-[18px]">event</span>
-                            Planifier
-                          </ActionButton>
-                        )}
+                        <ActionButton
+                          permission="psg:create"
+                          onClick={() => openSchedule(item)}
+                          className="action-primary px-4 py-2.5 rounded-lg text-label-md font-label-md flex items-center gap-1.5 shadow-sm ml-auto"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">event</span>
+                          Planifier
+                        </ActionButton>
                       </td>
                     </tr>
                   );

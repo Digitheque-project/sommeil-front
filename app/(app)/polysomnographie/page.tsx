@@ -39,6 +39,10 @@ export default function PolysomnographiePage() {
   const [toast, setToast] = useState<string | null>(null);
   const [startTarget, setStartTarget] = useState<PsgExam | null>(null);
   const [room, setRoom] = useState("");
+  const [editTarget, setEditTarget] = useState<PsgExam | null>(null);
+  const [editDate, setEditDate] = useState("");
+  const [editTime, setEditTime] = useState("");
+  const [editRoom, setEditRoom] = useState("");
 
   const { data: exams = [], isLoading } = usePsgExams();
   const startMutation = useStartPsg();
@@ -121,13 +125,25 @@ export default function PolysomnographiePage() {
     }
   };
 
-  /** `psg:update` — réassigne la salle d'examen. */
-  const changeRoom = async (exam: PsgExam) => {
-    const value = window.prompt("Salle d'examen :", exam.salle ?? "");
-    if (value === null) return;
+  const openEdit = (exam: PsgExam) => {
+    setEditTarget(exam);
+    setEditDate(dateKey(exam.rdvDate));
+    setEditTime(exam.rdvHeure ?? "");
+    setEditRoom(exam.salle ?? "");
+  };
+
+  /** `psg:update` — replanifie le rendez-vous et réassigne la salle. */
+  const submitEdit = async () => {
+    if (!editTarget || !editDate) return;
     try {
-      await updateMutation.mutateAsync({ id: exam.id, salle: value.trim() });
-      setToast("Salle mise à jour.");
+      await updateMutation.mutateAsync({
+        id: editTarget.id,
+        rdvDate: editDate,
+        rdvHeure: editTime || undefined,
+        salle: editRoom.trim(),
+      });
+      setToast("Rendez-vous mis à jour.");
+      setEditTarget(null);
     } catch (error) {
       setToast(error instanceof Error ? error.message : "La mise à jour a échoué.");
     }
@@ -297,13 +313,13 @@ export default function PolysomnographiePage() {
                       )}
                       <ActionButton
                         permission="psg:update"
-                        onClick={() => changeRoom(item)}
+                        onClick={() => openEdit(item)}
                         disabled={item.statut === "TERMINE"}
                         pending={updateMutation.isPending}
-                        title="Changer la salle d'examen"
+                        title="Replanifier le rendez-vous ou changer de salle"
                         className="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container"
                       >
-                        <span className="material-symbols-outlined text-[20px]">meeting_room</span>
+                        <span className="material-symbols-outlined text-[20px]">edit_calendar</span>
                       </ActionButton>
                       <ActionButton
                         permission="psg:export_data"
@@ -373,6 +389,92 @@ export default function PolysomnographiePage() {
                 className="action-success rounded-2xl px-4 py-2 text-sm font-bold"
               >
                 Démarrer l&apos;acquisition
+              </ActionButton>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {editTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-3xl bg-surface-container-lowest border border-outline-variant p-6 shadow-2xl">
+            <div className="mb-5 flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-on-surface-variant">
+                  Replanifier l&apos;examen
+                </p>
+                <h2 className="mt-1 text-xl font-extrabold text-primary">
+                  {editTarget.patientPrenom} {editTarget.patientNom}
+                </h2>
+                <p className="text-sm text-on-surface-variant mt-1">{editTarget.motif}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditTarget(null)}
+                aria-label="Fermer"
+                className="rounded-full p-2 text-on-surface-variant hover:bg-surface-container"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="psg-edit-date" className="mb-2 block text-[11px] font-bold uppercase tracking-[0.12em] text-on-surface-variant">
+                  Date du rendez-vous
+                </label>
+                <input
+                  id="psg-edit-date"
+                  type="date"
+                  value={editDate}
+                  onChange={(event) => setEditDate(event.target.value)}
+                  className="h-11 w-full rounded-2xl border border-outline-variant bg-surface-container px-3 text-sm font-medium text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary"
+                />
+              </div>
+              <div>
+                <label htmlFor="psg-edit-time" className="mb-2 block text-[11px] font-bold uppercase tracking-[0.12em] text-on-surface-variant">
+                  Heure du rendez-vous
+                </label>
+                <input
+                  id="psg-edit-time"
+                  type="time"
+                  value={editTime}
+                  onChange={(event) => setEditTime(event.target.value)}
+                  className="h-11 w-full rounded-2xl border border-outline-variant bg-surface-container px-3 text-sm font-medium text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary"
+                />
+              </div>
+              <div>
+                <label htmlFor="psg-edit-room" className="mb-2 block text-[11px] font-bold uppercase tracking-[0.12em] text-on-surface-variant">
+                  Salle d&apos;examen
+                </label>
+                <input
+                  id="psg-edit-room"
+                  type="text"
+                  value={editRoom}
+                  onChange={(event) => setEditRoom(event.target.value)}
+                  placeholder="Ex. Salle B-04"
+                  className="h-11 w-full rounded-2xl border border-outline-variant bg-surface-container px-3 text-sm font-medium text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary"
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setEditTarget(null)}
+                className="action-secondary rounded-2xl px-4 py-2 text-sm font-bold"
+              >
+                Annuler
+              </button>
+              <ActionButton
+                permission="psg:update"
+                onClick={submitEdit}
+                disabled={!editDate}
+                pending={updateMutation.isPending}
+                pendingLabel="Enregistrement…"
+                className="action-primary rounded-2xl px-4 py-2 text-sm font-bold"
+              >
+                Enregistrer
               </ActionButton>
             </div>
           </div>

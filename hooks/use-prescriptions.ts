@@ -52,6 +52,9 @@ export function useSchedulePolysomnographie() {
           : [...current, nextItem];
       });
       queryClient.invalidateQueries({ queryKey: ['polysomnographies'] });
+      // La planification crée l'examen lu par la page Polysomnographie : sans
+      // cette invalidation, elle continuait d'afficher sa liste en cache.
+      queryClient.invalidateQueries({ queryKey: ['psg-exams'] });
     },
   });
 }
