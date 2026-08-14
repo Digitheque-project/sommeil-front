@@ -1,4 +1,9 @@
-import { ROUTE_PERMISSIONS, type Permission } from "@/lib/permissions";
+import {
+  ALLOW_UNKNOWN_ACCOUNTS,
+  DEFAULT_ROLE,
+  ROUTE_PERMISSIONS,
+  type Permission,
+} from "@/lib/permissions";
 
 export const AUTH_COOKIE_NAME =
   process.env.NEXT_PUBLIC_AUTH_COOKIE_NAME || "sommeil_auth_token";
@@ -100,9 +105,18 @@ export function getSleepUserFromToken(token: string | null | undefined): SleepUs
     if (!decoded) return null;
     const payload = JSON.parse(decoded) as JwtPayload;
     const email = payload.email?.trim().toLowerCase();
-    if (!email || !USERS[email]) return null;
+    if (!email) return null;
 
-    const user = USERS[email];
+    // Seuls trois comptes de démonstration sont listés nominativement. Tant que
+    // l'ouverture temporaire est active, tout autre compte authentifié est
+    // accepté avec le rôle par défaut au lieu d'être refusé à l'entrée.
+    if (!USERS[email] && !ALLOW_UNKNOWN_ACCOUNTS) return null;
+
+    const user = USERS[email] ?? {
+      firstName: payload.firstname?.trim() || payload.name?.trim() || email,
+      lastName: "",
+      role: DEFAULT_ROLE,
+    };
     // Le SSO peut renvoyer soit `firstname` + `name`, soit uniquement le
     // nom complet dans `name`. Dans ce second cas, ne dupliquons pas le nom.
     const firstName = payload.firstname?.trim() || (payload.name?.trim() ? payload.name.trim() : user.firstName);

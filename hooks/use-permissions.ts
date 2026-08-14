@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import { authServiceApi, permissionNamesForRoles } from "@/lib/api/auth-service";
 import {
+  GRANT_ALL_PERMISSIONS,
   resolvePermissions,
   type Permission,
 } from "@/lib/permissions";
@@ -26,14 +27,16 @@ export function usePermissions() {
   const { data: roles = [], isLoading: isRolesLoading } = useQuery({
     queryKey: ["auth-roles"],
     queryFn: () => authServiceApi.getRoles(),
-    // Inutile d'interroger le service quand le jeton porte déjà les permissions.
-    enabled: Boolean(user) && !hasTokenPermissions,
+    // Inutile d'interroger le service quand le jeton porte déjà les permissions,
+    // ou pendant l'ouverture temporaire des accès.
+    enabled: Boolean(user) && !hasTokenPermissions && !GRANT_ALL_PERMISSIONS,
     staleTime: 5 * 60_000,
     retry: false,
   });
 
   const permissions = useMemo<Permission[]>(() => {
     if (!user) return [];
+    if (GRANT_ALL_PERMISSIONS) return resolvePermissions(user.role);
     if (hasTokenPermissions) {
       return resolvePermissions(user.role, user.grantedPermissions);
     }

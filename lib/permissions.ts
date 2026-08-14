@@ -77,6 +77,26 @@ export type Permission = keyof typeof PERMISSION_CATALOG;
 
 export const ALL_PERMISSIONS = Object.keys(PERMISSION_CATALOG) as Permission[];
 
+/* ─────────────────────────────────────────────────────────────────────────
+ * OUVERTURE TEMPORAIRE DES ACCÈS
+ *
+ * Tant que ce drapeau vaut `true`, tout compte authentifié dispose de la
+ * totalité des permissions : toutes les rubriques et tous les boutons sont
+ * accessibles, quel que soit le rôle.
+ *
+ * La matrice par rôle ci-dessous reste en place et n'est pas modifiée : il
+ * suffit de repasser ce drapeau à `false` pour que la répartition fine
+ * reprenne effet, sans autre changement de code.
+ *
+ * `ALLOW_UNKNOWN_ACCOUNTS` lève le second verrou : les comptes absents de la
+ * liste nominative de lib/auth.ts sont acceptés au lieu d'être refusés.
+ * ───────────────────────────────────────────────────────────────────────── */
+export const GRANT_ALL_PERMISSIONS = true;
+export const ALLOW_UNKNOWN_ACCOUNTS = true;
+
+/** Rôle attribué par défaut à un compte non listé nominativement. */
+export const DEFAULT_ROLE: SleepRole = "MEDECIN";
+
 const permissionSet = new Set<string>(ALL_PERMISSIONS);
 
 /**
@@ -172,6 +192,9 @@ export function resolvePermissions(
   role: SleepRole | null | undefined,
   grantedByAuthService?: readonly string[] | null
 ): Permission[] {
+  // Ouverture temporaire : prime sur le jeton comme sur la matrice.
+  if (GRANT_ALL_PERMISSIONS) return ALL_PERMISSIONS;
+
   if (grantedByAuthService && grantedByAuthService.length > 0) {
     const resolved = grantedByAuthService
       .map(normalizePermission)
