@@ -50,6 +50,44 @@ export function useTraiterConsultation() {
   });
 }
 
+export function useSaveObservation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, diagnostic, notes }: { id: string | number; diagnostic?: string; notes?: string }) =>
+      consultationApi.addObservation(id, { diagnostic, notes }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['consultations'] });
+      queryClient.invalidateQueries({ queryKey: ['consultation'] });
+    },
+  });
+}
+
+export function useMarkArrival() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, arrived }: { id: string | number; arrived: boolean }) =>
+      consultationApi.markConsultationArrival(id, {
+        arriveeAccueil: arrived,
+        arriveeAccueilAt: arrived ? new Date().toISOString() : null,
+      }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['consultations'] }),
+  });
+}
+
+export function useArchiveConsultation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string | number) => consultationApi.archiveConsultation(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['consultations'] });
+      queryClient.invalidateQueries({ queryKey: ['archives'] });
+    },
+  });
+}
+
 export function useConsultationEventsSubscription() {
   // Pour l'instant, cette fonction est un placeholder
   // Dans une implémentation complète, elle utiliserait WebSocket ou Server-Sent Events

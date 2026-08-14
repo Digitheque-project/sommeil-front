@@ -1,9 +1,11 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 import { useSidebar } from "@/components/AppShell";
 import { useMarkNotificationsRead, useNotifications } from "@/hooks/use-notifications";
+import { usePermissions } from "@/hooks/use-permissions";
 import type { NotificationItem } from "@/lib/api/notifications";
 import { useAuth } from "@/context/AuthContext";
 import { roleLabel } from "@/lib/auth";
@@ -48,7 +50,9 @@ export default function TopBar({
 }: Readonly<TopBarProps>) {
   const { toggleSidebar } = useSidebar();
   const { user } = useAuth();
+  const { can, permissions } = usePermissions();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
   const { data: notifications = [], isLoading } = useNotifications();
   const markReadMutation = useMarkNotificationsRead();
 
@@ -201,17 +205,25 @@ export default function TopBar({
             </>
           )}
         </div>
-        {showSettings && (
-          <button
+        {showSettings && can("settings:view") && (
+          <Link
+            href="/parametres"
             className="w-10 h-10 flex items-center justify-center text-primary hover:bg-primary/10 rounded-full transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             aria-label="Paramètres"
           >
             <span className="material-symbols-outlined">settings</span>
-          </button>
+          </Link>
         )}
 
         <div className="w-px h-6 bg-outline-variant hidden sm:block" />
-        <div className="flex items-center gap-3 cursor-pointer hover:bg-slate-100 p-1 pr-3 rounded-full transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setAccountOpen((open) => !open)}
+            aria-expanded={accountOpen}
+            aria-label="Menu du compte"
+            className="flex items-center gap-3 cursor-pointer hover:bg-slate-100 p-1 pr-3 rounded-full transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
           {avatarSrc ? (
             <Image
               className="w-8 h-8 rounded-full object-cover"
@@ -227,12 +239,58 @@ export default function TopBar({
               </span>
             </div>
           )}
-          <div className="hidden sm:block">
-            <p className="text-label-sm font-bold text-primary">{displayName}</p>
-            <p className="text-[10px] text-on-surface-variant uppercase tracking-wider">
-              {displayRole}
-            </p>
-          </div>
+            <div className="hidden sm:block text-left">
+              <p className="text-label-sm font-bold text-primary">{displayName}</p>
+              <p className="text-[10px] text-on-surface-variant uppercase tracking-wider">
+                {displayRole}
+              </p>
+            </div>
+          </button>
+
+          {accountOpen && (
+            <>
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setAccountOpen(false)}
+                aria-hidden="true"
+              />
+              <div className="absolute right-0 top-12 z-50 w-64 overflow-hidden rounded-2xl border border-outline-variant bg-white shadow-[0px_12px_40px_rgba(15,23,42,0.15)]">
+                <div className="border-b border-outline-variant px-4 py-3">
+                  <p className="text-sm font-black text-on-surface">{displayName}</p>
+                  <p className="text-xs text-on-surface-variant">{user?.email ?? displayRole}</p>
+                  <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-secondary">
+                    {displayRole} · {permissions.length} permission(s)
+                  </p>
+                </div>
+                {can("settings:view") && (
+                  <Link
+                    href="/parametres"
+                    onClick={() => setAccountOpen(false)}
+                    className="flex items-center gap-2 px-4 py-3 text-sm font-semibold text-on-surface hover:bg-surface-container"
+                  >
+                    <span className="material-symbols-outlined text-[20px]">settings</span>
+                    Paramètres
+                  </Link>
+                )}
+                <Link
+                  href="/aide"
+                  onClick={() => setAccountOpen(false)}
+                  className="flex items-center gap-2 px-4 py-3 text-sm font-semibold text-on-surface hover:bg-surface-container"
+                >
+                  <span className="material-symbols-outlined text-[20px]">help</span>
+                  Aide
+                </Link>
+                <Link
+                  href="/deconnexion"
+                  onClick={() => setAccountOpen(false)}
+                  className="flex items-center gap-2 border-t border-outline-variant px-4 py-3 text-sm font-semibold text-red-600 hover:bg-red-50"
+                >
+                  <span className="material-symbols-outlined text-[20px]">logout</span>
+                  Déconnexion
+                </Link>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </header>

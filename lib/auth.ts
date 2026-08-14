@@ -1,3 +1,5 @@
+import { ROUTE_PERMISSIONS, type Permission } from "@/lib/permissions";
+
 export const AUTH_COOKIE_NAME =
   process.env.NEXT_PUBLIC_AUTH_COOKIE_NAME || "sommeil_auth_token";
 
@@ -12,9 +14,19 @@ export type SleepUser = {
   firstName: string;
   lastName: string;
   role: SleepRole;
+  /** Identifiant du compte côté service d'authentification CHU, s'il est présent. */
+  userId?: string;
+  /**
+   * Permissions portées par le jeton (service d'authentification CHU).
+   * Vide quand le jeton n'en transporte pas : la matrice du rôle prend alors
+   * le relais — voir `resolvePermissions` dans lib/permissions.ts.
+   */
+  grantedPermissions: string[];
 };
 
-const USERS: Record<string, Omit<SleepUser, "email">> = {
+type SleepUserProfile = Pick<SleepUser, "firstName" | "lastName" | "role">;
+
+const USERS: Record<string, SleepUserProfile> = {
   "para@gmail.com": {
     firstName: "Paramed",
     lastName: "Sommeil",
@@ -33,10 +45,34 @@ const USERS: Record<string, Omit<SleepUser, "email">> = {
 };
 
 type JwtPayload = {
+  sub?: string;
+  id?: string;
   email?: string;
   name?: string;
   firstname?: string;
+  // Le service d'authentification CHU expose des rôles porteurs de permissions
+  // (`POST /roles` : `permissionIds`). Selon la configuration, le jeton peut
+  // transporter les permissions à plat ou imbriquées dans les rôles.
+  permissions?: Array<string | { name?: string }>;
+  roles?: Array<string | { name?: string; permissions?: Array<string | { name?: string }> }>;
 };
+
+/** Aplatit les permissions du jeton, quelle que soit leur forme. */
+function readGrantedPermissions(payload: JwtPayload): string[] {
+  const collected: string[] = [];
+
+  const push = (entry: string | { name?: string } | undefined) => {
+    if (typeof entry === "string") collected.push(entry);
+    else if (entry?.name) collected.push(entry.name);
+  };
+
+  payload.permissions?.forEach(push);
+  payload.roles?.forEach((role) => {
+    if (typeof role === "object" && role?.permissions) role.permissions.forEach(push);
+  });
+
+  return [...new Set(collected)];
+}
 
 function decodeBase64Url(value: string): string | null {
   try {
@@ -77,6 +113,8 @@ export function getSleepUserFromToken(token: string | null | undefined): SleepUs
       role: user.role,
       firstName,
       lastName,
+      userId: payload.sub ?? payload.id,
+      grantedPermissions: readGrantedPermissions(payload),
     };
   } catch {
     return null;
@@ -94,15 +132,32 @@ export const roleLabel = (role: SleepRole) => {
   }
 };
 
-const PARAMED_PATHS = ["/", "/consultation", "/prescription", "/polysomnographie"];
-const MAJOR_PATHS = [...PARAMED_PATHS, "/comptes-rendus", "/rapports", "/archives"];
-
-function matchesPath(pathname: string, paths: string[]) {
-  return paths.some((path) => path === "/" ? pathname === "/" : pathname === path || pathname.startsWith(`${path}/`));
+function matchesPath(pathname: string, path: string) {
+  return path === "/"
+    ? pathname === "/"
+    : pathname === path || pathname.startsWith(`${path}/`);
 }
 
-/** Autorisations de navigation du Centre de Sommeil. */
-export function canAccessPath(role: SleepRole, pathname: string) {
-  if (role === "MEDECIN") return true;
-  return matchesPath(pathname, role === "MAJOR" ? MAJOR_PATHS : PARAMED_PATHS);
+/**
+ * Permission requise pour ouvrir un chemin, ou `null` si le chemin est libre
+ * (déconnexion, aide...). Les chemins les plus spécifiques l'emportent.
+ */
+export function permissionForPath(pathname: string): Permission | null {
+  const match = [...ROUTE_PERMISSIONS]
+    .sort((a, b) => b.path.length - a.path.length)
+    .find((route) => matchesPath(pathname, route.path));
+
+  return match?.permission ?? null;
+}
+
+/**
+ * Autorisations de navigation du Centre de Sommeil, évaluées sur les
+ * permissions effectives du compte (jeton CHU ou matrice du rôle).
+ */
+export function canAccessPath(
+  permissions: readonly Permission[],
+  pathname: string
+) {
+  const required = permissionForPath(pathname);
+  return required === null || permissions.includes(required);
 }

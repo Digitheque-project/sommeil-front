@@ -223,4 +223,32 @@ export const consultationApi = {
     if (!res.ok) return [];
     return handleResponse(res);
   },
+
+  /** Enregistre observation et diagnostic sans clore la consultation. */
+  async addObservation(
+    id: string | number,
+    payload: { diagnostic?: string; notes?: string }
+  ) {
+    const res = await fetch(getSommeilApiUrl(`/consultations/${id}/observations`), {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res);
+  },
+
+  async archiveConsultation(id: string | number) {
+    const res = await fetch(getSommeilApiUrl(`/consultations/${id}/archive`), {
+      method: 'POST',
+      headers: authHeaders(),
+    });
+    return handleResponse(res);
+  },
+
+  async getCompteRendus(id: string | number) {
+    const res = await fetch(getSommeilApiUrl(`/consultations/${id}/compte-rendus`), {
+      headers: authHeaders(),
+    });
+    return handleResponse(res);
+  },
 };

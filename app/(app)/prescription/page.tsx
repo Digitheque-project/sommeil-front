@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import TopBar from "@/components/TopBar";
+import ActionButton from "@/components/ActionButton";
 import { usePolysomnographies, useSchedulePolysomnographie } from "@/hooks/use-prescriptions";
 import type { PolysomnographieItem } from "@/lib/api/prescription";
 import { cn } from "@/lib/utils";
@@ -241,25 +242,25 @@ export default function PrescriptionPage() {
                               {formatDate(item.rdvDate ?? "")}
                               {item.rdvHeure ? ` · ${item.rdvHeure}` : ""}
                             </span>
-                            <button
-                              type="button"
+                            <ActionButton
+                              permission="psg:update"
                               onClick={() => openSchedule(item)}
                               className="action-warning px-3 py-2 rounded-lg text-label-md font-label-md flex items-center gap-1.5"
                               title="Modifier le rendez-vous"
                             >
                               <span className="material-symbols-outlined text-[18px]">edit_calendar</span>
                               Modifier
-                            </button>
+                            </ActionButton>
                           </div>
                         ) : (
-                          <button
-                            type="button"
+                          <ActionButton
+                            permission="psg:create"
                             onClick={() => openSchedule(item)}
                             className="action-primary px-4 py-2.5 rounded-lg text-label-md font-label-md flex items-center gap-1.5 shadow-sm ml-auto"
                           >
                             <span className="material-symbols-outlined text-[18px]">event</span>
                             Planifier
-                          </button>
+                          </ActionButton>
                         )}
                       </td>
                     </tr>
@@ -334,14 +335,16 @@ export default function PrescriptionPage() {
               >
                 Annuler
               </button>
-              <button
-                type="button"
-                disabled={!rdvDate || scheduleMutation.isPending}
+              <ActionButton
+                permission={scheduleTarget.statut === "PLANIFIE" ? "psg:update" : "psg:create"}
+                disabled={!rdvDate}
+                pending={scheduleMutation.isPending}
+                pendingLabel="Planification..."
                 onClick={submitSchedule}
-                className="action-primary rounded-2xl px-4 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-50"
+                className="action-primary rounded-2xl px-4 py-2 text-sm font-bold"
               >
-                {scheduleMutation.isPending ? "Planification..." : "Confirmer le rendez-vous"}
-              </button>
+                Confirmer le rendez-vous
+              </ActionButton>
             </div>
           </div>
         </div>

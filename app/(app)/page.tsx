@@ -3,14 +3,42 @@
 import Link from "next/link";
 import TopBar from "@/components/TopBar";
 import { useAllConsultations } from "@/hooks/use-consultations";
+import { usePsgExams } from "@/hooks/use-psg";
 import type { ConsultationApi } from "@/lib/api/consultation";
 
 export default function DashboardPage() {
   const { data: consultations = [], isLoading } = useAllConsultations();
+  const { data: psgExams = [] } = usePsgExams();
   const today = new Date().toISOString().slice(0, 10);
   const todayConsultations = (consultations as ConsultationApi[]).filter((item) => item.date.slice(0, 10) === today);
   const completed = todayConsultations.filter((item) => item.termine).length;
   const urgent = todayConsultations.filter((item) => item.urgence).length;
+
+  // Prochain rendez-vous : premier examen de polysomnographie à venir, sinon
+  // la prochaine consultation non terminée du jour.
+  const upcomingExam = [...psgExams]
+    .filter((exam) => exam.statut !== "TERMINE" && new Date(exam.rdvDate).toISOString().slice(0, 10) >= today)
+    .sort((a, b) => `${a.rdvDate}${a.rdvHeure}`.localeCompare(`${b.rdvDate}${b.rdvHeure}`))[0];
+
+  const upcomingConsultation = [...todayConsultations]
+    .filter((item) => !item.termine)
+    .sort((a, b) => (a.heure ?? "").localeCompare(b.heure ?? ""))[0];
+
+  const nextAppointment = upcomingExam
+    ? {
+        time: upcomingExam.rdvHeure || "Heure à définir",
+        patient: `${upcomingExam.patientPrenom} ${upcomingExam.patientNom}`.trim() || "Patient inconnu",
+        detail: `${upcomingExam.salle ? `${upcomingExam.salle} · ` : ""}Polysomnographie`,
+        href: "/polysomnographie",
+      }
+    : upcomingConsultation
+      ? {
+          time: upcomingConsultation.heure || "Heure à définir",
+          patient: upcomingConsultation.patient?.displayName ?? "Patient inconnu",
+          detail: upcomingConsultation.motif || "Consultation",
+          href: `/consultation/traitement?id=${upcomingConsultation.id}`,
+        }
+      : null;
   const activityFeed = [...(consultations as ConsultationApi[])]
     .sort((a, b) => new Date(b.createdAt ?? b.date).getTime() - new Date(a.createdAt ?? a.date).getTime())
     .slice(0, 5)
@@ -43,10 +71,9 @@ export default function DashboardPage() {
         {/* KPI Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-10">
           {/* Examens Aujourd'hui */}
-          <div
-            className="bg-[#1E3A8A] p-6 rounded-[24px] relative overflow-hidden flex flex-col justify-between h-[220px] cursor-pointer shadow-sm transition hover:brightness-105"
-            role="button"
-            tabIndex={0}
+          <Link
+            href="/consultation"
+            className="bg-[#1E3A8A] p-6 rounded-[24px] relative overflow-hidden flex flex-col justify-between h-[220px] cursor-pointer shadow-sm transition hover:brightness-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
           >
             <div className="flex justify-between items-start">
               <div className="flex items-center gap-1 text-[#4FC3F7]">
@@ -68,11 +95,12 @@ export default function DashboardPage() {
               </p>
               <p className="text-[#64748B] text-[11px]">Données synchronisées avec le planning</p>
             </div>
-          </div>
+          </Link>
 
           {/* Comptes-rendus en attente */}
-          <div
-            className="bg-white p-6 rounded-[24px] relative overflow-hidden cursor-pointer flex flex-col justify-between h-[220px] shadow-sm border border-[#E0E4E8]"
+          <Link
+            href="/comptes-rendus"
+            className="bg-white p-6 rounded-[24px] relative overflow-hidden cursor-pointer flex flex-col justify-between h-[220px] shadow-sm border border-[#E0E4E8] transition hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB]"
           >
             <div className="flex justify-between items-start">
               <span className="material-symbols-outlined text-[#2563EB] text-[32px]" style={{ fontVariationSettings: '"FILL" 1' }}>
@@ -93,11 +121,12 @@ export default function DashboardPage() {
                 {urgent} urgente{urgent > 1 ? "s" : ""}
               </span>
             </div>
-          </div>
+          </Link>
 
-          {/* Occupation Lits */}
-          <div
-            className="bg-white p-6 rounded-[24px] relative overflow-hidden cursor-pointer flex flex-col justify-between h-[220px] shadow-sm border border-[#E0E4E8]"
+          {/* Consultations urgentes */}
+          <Link
+            href="/consultation"
+            className="bg-white p-6 rounded-[24px] relative overflow-hidden cursor-pointer flex flex-col justify-between h-[220px] shadow-sm border border-[#E0E4E8] transition hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E]"
           >
             <div className="flex justify-between items-start">
               <span className="material-symbols-outlined text-[#0F766E] text-[32px]" style={{ fontVariationSettings: '"FILL" 1' }}>
@@ -116,7 +145,7 @@ export default function DashboardPage() {
               </p>
               <p className="text-[#64748B] text-[11px] mt-2">Parmi les consultations du jour</p>
             </div>
-          </div>
+          </Link>
         </div>
 
         {/* Main Dashboard Layout */}
@@ -189,24 +218,36 @@ export default function DashboardPage() {
                 <p className="text-xs font-bold uppercase tracking-wider text-[#94A3B8] mb-2">
                   Prochain RDV
                 </p>
-                <h3 className="text-2xl font-extrabold font-headline mb-1">
-                  14:30
-                </h3>
-                <p className="font-semibold text-base mb-3">
-                  M. Jean Dupont
-                </p>
-                <p className="text-sm text-[#94A3B8]">
-                  Salle B-04 · Polysomnographie
-                </p>
-                <Link
-                  href="/polysomnographie"
-                  className="mt-4 inline-flex items-center gap-2 bg-white text-[#2563EB] px-4 py-2 rounded-lg font-semibold text-sm hover:bg-[#F1F5F9] transition-colors"
-                >
-                  Accéder
-                  <span className="material-symbols-outlined text-[16px]">
-                    arrow_forward
-                  </span>
-                </Link>
+                {nextAppointment ? (
+                  <>
+                    <h3 className="text-2xl font-extrabold font-headline mb-1">
+                      {nextAppointment.time}
+                    </h3>
+                    <p className="font-semibold text-base mb-3">{nextAppointment.patient}</p>
+                    <p className="text-sm text-[#94A3B8]">{nextAppointment.detail}</p>
+                    <Link
+                      href={nextAppointment.href}
+                      className="mt-4 inline-flex items-center gap-2 bg-white text-[#2563EB] px-4 py-2 rounded-lg font-semibold text-sm hover:bg-[#F1F5F9] transition-colors"
+                    >
+                      Accéder
+                      <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="text-2xl font-extrabold font-headline mb-1">—</h3>
+                    <p className="text-sm text-[#94A3B8]">
+                      Aucun rendez-vous à venir n&apos;est enregistré.
+                    </p>
+                    <Link
+                      href="/polysomnographie"
+                      className="mt-4 inline-flex items-center gap-2 bg-white text-[#2563EB] px-4 py-2 rounded-lg font-semibold text-sm hover:bg-[#F1F5F9] transition-colors"
+                    >
+                      Voir le planning
+                      <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </div>

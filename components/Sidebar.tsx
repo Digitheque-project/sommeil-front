@@ -5,12 +5,14 @@ import { usePathname } from "next/navigation";
 import { NAV_ITEMS, isPathActive } from "@/lib/nav";
 import { useSidebar } from "@/components/AppShell";
 import { useAuth } from "@/context/AuthContext";
+import { usePermissions } from "@/hooks/use-permissions";
 import { roleLabel } from "@/lib/auth";
 
 export default function Sidebar() {
   const pathname = usePathname();
   const { desktopOpen, mobileOpen, closeMobile } = useSidebar();
   const { user } = useAuth();
+  const { can } = usePermissions();
 
   const linkClass = (active: boolean, extra = "") =>
     `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-150 border-l-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 ${
@@ -36,7 +38,7 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex-1 space-y-2 overflow-y-auto px-2 pb-4" aria-label="Navigation principale">
-        {NAV_ITEMS.filter((item) => !user || item.roles.includes(user.role)).map((item) => {
+        {NAV_ITEMS.filter((item) => !user || can(item.permission)).map((item) => {
           const active = isPathActive(pathname, item.href);
           return (
             <Link

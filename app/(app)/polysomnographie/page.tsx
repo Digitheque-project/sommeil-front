@@ -1,14 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import TopBar from "@/components/TopBar";
-import { usePolysomnographies } from "@/hooks/use-prescriptions";
-import type { PolysomnographieItem } from "@/lib/api/prescription";
+import ActionButton from "@/components/ActionButton";
+import { useDeletePsg, usePsgExams, useStartPsg, useStopPsg, useUpdatePsg } from "@/hooks/use-psg";
+import { psgApi, type PsgExam } from "@/lib/api/psg";
+import { downloadJson } from "@/lib/download";
 import { cn } from "@/lib/utils";
 
 const formatDate = (value: string) => {
-  const date = new Date(`${value}T00:00:00`);
+  const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return new Intl.DateTimeFormat("fr-FR", {
     weekday: "short",
@@ -18,43 +20,129 @@ const formatDate = (value: string) => {
   }).format(date);
 };
 
-const getInitials = (item: PolysomnographieItem) => {
-  const fullName = `${item.patientPrenom} ${item.patientNom}`.trim();
-  const parts = fullName.split(" ").filter(Boolean);
+const dateKey = (value: string) => new Date(value).toISOString().slice(0, 10);
+
+const getInitials = (item: PsgExam) => {
+  const parts = `${item.patientPrenom} ${item.patientNom}`.trim().split(" ").filter(Boolean);
   if (parts.length === 0) return "?";
-  return parts.map((p) => p[0]?.toUpperCase() ?? "").slice(0, 2).join("");
+  return parts.map((part) => part[0]?.toUpperCase() ?? "").slice(0, 2).join("");
+};
+
+const STATUS_STYLES: Record<PsgExam["statut"], { label: string; className: string }> = {
+  PLANIFIE: { label: "Planifié", className: "bg-secondary-container text-on-secondary-container" },
+  EN_COURS: { label: "Enregistrement en cours", className: "bg-amber-100 text-amber-800" },
+  TERMINE: { label: "Terminé", className: "bg-green-100 text-green-800" },
 };
 
 export default function PolysomnographiePage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [toast, setToast] = useState<string | null>(null);
+  const [startTarget, setStartTarget] = useState<PsgExam | null>(null);
+  const [room, setRoom] = useState("");
 
-  const { data: polysomnographies = [], isLoading } = usePolysomnographies();
+  const { data: exams = [], isLoading } = usePsgExams();
+  const startMutation = useStartPsg();
+  const stopMutation = useStopPsg();
+  const updateMutation = useUpdatePsg();
+  const deleteMutation = useDeletePsg();
 
-  // Seuls les patients ayant déjà un rendez-vous de polysomnographie planifié s'affichent ici.
-  const scheduled = useMemo(() => {
-    const list = polysomnographies
-      .filter((item) => item.statut === "PLANIFIE" && item.rdvDate)
-      .sort((a, b) => String(a.rdvDate ?? "").localeCompare(String(b.rdvDate ?? "")));
+  useEffect(() => {
+    if (!toast) return;
+    const timeout = window.setTimeout(() => setToast(null), 3500);
+    return () => window.clearTimeout(timeout);
+  }, [toast]);
 
+  const filtered = useMemo(() => {
+    const list = [...exams].sort((a, b) => a.rdvDate.localeCompare(b.rdvDate));
     const query = searchQuery.trim().toLowerCase();
     if (!query) return list;
     return list.filter((item) =>
-      [item.patientNom, item.patientPrenom, item.patientId, item.motif]
+      [item.patientNom, item.patientPrenom, item.patientId, item.motif, item.salle ?? ""]
         .join(" ")
         .toLowerCase()
         .includes(query)
     );
-  }, [polysomnographies, searchQuery]);
+  }, [exams, searchQuery]);
 
   const today = new Date().toISOString().slice(0, 10);
-  const todayCount = scheduled.filter((item) => item.rdvDate === today).length;
-  const upcomingCount = scheduled.filter((item) => (item.rdvDate ?? "") > today).length;
-
   const stats = [
-    { label: "RDV planifiés", value: scheduled.length, icon: "event_available", valueColor: "text-primary" },
-    { label: "Aujourd'hui", value: todayCount, icon: "today", valueColor: "text-secondary" },
-    { label: "À venir", value: upcomingCount, icon: "calendar_month", valueColor: "text-secondary" },
+    { label: "RDV planifiés", value: exams.length, icon: "event_available", valueColor: "text-primary" },
+    {
+      label: "Aujourd'hui",
+      value: exams.filter((item) => dateKey(item.rdvDate) === today).length,
+      icon: "today",
+      valueColor: "text-secondary",
+    },
+    {
+      label: "En cours",
+      value: exams.filter((item) => item.statut === "EN_COURS").length,
+      icon: "sensors",
+      valueColor: "text-amber-600",
+    },
+    {
+      label: "Terminés",
+      value: exams.filter((item) => item.statut === "TERMINE").length,
+      icon: "task_alt",
+      valueColor: "text-green-700",
+    },
   ];
+
+  /** `psg:start` — lance l'acquisition, salle facultative. */
+  const confirmStart = async () => {
+    if (!startTarget) return;
+    try {
+      await startMutation.mutateAsync({ id: startTarget.id, salle: room.trim() || undefined });
+      setToast(`Enregistrement démarré pour ${startTarget.patientPrenom} ${startTarget.patientNom}.`);
+      setStartTarget(null);
+      setRoom("");
+    } catch (error) {
+      setToast(error instanceof Error ? error.message : "Le démarrage a échoué.");
+    }
+  };
+
+  /** `psg:stop` — clôt l'acquisition. */
+  const stop = async (exam: PsgExam) => {
+    try {
+      await stopMutation.mutateAsync(exam.id);
+      setToast("Enregistrement terminé.");
+    } catch (error) {
+      setToast(error instanceof Error ? error.message : "L'arrêt a échoué.");
+    }
+  };
+
+  /** `psg:export_data` — extraction des données de la séance. */
+  const exportData = async (exam: PsgExam) => {
+    try {
+      const data = await psgApi.exportData(exam.id);
+      downloadJson(data, `psg-${exam.patientNom || exam.patientId}-${dateKey(exam.rdvDate)}.json`);
+      setToast("Données de l'examen exportées.");
+    } catch (error) {
+      setToast(error instanceof Error ? error.message : "L'export a échoué.");
+    }
+  };
+
+  /** `psg:update` — réassigne la salle d'examen. */
+  const changeRoom = async (exam: PsgExam) => {
+    const value = window.prompt("Salle d'examen :", exam.salle ?? "");
+    if (value === null) return;
+    try {
+      await updateMutation.mutateAsync({ id: exam.id, salle: value.trim() });
+      setToast("Salle mise à jour.");
+    } catch (error) {
+      setToast(error instanceof Error ? error.message : "La mise à jour a échoué.");
+    }
+  };
+
+  /** `psg:delete` — retire l'examen du planning. */
+  const remove = async (exam: PsgExam) => {
+    if (!window.confirm(`Supprimer l'examen de ${exam.patientPrenom} ${exam.patientNom} ?`)) return;
+    try {
+      await deleteMutation.mutateAsync(exam.id);
+      setToast("Examen supprimé.");
+    } catch (error) {
+      setToast(error instanceof Error ? error.message : "La suppression a échoué.");
+    }
+  };
 
   return (
     <>
@@ -66,15 +154,14 @@ export default function PolysomnographiePage() {
       />
 
       <div className="p-6 md:p-8 flex flex-col min-h-[calc(100vh-5rem)] max-w-7xl mx-auto w-full">
-        {/* Page Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
           <div>
             <h2 className="font-display-lg text-display-lg text-primary mb-1">
-              Patients avec rendez-vous de polysomnographie
+              Examens de polysomnographie
             </h2>
             <p className="text-on-surface-variant font-body-md">
-              Les patients apparaissent ici dès qu&apos;une prescription de polysomnographie reçue a été
-              planifiée depuis le menu Prescription.
+              Les patients apparaissent ici dès qu&apos;une prescription de polysomnographie reçue a
+              été planifiée depuis le menu Prescription.
             </p>
           </div>
           <Link
@@ -86,8 +173,7 @@ export default function PolysomnographiePage() {
           </Link>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-gutter mb-8">
           {stats.map((stat) => (
             <div
               key={stat.label}
@@ -106,7 +192,6 @@ export default function PolysomnographiePage() {
           ))}
         </div>
 
-        {/* Search */}
         <div className="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden mb-6 shadow-sm">
           <div className="p-4 border-b border-outline-variant">
             <div className="relative w-full max-w-md">
@@ -117,22 +202,21 @@ export default function PolysomnographiePage() {
                 type="text"
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder="Rechercher par nom, ID patient ou indication..."
+                placeholder="Rechercher par nom, ID patient, salle ou indication..."
                 className="w-full pl-10 pr-4 py-2.5 bg-surface-container border border-outline-variant rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none font-body-sm text-body-sm transition-all"
               />
             </div>
           </div>
 
-          {/* RDV List */}
           {isLoading ? (
-            <div className="px-6 py-14 text-center text-on-surface-variant">Chargement des rendez-vous...</div>
-          ) : scheduled.length === 0 ? (
+            <div className="px-6 py-14 text-center text-on-surface-variant">Chargement des examens...</div>
+          ) : filtered.length === 0 ? (
             <div className="px-6 py-16 text-center">
               <div className="flex flex-col items-center gap-3">
                 <div className="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center">
                   <span className="material-symbols-outlined text-3xl text-on-surface-variant/60">night_shelter</span>
                 </div>
-                <p className="font-semibold text-on-surface">Aucun rendez-vous de polysomnographie</p>
+                <p className="font-semibold text-on-surface">Aucun examen de polysomnographie</p>
                 <p className="text-sm text-on-surface-variant max-w-sm">
                   Les patients ayant une prescription de polysomnographie planifiée s&apos;afficheront
                   automatiquement ici.
@@ -148,50 +232,158 @@ export default function PolysomnographiePage() {
             </div>
           ) : (
             <ul className="divide-y divide-outline-variant">
-              {scheduled.map((item) => (
-                <li key={item.id} className="flex flex-col sm:flex-row sm:items-center gap-4 px-6 py-5 hover:bg-tertiary-fixed transition-colors">
-                  <div className="flex items-center gap-3 sm:w-[280px] shrink-0">
-                    <div className={cn(
-                      "w-11 h-11 rounded-full flex items-center justify-center font-bold shrink-0",
-                      item.urgence ? "bg-error-container text-error" : "bg-secondary-fixed text-secondary"
+              {filtered.map((item) => {
+                const status = STATUS_STYLES[item.statut] ?? STATUS_STYLES.PLANIFIE;
+                return (
+                  <li key={item.id} className="flex flex-col gap-4 px-6 py-5 hover:bg-tertiary-fixed transition-colors xl:flex-row xl:items-center">
+                    <div className="flex items-center gap-3 xl:w-[260px] shrink-0">
+                      <div className={cn(
+                        "w-11 h-11 rounded-full flex items-center justify-center font-bold shrink-0",
+                        item.urgence ? "bg-error-container text-error" : "bg-secondary-fixed text-secondary"
+                      )}>
+                        {getInitials(item)}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-primary truncate">{item.patientPrenom} {item.patientNom}</p>
+                        <p className="text-xs font-data-mono text-on-surface-variant truncate">{item.patientId}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-1 min-w-0 flex-col gap-1">
+                      <div className="flex flex-wrap items-center gap-3 text-sm font-semibold text-on-surface">
+                        <span className="flex items-center gap-2 whitespace-nowrap">
+                          <span className="material-symbols-outlined text-[18px] text-secondary">event</span>
+                          {formatDate(item.rdvDate)}
+                          {item.rdvHeure && <span className="text-on-surface-variant">· {item.rdvHeure}</span>}
+                        </span>
+                        {item.salle && (
+                          <span className="flex items-center gap-1 text-xs text-on-surface-variant whitespace-nowrap">
+                            <span className="material-symbols-outlined text-[16px]">meeting_room</span>
+                            {item.salle}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-on-surface-variant truncate">{item.motif}</p>
+                    </div>
+
+                    <span className={cn(
+                      "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap shrink-0",
+                      status.className
                     )}>
-                      {getInitials(item)}
-                    </div>
-                    <div>
-                      <p className="font-semibold text-primary">{item.patientPrenom} {item.patientNom}</p>
-                      <p className="text-xs font-data-mono text-on-surface-variant">{item.patientId}</p>
-                    </div>
-                  </div>
+                      {status.label}
+                    </span>
 
-                  <div className="flex items-center gap-4 flex-1 min-w-0">
-                    <div className="flex items-center gap-2 text-sm font-semibold text-on-surface whitespace-nowrap">
-                      <span className="material-symbols-outlined text-[18px] text-secondary">event</span>
-                      <span>{formatDate(item.rdvDate ?? "")}</span>
-                      {item.rdvHeure && <span className="text-on-surface-variant">· {item.rdvHeure}</span>}
+                    <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+                      {item.statut === "EN_COURS" ? (
+                        <ActionButton
+                          permission="psg:stop"
+                          onClick={() => stop(item)}
+                          pending={stopMutation.isPending}
+                          className="action-danger flex items-center gap-1.5 rounded-lg px-3 py-2 text-label-md font-label-md"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">stop_circle</span>
+                          Arrêter
+                        </ActionButton>
+                      ) : (
+                        <ActionButton
+                          permission="psg:start"
+                          onClick={() => { setStartTarget(item); setRoom(item.salle ?? ""); }}
+                          disabled={item.statut === "TERMINE"}
+                          className="action-success flex items-center gap-1.5 rounded-lg px-3 py-2 text-label-md font-label-md"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">play_circle</span>
+                          Démarrer
+                        </ActionButton>
+                      )}
+                      <ActionButton
+                        permission="psg:update"
+                        onClick={() => changeRoom(item)}
+                        disabled={item.statut === "TERMINE"}
+                        pending={updateMutation.isPending}
+                        title="Changer la salle d'examen"
+                        className="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container"
+                      >
+                        <span className="material-symbols-outlined text-[20px]">meeting_room</span>
+                      </ActionButton>
+                      <ActionButton
+                        permission="psg:export_data"
+                        onClick={() => exportData(item)}
+                        title="Exporter les données de l'examen"
+                        className="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container"
+                      >
+                        <span className="material-symbols-outlined text-[20px]">download</span>
+                      </ActionButton>
+                      <ActionButton
+                        permission="psg:delete"
+                        hideWhenDenied
+                        onClick={() => remove(item)}
+                        pending={deleteMutation.isPending}
+                        title="Supprimer l'examen"
+                        className="p-2 rounded-lg text-on-surface-variant hover:bg-red-50 hover:text-red-600"
+                      >
+                        <span className="material-symbols-outlined text-[20px]">delete</span>
+                      </ActionButton>
                     </div>
-                    <p className="text-sm text-on-surface-variant truncate flex-1 min-w-0">{item.motif}</p>
-                  </div>
-
-                  <span className={cn(
-                    "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap shrink-0",
-                    (item.rdvDate ?? "") === today
-                      ? "bg-secondary-container text-on-secondary-container"
-                      : (item.rdvDate ?? "") < today
-                        ? "bg-surface-container-high text-on-surface-variant"
-                        : "bg-green-100 text-green-800"
-                  )}>
-                    {(item.rdvDate ?? "") === today
-                      ? "Aujourd'hui"
-                      : (item.rdvDate ?? "") < today
-                        ? "Passé"
-                        : "À venir"}
-                  </span>
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>
       </div>
+
+      {startTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-3xl bg-surface-container-lowest border border-outline-variant p-6 shadow-2xl">
+            <div className="mb-5">
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-on-surface-variant">
+                Démarrer l&apos;enregistrement
+              </p>
+              <h2 className="mt-1 text-xl font-extrabold text-primary">
+                {startTarget.patientPrenom} {startTarget.patientNom}
+              </h2>
+              <p className="text-sm text-on-surface-variant mt-1">{startTarget.motif}</p>
+            </div>
+
+            <label htmlFor="psg-room" className="block text-[11px] font-bold uppercase tracking-[0.12em] text-on-surface-variant mb-2">
+              Salle d&apos;acquisition (facultatif)
+            </label>
+            <input
+              id="psg-room"
+              type="text"
+              value={room}
+              onChange={(event) => setRoom(event.target.value)}
+              placeholder="Ex. Salle B-04"
+              className="h-11 w-full rounded-2xl border border-outline-variant bg-surface-container px-3 text-sm font-medium text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary"
+            />
+
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setStartTarget(null)}
+                className="action-secondary rounded-2xl px-4 py-2 text-sm font-bold"
+              >
+                Annuler
+              </button>
+              <ActionButton
+                permission="psg:start"
+                onClick={confirmStart}
+                pending={startMutation.isPending}
+                pendingLabel="Démarrage…"
+                className="action-success rounded-2xl px-4 py-2 text-sm font-bold"
+              >
+                Démarrer l&apos;acquisition
+              </ActionButton>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {toast && (
+        <div role="status" className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full bg-slate-900 px-5 py-3 text-sm font-bold text-white shadow-xl">
+          {toast}
+        </div>
+      )}
     </>
   );
 }

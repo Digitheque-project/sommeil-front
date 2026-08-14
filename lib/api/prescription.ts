@@ -15,7 +15,12 @@ const getPrescriptionBaseUrl = () => {
 };
 
 const authHeaders = (): Record<string, string> => {
-  const token = localStorage.getItem('token');
+  // Mêmes clés que celles posées par AuthContext : `token` seul laissait
+  // partir les requêtes sans en-tête d'autorisation.
+  const token =
+    localStorage.getItem('access_token') ||
+    localStorage.getItem('auth_token') ||
+    localStorage.getItem('token');
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 

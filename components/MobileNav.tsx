@@ -3,16 +3,18 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NAV_ITEMS, isPathActive } from "@/lib/nav";
+import { usePermissions } from "@/hooks/use-permissions";
 
 export default function MobileNav() {
   const pathname = usePathname();
+  const { can } = usePermissions();
 
   return (
     <nav
       aria-label="Navigation mobile principale"
       className="md:hidden fixed bottom-0 left-0 right-0 bg-surface border-t border-outline-variant h-16 flex items-center justify-around px-2 z-50"
     >
-      {NAV_ITEMS.map((item) => {
+      {NAV_ITEMS.filter((item) => can(item.permission)).map((item) => {
         const active = isPathActive(pathname, item.href);
         return (
           <Link
