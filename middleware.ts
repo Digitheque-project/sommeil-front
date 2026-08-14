@@ -27,6 +27,11 @@ export function middleware(request: NextRequest) {
     return response;
   }
 
+  // Après le choix du service dans le portail SSO, la base URL du service
+  // est appelée. La racine de cette application est son tableau de bord.
+  // Aucun second saut n'est nécessaire : le jeton est déjà présent dans le
+  // cookie posé juste au-dessus.
+
   if (pathname === "/login" || pathname === "/deconnexion") {
     return NextResponse.next();
   }
