@@ -66,8 +66,7 @@ export default function DonutChart({
             cy={size / 2}
             r={radius}
             fill="none"
-            stroke="currentColor"
-            className="text-outline-variant/50"
+            stroke="#E2E8F0"
             strokeWidth={thickness}
           />
           {segments.map((s) => (
@@ -89,12 +88,12 @@ export default function DonutChart({
         {(centerLabel || centerValue) && (
           <div className="absolute inset-0 flex flex-col items-center justify-center px-4 text-center">
             {centerValue && (
-              <span className="font-headline-md text-headline-md text-primary">
+              <span className="text-[28px] font-black text-[#0F172A]">
                 {centerValue}
               </span>
             )}
             {centerLabel && (
-              <span className="text-label-sm text-on-surface-variant">
+              <span className="text-xs font-semibold text-[#64748B]">
                 {centerLabel}
               </span>
             )}
@@ -105,16 +104,18 @@ export default function DonutChart({
         {segments.map((s) => (
           <div
             key={s.label}
-            className="flex items-center justify-between gap-3 text-body-sm"
+            className="flex items-center justify-between gap-3"
           >
             <div className="flex items-center gap-2 min-w-0">
               <span
                 className="w-2.5 h-2.5 rounded-full shrink-0"
                 style={{ backgroundColor: s.color }}
               />
-              <span className="text-on-surface truncate">{s.label}</span>
+              <span className="text-sm font-bold uppercase tracking-wide text-[#334155] truncate">
+                {s.label}
+              </span>
             </div>
-            <span className="font-data-mono text-on-surface-variant shrink-0">
+            <span className="text-sm font-bold text-[#64748B] shrink-0">
               {s.percent}%
             </span>
           </div>

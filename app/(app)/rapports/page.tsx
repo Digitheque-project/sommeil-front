@@ -104,26 +104,20 @@ export default function RapportsPage() {
     {
       label: "Examens réalisés",
       value: stats ? String(stats.indicateurs.examensRealises) : "—",
-      icon: "clinical_notes",
-      iconBg: "bg-secondary-container/15",
-      iconColor: "text-secondary",
+      borderColor: "border-[#2563EB]",
     },
     {
       label: "Comptes-rendus validés",
       value: stats ? String(stats.indicateurs.tauxValidation) : "—",
       suffix: "%",
-      icon: "fact_check",
-      iconBg: "bg-green-100",
-      iconColor: "text-green-700",
+      borderColor: "border-[#15803D]",
       note: stats ? `${stats.indicateurs.comptesRendusValides} compte(s) rendu(s) signé(s)` : undefined,
     },
     {
       label: "Consultations",
       value: stats ? String(stats.indicateurs.consultations) : "—",
-      note: stats ? `dont ${stats.indicateurs.urgences} urgente(s)` : undefined,
-      icon: "bedtime",
-      iconBg: "bg-secondary-fixed",
-      iconColor: "text-secondary",
+      borderColor: "border-[#2563EB]",
+      note: stats ? { count: stats.indicateurs.urgences, suffix: "urgente(s)" } : undefined,
     },
   ];
 
@@ -136,112 +130,122 @@ export default function RapportsPage() {
         doctorRole="Spécialiste Sommeil"
       />
 
-      <div className="p-container-padding space-y-section-gap">
-        {/* Header & Filters */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div>
-            <h2 className="font-headline-md text-headline-md text-primary mb-1">
-              Rapports &amp; Statistiques
-            </h2>
-            <p className="text-on-surface-variant font-body-md">
-              Analyse de l&apos;activité clinique et des indicateurs de diagnostic du sommeil.
-            </p>
+      <div className="page-content p-8 bg-[#F7FBFD] min-h-[calc(100vh-84px)]">
+        <div className="max-w-[1500px] mx-auto space-y-6">
+          {/* Header */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div>
+              <h2 className="text-[42px] font-extrabold text-[#0B1F33] leading-none">
+                Rapports &amp; Statistiques
+              </h2>
+              <p className="text-[#64748B] font-semibold mt-2">
+                Analyse de l&apos;activité clinique et des indicateurs de diagnostic du sommeil.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <ActionButton
+                permission="stats:export"
+                onClick={exportCsv}
+                disabled={!stats}
+                pending={isExporting}
+                pendingLabel="Export en cours…"
+                className="flex items-center gap-2 rounded-xl bg-[#EEF3F7] px-5 py-2.5 text-sm font-bold text-[#1E293B] hover:bg-[#E2E8F0] transition"
+              >
+                <span className="material-symbols-outlined text-[20px]">download</span>
+                Exporter
+              </ActionButton>
+              <ActionButton
+                permission="stats:generate"
+                onClick={generateReport}
+                disabled={!stats}
+                className="flex items-center gap-2 rounded-xl bg-[#2563EB] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#1E3A8A] transition"
+              >
+                <span className="material-symbols-outlined text-[20px]">summarize</span>
+                Générer un rapport
+              </ActionButton>
+            </div>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <div className="bg-surface-container-lowest border border-outline-variant p-1 rounded-lg flex items-center">
+
+          {/* Period filter bar */}
+          <div className="bg-white rounded-2xl border border-[#E2E8F0] p-4 shadow-sm flex flex-wrap items-center gap-4">
+            <span className="text-xs font-bold uppercase tracking-wide text-[#64748B]">Période</span>
+            <div className="inline-flex bg-[#F1F5F9] rounded-xl p-1">
               {PERIODS.map((item) => (
                 <button
                   key={item.key}
                   type="button"
                   onClick={() => setPeriod(item.key)}
-                  className={`px-4 py-1.5 rounded-md font-label-md text-label-md transition-colors ${
+                  className={`px-4 py-2 rounded-lg text-sm font-bold transition ${
                     period === item.key
-                      ? "text-secondary font-semibold bg-secondary-container"
-                      : "text-on-surface-variant hover:bg-surface-container-low"
+                      ? "bg-[#2563EB] text-white shadow-sm"
+                      : "text-[#475569] hover:bg-white"
                   }`}
                 >
                   {item.label}
                 </button>
               ))}
             </div>
-            <ActionButton
-              permission="stats:generate"
-              onClick={generateReport}
-              disabled={!stats}
-              className="action-primary px-4 py-2 rounded-lg text-label-md font-label-md flex items-center gap-2 shadow-sm"
-            >
-              <span className="material-symbols-outlined text-[20px]">summarize</span>
-              Générer un rapport
-            </ActionButton>
-            <ActionButton
-              permission="stats:export"
-              onClick={exportCsv}
-              disabled={!stats}
-              pending={isExporting}
-              pendingLabel="Export en cours…"
-              className="action-secondary px-4 py-2 rounded-lg text-label-md font-label-md flex items-center gap-2 shadow-sm"
-            >
-              <span className="material-symbols-outlined text-[20px]">download</span>
-              Exporter
-            </ActionButton>
+            {isFetching && (
+              <span className="text-xs font-semibold text-[#64748B]">Actualisation…</span>
+            )}
           </div>
-        </div>
 
-        {isError && (
-          <div className="flex items-center justify-between gap-4 rounded-2xl border border-red-200 bg-red-50 px-5 py-4">
-            <p className="text-sm font-semibold text-red-800">
-              Les statistiques n&apos;ont pas pu être chargées :{" "}
-              {error instanceof Error ? error.message : "erreur inconnue"}
-            </p>
-            <button
-              type="button"
-              onClick={() => refetch()}
-              className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-red-700"
-            >
-              Réessayer
-            </button>
+          {isError && (
+            <div className="flex items-center justify-between gap-4 rounded-2xl border border-red-200 bg-red-50 px-5 py-4">
+              <p className="text-sm font-semibold text-red-800">
+                Les statistiques n&apos;ont pas pu être chargées :{" "}
+                {error instanceof Error ? error.message : "erreur inconnue"}
+              </p>
+              <button
+                type="button"
+                onClick={() => refetch()}
+                className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-red-700"
+              >
+                Réessayer
+              </button>
+            </div>
+          )}
+
+          {/* KPI Row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+            {kpis.map((kpi) => (
+              <div
+                key={kpi.label}
+                className={`bg-white rounded-2xl p-6 border-l-4 shadow-sm ${kpi.borderColor}`}
+              >
+                <p className="text-[10px] uppercase tracking-widest font-bold text-[#64748B]">
+                  {kpi.label}
+                </p>
+                <h4 className="text-5xl font-black text-[#0F172A] mt-3">
+                  {isLoading ? "…" : kpi.value}
+                  {kpi.suffix && !isLoading && (
+                    <span className="text-2xl font-bold text-[#64748B] ml-1">{kpi.suffix}</span>
+                  )}
+                </h4>
+                {kpi.note && typeof kpi.note === "string" && (
+                  <p className="text-xs text-[#64748B] mt-2">{kpi.note}</p>
+                )}
+                {kpi.note && typeof kpi.note === "object" && (
+                  <p className="text-xs text-[#64748B] mt-2">
+                    dont <span className="font-bold text-[#DC2626]">{kpi.note.count}</span>{" "}
+                    {kpi.note.suffix}
+                  </p>
+                )}
+              </div>
+            ))}
           </div>
-        )}
 
-        {/* KPI Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {kpis.map((kpi) => (
-            <div
-              key={kpi.label}
-              className="bg-white border border-outline-variant p-6 rounded-[28px] shadow-sm hover:shadow-md transition-shadow duration-200"
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div className={`p-3 rounded-2xl ${kpi.iconBg} ${kpi.iconColor} inline-flex`}>
-                  <span className="material-symbols-outlined icon-xl">{kpi.icon}</span>
+          {/* Charts Grid */}
+          <div className="grid grid-cols-12 gap-5">
+            <div className="col-span-12 lg:col-span-7 bg-white rounded-2xl p-6 shadow-sm">
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between mb-4">
+                <div>
+                  <h3 className="text-[22px] font-extrabold text-[#0F172A]">Volume d&apos;activité</h3>
+                  <p className="text-sm text-[#64748B] font-semibold">
+                    Répartition sur la période · {periodLabel}
+                  </p>
                 </div>
               </div>
-              <p className="text-on-surface-variant font-label-md text-label-md uppercase tracking-[0.16em] mb-3">
-                {kpi.label}
-              </p>
-              <h4 className="font-display-lg text-display-lg text-primary">
-                {isLoading ? "…" : kpi.value}
-                {kpi.suffix && !isLoading && (
-                  <span className="text-headline-sm font-headline-sm text-on-surface-variant"> {kpi.suffix}</span>
-                )}
-              </h4>
-              {kpi.note && <p className="mt-3 text-label-sm text-on-surface-variant">{kpi.note}</p>}
-            </div>
-          ))}
-        </div>
-
-        {/* Charts Grid */}
-        <div className="grid grid-cols-12 gap-gutter">
-          <div className="col-span-12 lg:col-span-7 bg-white border border-outline-variant rounded-[32px] p-6 shadow-sm">
-            <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between mb-2">
-              <div>
-                <h3 className="font-headline-sm text-headline-sm text-primary">Volume d&apos;activité</h3>
-                <p className="text-label-sm text-on-surface-variant">
-                  Répartition sur la période · {periodLabel}
-                  {isFetching && " · actualisation…"}
-                </p>
-              </div>
-            </div>
-            <div className="mt-4">
               <BarChart
                 data={(stats?.volumeExamens ?? []).map((item) => ({
                   label: item.label,
@@ -251,72 +255,75 @@ export default function RapportsPage() {
                 height={220}
               />
             </div>
-          </div>
 
-          <div className="col-span-12 lg:col-span-5 bg-white border border-outline-variant rounded-[32px] p-6 shadow-sm">
-            <h3 className="font-headline-sm text-headline-sm text-primary mb-1">
-              Répartition par type de visite
-            </h3>
-            <p className="text-label-sm text-on-surface-variant mb-6">
-              Sur {stats?.indicateurs.consultations ?? 0} consultations · {periodLabel}
-            </p>
-            {stats && stats.typesExamens.length > 0 ? (
-              <DonutChart
-                data={withColors(stats.typesExamens, SLICE_COLORS)}
-                centerValue={String(stats.indicateurs.consultations)}
-                centerLabel="consultations"
-              />
-            ) : (
-              <p className="py-10 text-center text-sm text-on-surface-variant">
-                Aucune donnée sur cette période.
+            <div className="col-span-12 lg:col-span-5 bg-white rounded-2xl p-6 shadow-sm">
+              <h3 className="text-lg font-extrabold text-[#0F172A] mb-1">
+                Répartition par type de visite
+              </h3>
+              <p className="text-sm text-[#64748B] font-semibold mb-6">
+                Sur {stats?.indicateurs.consultations ?? 0} consultations · {periodLabel}
               </p>
-            )}
-          </div>
+              {stats && stats.typesExamens.length > 0 ? (
+                <DonutChart
+                  data={withColors(stats.typesExamens, SLICE_COLORS)}
+                  centerValue={String(stats.indicateurs.consultations)}
+                  centerLabel="consultations"
+                />
+              ) : (
+                <p className="py-10 text-center text-sm text-[#64748B]">
+                  Aucune donnée sur cette période.
+                </p>
+              )}
+            </div>
 
-          <div className="col-span-12 lg:col-span-5 bg-white border border-outline-variant rounded-[32px] p-6 shadow-sm">
-            <h3 className="font-headline-sm text-headline-sm text-primary mb-1">Niveau de priorité</h3>
-            <p className="text-label-sm text-on-surface-variant mb-6">
-              Urgences et consultations programmées · {periodLabel}
-            </p>
-            {stats && stats.severite.length > 0 ? (
-              <DonutChart
-                data={withColors(stats.severite, SEVERITY_COLORS)}
-                centerValue={String(stats.indicateurs.urgences)}
-                centerLabel="urgences"
-              />
-            ) : (
-              <p className="py-10 text-center text-sm text-on-surface-variant">
-                Aucune donnée sur cette période.
+            <div className="col-span-12 lg:col-span-5 bg-white rounded-2xl p-6 shadow-sm">
+              <h3 className="text-lg font-extrabold text-[#0F172A] mb-1">Niveau de priorité</h3>
+              <p className="text-sm text-[#64748B] font-semibold mb-6">
+                Urgences et consultations programmées · {periodLabel}
               </p>
-            )}
-          </div>
+              {stats && stats.severite.length > 0 ? (
+                <DonutChart
+                  data={withColors(stats.severite, SEVERITY_COLORS)}
+                  centerValue={String(stats.indicateurs.urgences)}
+                  centerLabel="urgences"
+                />
+              ) : (
+                <p className="py-10 text-center text-sm text-[#64748B]">
+                  Aucune donnée sur cette période.
+                </p>
+              )}
+            </div>
 
-          <div className="col-span-12 lg:col-span-7 bg-white border border-outline-variant rounded-[32px] p-6 shadow-sm">
-            <h3 className="font-headline-sm text-headline-sm text-primary mb-1">
-              Taux d&apos;occupation par salle
-            </h3>
-            <p className="text-label-sm text-on-surface-variant mb-6">
-              Examens de polysomnographie · {periodLabel}
-            </p>
-            {stats && stats.occupationSalles.length > 0 ? (
-              <div className="space-y-5">
-                {stats.occupationSalles.map((room) => (
-                  <div key={room.label}>
-                    <div className="flex items-center justify-between mb-2 text-body-sm">
-                      <span className="text-on-surface font-medium">{room.label}</span>
-                      <span className="font-data-mono text-on-surface-variant">{room.percent}%</span>
+            <div className="col-span-12 lg:col-span-7 bg-white rounded-2xl p-6 shadow-sm">
+              <h3 className="text-lg font-extrabold text-[#0F172A] mb-1">
+                Taux d&apos;occupation par salle
+              </h3>
+              <p className="text-sm text-[#64748B] font-semibold mb-6">
+                Examens de polysomnographie · {periodLabel}
+              </p>
+              {stats && stats.occupationSalles.length > 0 ? (
+                <div className="space-y-5">
+                  {stats.occupationSalles.map((room) => (
+                    <div key={room.label}>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-semibold text-[#0F172A]">{room.label}</span>
+                        <span className="text-sm font-bold text-[#0F172A]">{room.percent}%</span>
+                      </div>
+                      <div className="h-2.5 bg-[#F1F5F9] border border-[#E2E8F0] rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-[#2563EB] rounded-full"
+                          style={{ width: `${room.percent}%` }}
+                        />
+                      </div>
                     </div>
-                    <div className="h-2.5 bg-surface-container rounded-full overflow-hidden">
-                      <div className="h-full bg-secondary rounded-full" style={{ width: `${room.percent}%` }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="py-10 text-center text-sm text-on-surface-variant">
-                Aucune salle renseignée sur les examens de la période.
-              </p>
-            )}
+                  ))}
+                </div>
+              ) : (
+                <p className="py-10 text-center text-sm text-[#64748B]">
+                  Aucune salle renseignée sur les examens de la période.
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </div>

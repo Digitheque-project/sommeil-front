@@ -34,14 +34,16 @@ export default function BarChart({
   return (
     <div>
       {series.length > 1 && (
-        <div className="flex flex-wrap gap-4 text-label-sm mb-5">
+        <div className="flex flex-wrap gap-4 mb-5">
           {series.map((s) => (
             <div key={s.key} className="flex items-center gap-2">
               <span
                 className="w-3 h-3 rounded-full"
                 style={{ backgroundColor: s.color }}
               />
-              <span className="text-on-surface-variant">{s.label}</span>
+              <span className="text-xs font-bold uppercase tracking-wide text-[#64748B]">
+                {s.label}
+              </span>
             </div>
           ))}
         </div>
@@ -54,10 +56,10 @@ export default function BarChart({
             className="absolute left-0 right-0 flex items-center gap-2"
             style={{ bottom: `${g * 100}%` }}
           >
-            <span className="text-[10px] font-data-mono text-on-surface-variant w-8 -translate-y-1/2">
+            <span className="text-[10px] font-semibold text-[#64748B] w-8 -translate-y-1/2">
               {valueFormatter(Math.round(computedMax * g))}
             </span>
-            <div className="flex-1 border-t border-outline-variant/60" />
+            <div className="flex-1 border-t border-[#E2E8F0]" />
           </div>
         ))}
         <div className="absolute inset-0 pl-10 flex items-end gap-3 sm:gap-5">
@@ -73,7 +75,7 @@ export default function BarChart({
                   <div
                     key={s.key}
                     title={`${s.label} · ${d.label}: ${valueFormatter(value)}`}
-                    className="flex-1 max-w-[26px] rounded-t-lg hover:opacity-80 transition-all"
+                    className="flex-1 max-w-[26px] rounded-t-xl hover:opacity-80 transition-all"
                     style={{ height: barHeight, backgroundColor: s.color }}
                   />
                 );
@@ -87,7 +89,7 @@ export default function BarChart({
         {data.map((d) => (
           <span
             key={d.label}
-            className="flex-1 text-center text-[11px] font-data-mono text-on-surface-variant"
+            className="flex-1 text-center text-[11px] font-semibold text-[#64748B]"
           >
             {d.label}
           </span>
