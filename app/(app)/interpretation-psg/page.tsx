@@ -167,6 +167,7 @@ export default function InterpretationPsgPage() {
          <p class="meta">
            Patient : ${data.patient.nom}<br />
            Examen du ${data.examen ? formatDate(data.examen.rdvDate) : "—"}<br />
+           Enregistrement : du ${data.examen?.demarreLe ? formatDateTime(data.examen.demarreLe) : "—"} au ${data.examen?.termineLe ? formatDateTime(data.examen.termineLe) : "—"}<br />
            Statut : ${data.statut === "VALIDE" ? `Validée le ${formatDateTime(data.valideLe)}${data.validePar ? ` par ${data.validePar}` : ""}` : "Brouillon"}<br />
            Édité le ${formatDateTime(data.genereLe)}
          </p>
@@ -307,7 +308,11 @@ export default function InterpretationPsgPage() {
                   {selectedExam.patientPrenom} {selectedExam.patientNom}
                 </h2>
                 <p className="mt-1 text-sm text-on-surface-variant">
-                  Examen du {formatDate(selectedExam.rdvDate)} · Terminé le {formatDateTime(selectedExam.termineLe)}
+                  Examen du {formatDate(selectedExam.rdvDate)}
+                </p>
+                <p className="mt-1 text-sm text-on-surface-variant">
+                  Démarré le {formatDateTime(selectedExam.demarreLe)} · Terminé le{" "}
+                  {formatDateTime(selectedExam.termineLe)}
                 </p>
               </div>
               <button
