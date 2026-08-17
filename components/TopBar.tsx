@@ -17,7 +17,6 @@ type TopBarProps = {
   doctorRole?: string;
   avatarSrc?: string;
   logoSrc?: string;
-  showSettings?: boolean;
 };
 
 const todayLabel = new Intl.DateTimeFormat("fr-FR", {
@@ -46,11 +45,10 @@ export default function TopBar({
   doctorRole = "Spécialiste Sommeil",
   avatarSrc,
   logoSrc = "/chu.png",
-  showSettings = true,
 }: Readonly<TopBarProps>) {
   const { toggleSidebar } = useSidebar();
   const { user } = useAuth();
-  const { can, permissions } = usePermissions();
+  const { permissions } = usePermissions();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const { data: notifications = [], isLoading } = useNotifications();
@@ -205,16 +203,6 @@ export default function TopBar({
             </>
           )}
         </div>
-        {showSettings && can("settings:view") && (
-          <Link
-            href="/parametres"
-            className="w-10 h-10 flex items-center justify-center text-primary hover:bg-primary/10 rounded-full transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            aria-label="Paramètres"
-          >
-            <span className="material-symbols-outlined">settings</span>
-          </Link>
-        )}
-
         <div className="w-px h-6 bg-outline-variant hidden sm:block" />
         <div className="relative">
           <button
@@ -262,16 +250,6 @@ export default function TopBar({
                     {displayRole} · {permissions.length} permission(s)
                   </p>
                 </div>
-                {can("settings:view") && (
-                  <Link
-                    href="/parametres"
-                    onClick={() => setAccountOpen(false)}
-                    className="flex items-center gap-2 px-4 py-3 text-sm font-semibold text-on-surface hover:bg-surface-container"
-                  >
-                    <span className="material-symbols-outlined text-[20px]">settings</span>
-                    Paramètres
-                  </Link>
-                )}
                 <Link
                   href="/aide"
                   onClick={() => setAccountOpen(false)}

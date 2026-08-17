@@ -76,10 +76,6 @@ export const PERMISSION_CATALOG = {
   "role:assign": "Attribuer un rôle",
   "permission:manage": "Gérer les permissions",
   "audit:view": "Consulter le journal d'audit",
-
-  // 9. Paramètres système
-  "settings:view": "Consulter les paramètres",
-  "settings:update": "Modifier les paramètres",
 } as const;
 
 export type Permission = keyof typeof PERMISSION_CATALOG;
@@ -160,7 +156,6 @@ const MEDECIN_PERMISSIONS: Permission[] = [
   "archive:read",
   "archive:list",
   "archive:export",
-  "settings:view",
 ];
 
 const PARAMED_PERMISSIONS: Permission[] = [
@@ -233,5 +228,4 @@ export const ROUTE_PERMISSIONS: Array<{ path: string; permission: Permission }> 
   { path: "/comptes-rendus", permission: "report:list" },
   { path: "/rapports", permission: "stats:view" },
   { path: "/archives", permission: "archive:list" },
-  { path: "/parametres", permission: "settings:view" },
 ];

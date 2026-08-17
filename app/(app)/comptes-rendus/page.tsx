@@ -181,7 +181,6 @@ export default function CompteRenduPage() {
         searchPlaceholder="Rechercher un dossier..."
         doctorName="Dr. Morel"
         doctorRole="Somnologue"
-        showSettings={false}
       />
 
       <main className="w-full mx-auto px-container-padding py-section-gap animate-fade-in">
