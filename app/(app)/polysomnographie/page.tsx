@@ -20,6 +20,12 @@ const formatDate = (value: string) => {
   }).format(date);
 };
 
+const formatTime = (value: string) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit" }).format(date);
+};
+
 const dateKey = (value: string) => new Date(value).toISOString().slice(0, 10);
 
 const getInitials = (item: PsgExam) => {
@@ -104,11 +110,13 @@ export default function PolysomnographiePage() {
     }
   };
 
-  /** `psg:stop` — clôt l'acquisition. */
+  /** `psg:stop` — clôt l'acquisition ; l'examen bascule vers Interprétation PSG. */
   const stop = async (exam: PsgExam) => {
     try {
       await stopMutation.mutateAsync(exam.id);
-      setToast("Enregistrement terminé.");
+      setToast(
+        `Enregistrement terminé pour ${exam.patientPrenom} ${exam.patientNom} — l'examen est maintenant disponible dans Interprétation PSG.`
+      );
     } catch (error) {
       setToast(error instanceof Error ? error.message : "L'arrêt a échoué.");
     }
@@ -279,6 +287,20 @@ export default function PolysomnographiePage() {
                           </span>
                         )}
                       </div>
+                      {item.demarreLe && (
+                        <div className="flex flex-wrap items-center gap-3 text-xs font-semibold">
+                          <span className="flex items-center gap-1.5 text-amber-700 whitespace-nowrap">
+                            <span className="material-symbols-outlined text-[14px]">sensors</span>
+                            Démarré à {formatTime(item.demarreLe)}
+                          </span>
+                          {item.termineLe && (
+                            <span className="flex items-center gap-1.5 text-green-700 whitespace-nowrap">
+                              <span className="material-symbols-outlined text-[14px]">task_alt</span>
+                              Terminé à {formatTime(item.termineLe)}
+                            </span>
+                          )}
+                        </div>
+                      )}
                       <p className="text-sm text-on-surface-variant truncate">{item.motif}</p>
                     </div>
 
@@ -290,7 +312,7 @@ export default function PolysomnographiePage() {
                     </span>
 
                     <div className="flex flex-wrap items-center gap-1.5 shrink-0">
-                      {item.statut === "EN_COURS" ? (
+                      {item.statut === "EN_COURS" && (
                         <ActionButton
                           permission="psg:stop"
                           onClick={() => stop(item)}
@@ -298,29 +320,31 @@ export default function PolysomnographiePage() {
                           className="action-danger flex items-center gap-1.5 rounded-lg px-3 py-2 text-label-md font-label-md"
                         >
                           <span className="material-symbols-outlined text-[18px]">stop_circle</span>
-                          Arrêter
-                        </ActionButton>
-                      ) : (
-                        <ActionButton
-                          permission="psg:start"
-                          onClick={() => { setStartTarget(item); setRoom(item.salle ?? ""); }}
-                          disabled={item.statut === "TERMINE"}
-                          className="action-success flex items-center gap-1.5 rounded-lg px-3 py-2 text-label-md font-label-md"
-                        >
-                          <span className="material-symbols-outlined text-[18px]">play_circle</span>
-                          Démarrer
+                          Stopper
                         </ActionButton>
                       )}
-                      <ActionButton
-                        permission="psg:update"
-                        onClick={() => openEdit(item)}
-                        disabled={item.statut === "TERMINE"}
-                        pending={updateMutation.isPending}
-                        title="Replanifier le rendez-vous ou changer de salle"
-                        className="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container"
-                      >
-                        <span className="material-symbols-outlined text-[20px]">edit_calendar</span>
-                      </ActionButton>
+                      {item.statut === "PLANIFIE" && (
+                        <>
+                          <ActionButton
+                            permission="psg:update"
+                            onClick={() => openEdit(item)}
+                            pending={updateMutation.isPending}
+                            title="Choisir la date et l'heure du rendez-vous"
+                            className="action-secondary flex items-center gap-1.5 rounded-lg px-3 py-2 text-label-md font-label-md"
+                          >
+                            <span className="material-symbols-outlined text-[18px]">edit_calendar</span>
+                            Planifier
+                          </ActionButton>
+                          <ActionButton
+                            permission="psg:start"
+                            onClick={() => { setStartTarget(item); setRoom(item.salle ?? ""); }}
+                            className="action-success flex items-center gap-1.5 rounded-lg px-3 py-2 text-label-md font-label-md"
+                          >
+                            <span className="material-symbols-outlined text-[18px]">play_circle</span>
+                            Démarrer
+                          </ActionButton>
+                        </>
+                      )}
                       <ActionButton
                         permission="psg:export_data"
                         onClick={() => exportData(item)}
@@ -401,7 +425,7 @@ export default function PolysomnographiePage() {
             <div className="mb-5 flex items-start justify-between gap-3">
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-on-surface-variant">
-                  Replanifier l&apos;examen
+                  Planifier l&apos;examen
                 </p>
                 <h2 className="mt-1 text-xl font-extrabold text-primary">
                   {editTarget.patientPrenom} {editTarget.patientNom}
