@@ -1,7 +1,6 @@
 import { sommeilApi } from "./http";
 
 export type PsgInterpretationStatut = "BROUILLON" | "VALIDE";
-export type PsgSeverite = "NORMAL" | "LEGER" | "MODERE" | "SEVERE";
 
 export type PsgInterpretation = {
   id: string;
@@ -9,17 +8,8 @@ export type PsgInterpretation = {
   patientId: string;
   patientNom: string;
   patientPrenom: string;
-  iah?: number | null;
-  indexDesaturation?: number | null;
-  spo2Moyenne?: number | null;
-  spo2Min?: number | null;
-  efficaciteSommeil?: number | null;
-  latenceEndormissement?: number | null;
-  latenceRem?: number | null;
-  tempsSommeilTotal?: number | null;
-  severite?: PsgSeverite | null;
-  conclusion: string;
-  recommandations?: string | null;
+  titre: string;
+  contenu: string;
   statut: PsgInterpretationStatut;
   valideLe?: string | null;
   validePar?: string | null;
@@ -27,35 +17,11 @@ export type PsgInterpretation = {
   updatedAt: string;
 };
 
-export type PsgInterpretationPayload = {
-  psgId?: string;
-  iah?: number | null;
-  indexDesaturation?: number | null;
-  spo2Moyenne?: number | null;
-  spo2Min?: number | null;
-  efficaciteSommeil?: number | null;
-  latenceEndormissement?: number | null;
-  latenceRem?: number | null;
-  tempsSommeilTotal?: number | null;
-  severite?: PsgSeverite | null;
-  conclusion?: string;
-  recommandations?: string | null;
-};
-
 export type PsgInterpretationExport = {
   id: string;
+  titre: string;
+  contenu: string;
   statut: PsgInterpretationStatut;
-  iah?: number | null;
-  indexDesaturation?: number | null;
-  spo2Moyenne?: number | null;
-  spo2Min?: number | null;
-  efficaciteSommeil?: number | null;
-  latenceEndormissement?: number | null;
-  latenceRem?: number | null;
-  tempsSommeilTotal?: number | null;
-  severite?: PsgSeverite | null;
-  conclusion: string;
-  recommandations?: string | null;
   valideLe?: string | null;
   validePar?: string | null;
   genereLe: string;
@@ -72,10 +38,10 @@ export const psgInterpretationApi = {
   getByPsg: (psgId: string) =>
     sommeilApi<PsgInterpretation | null>(`/psg-interpretations/by-psg/${psgId}`),
 
-  create: (data: PsgInterpretationPayload & { psgId: string; conclusion: string }) =>
+  create: (data: { psgId: string; titre?: string; contenu: string }) =>
     sommeilApi<PsgInterpretation>("/psg-interpretations", { method: "POST", body: data }),
 
-  update: (id: string, data: PsgInterpretationPayload) =>
+  update: (id: string, data: { titre?: string; contenu?: string }) =>
     sommeilApi<PsgInterpretation>(`/psg-interpretations/${id}`, { method: "PUT", body: data }),
 
   validate: (id: string, validePar?: string) =>

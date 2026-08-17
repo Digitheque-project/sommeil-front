@@ -11,7 +11,7 @@ import {
   useUpdatePsgInterpretation,
   useValidatePsgInterpretation,
 } from "@/hooks/use-psg-interpretations";
-import { psgInterpretationApi, type PsgSeverite } from "@/lib/api/psg-interpretations";
+import { psgInterpretationApi } from "@/lib/api/psg-interpretations";
 import type { PsgExam } from "@/lib/api/psg";
 import { useAuth } from "@/context/AuthContext";
 import { printDocument } from "@/lib/download";
@@ -39,67 +39,11 @@ const formatDate = (value: string) => {
   }).format(date);
 };
 
-const SEVERITE_OPTIONS: Array<{ value: PsgSeverite; label: string; className: string }> = [
-  { value: "NORMAL", label: "Normal (IAH < 5)", className: "bg-green-100 text-green-800" },
-  { value: "LEGER", label: "SAOS léger (5 ≤ IAH < 15)", className: "bg-amber-100 text-amber-800" },
-  { value: "MODERE", label: "SAOS modéré (15 ≤ IAH < 30)", className: "bg-orange-100 text-orange-800" },
-  { value: "SEVERE", label: "SAOS sévère (IAH ≥ 30)", className: "bg-red-100 text-red-800" },
-];
-
-const suggestSeverite = (iah: number | null): PsgSeverite | null => {
-  if (iah === null || Number.isNaN(iah)) return null;
-  if (iah < 5) return "NORMAL";
-  if (iah < 15) return "LEGER";
-  if (iah < 30) return "MODERE";
-  return "SEVERE";
-};
-
-const toNumberOrNull = (value: string): number | null => {
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  const parsed = Number(trimmed);
-  return Number.isNaN(parsed) ? null : parsed;
-};
-
-type NumericFieldKey =
-  | "iah"
-  | "indexDesaturation"
-  | "spo2Moyenne"
-  | "spo2Min"
-  | "efficaciteSommeil"
-  | "latenceEndormissement"
-  | "latenceRem"
-  | "tempsSommeilTotal";
-
-const NUMERIC_FIELDS: Array<{ key: NumericFieldKey; label: string; unit: string; step?: string }> = [
-  { key: "iah", label: "IAH (index apnées-hypopnées)", unit: "/h", step: "0.1" },
-  { key: "indexDesaturation", label: "Index de désaturation", unit: "/h", step: "0.1" },
-  { key: "spo2Moyenne", label: "SpO2 moyenne", unit: "%", step: "0.1" },
-  { key: "spo2Min", label: "SpO2 minimale", unit: "%", step: "0.1" },
-  { key: "efficaciteSommeil", label: "Efficacité du sommeil", unit: "%", step: "0.1" },
-  { key: "latenceEndormissement", label: "Latence d'endormissement", unit: "min" },
-  { key: "latenceRem", label: "Latence REM", unit: "min" },
-  { key: "tempsSommeilTotal", label: "Temps de sommeil total", unit: "min" },
-];
-
-const emptyNumericState: Record<NumericFieldKey, string> = {
-  iah: "",
-  indexDesaturation: "",
-  spo2Moyenne: "",
-  spo2Min: "",
-  efficaciteSommeil: "",
-  latenceEndormissement: "",
-  latenceRem: "",
-  tempsSommeilTotal: "",
-};
-
 export default function InterpretationPsgPage() {
   const { user } = useAuth();
   const [selectedExamId, setSelectedExamId] = useState<string | null>(null);
-  const [numeric, setNumeric] = useState(emptyNumericState);
-  const [severite, setSeverite] = useState<PsgSeverite | "">("");
-  const [conclusion, setConclusion] = useState("");
-  const [recommandations, setRecommandations] = useState("");
+  const [titre, setTitre] = useState("");
+  const [draft, setDraft] = useState("");
   const [toast, setToast] = useState<string | null>(null);
 
   const { data: exams = [], isLoading: areExamsLoading } = usePsgExams("TERMINE");
@@ -128,28 +72,10 @@ export default function InterpretationPsgPage() {
   const isLocked = selectedInterpretation?.statut === "VALIDE";
   const isSaving = createMutation.isPending || updateMutation.isPending;
 
-  // Le formulaire suit l'interprétation existante de l'examen sélectionné.
+  // Le brouillon suit l'interprétation existante de l'examen sélectionné.
   useEffect(() => {
-    if (selectedInterpretation) {
-      setNumeric({
-        iah: selectedInterpretation.iah?.toString() ?? "",
-        indexDesaturation: selectedInterpretation.indexDesaturation?.toString() ?? "",
-        spo2Moyenne: selectedInterpretation.spo2Moyenne?.toString() ?? "",
-        spo2Min: selectedInterpretation.spo2Min?.toString() ?? "",
-        efficaciteSommeil: selectedInterpretation.efficaciteSommeil?.toString() ?? "",
-        latenceEndormissement: selectedInterpretation.latenceEndormissement?.toString() ?? "",
-        latenceRem: selectedInterpretation.latenceRem?.toString() ?? "",
-        tempsSommeilTotal: selectedInterpretation.tempsSommeilTotal?.toString() ?? "",
-      });
-      setSeverite(selectedInterpretation.severite ?? "");
-      setConclusion(selectedInterpretation.conclusion ?? "");
-      setRecommandations(selectedInterpretation.recommandations ?? "");
-    } else {
-      setNumeric(emptyNumericState);
-      setSeverite("");
-      setConclusion("");
-      setRecommandations("");
-    }
+    setDraft(selectedInterpretation?.contenu ?? "");
+    setTitre(selectedInterpretation?.titre ?? "");
   }, [selectedInterpretation]);
 
   useEffect(() => {
@@ -162,38 +88,25 @@ export default function InterpretationPsgPage() {
     setSelectedExamId(exam.id);
   };
 
-  const setNumericField = (key: NumericFieldKey, value: string) => {
-    setNumeric((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const iahValue = toNumberOrNull(numeric.iah);
-  const suggestedSeverite = suggestSeverite(iahValue);
-
-  const payloadFromForm = () => ({
-    iah: toNumberOrNull(numeric.iah),
-    indexDesaturation: toNumberOrNull(numeric.indexDesaturation),
-    spo2Moyenne: toNumberOrNull(numeric.spo2Moyenne),
-    spo2Min: toNumberOrNull(numeric.spo2Min),
-    efficaciteSommeil: toNumberOrNull(numeric.efficaciteSommeil),
-    latenceEndormissement: toNumberOrNull(numeric.latenceEndormissement),
-    latenceRem: toNumberOrNull(numeric.latenceRem),
-    tempsSommeilTotal: toNumberOrNull(numeric.tempsSommeilTotal),
-    severite: severite || null,
-    conclusion,
-    recommandations: recommandations || null,
-  });
-
   /** `psg:interpret_create` / `psg:interpret_update` selon qu'un brouillon existe déjà. */
   const saveInterpretation = async () => {
-    if (!selectedExam || !conclusion.trim()) return;
+    if (!selectedExam || !draft.trim()) return;
     try {
       if (selectedInterpretation) {
-        await updateMutation.mutateAsync({ id: selectedInterpretation.id, ...payloadFromForm() });
+        await updateMutation.mutateAsync({
+          id: selectedInterpretation.id,
+          titre: titre.trim() || "Interprétation PSG",
+          contenu: draft,
+        });
         setToast("Interprétation enregistrée.");
         return;
       }
 
-      await createMutation.mutateAsync({ psgId: selectedExam.id, ...payloadFromForm() });
+      await createMutation.mutateAsync({
+        psgId: selectedExam.id,
+        titre: titre.trim() || `Interprétation PSG — ${selectedExam.patientPrenom} ${selectedExam.patientNom}`,
+        contenu: draft,
+      });
       setToast("Interprétation créée.");
     } catch (error) {
       setToast(error instanceof Error ? error.message : "L'enregistrement a échoué.");
@@ -231,30 +144,16 @@ export default function InterpretationPsgPage() {
     if (!selectedInterpretation) return;
     try {
       const data = await psgInterpretationApi.export(selectedInterpretation.id);
-      const severiteLabel = SEVERITE_OPTIONS.find((option) => option.value === data.severite)?.label;
       printDocument(
-        `Interprétation PSG — ${data.patient.nom}`,
-        `<h1>Interprétation de polysomnographie</h1>
+        data.titre,
+        `<h1>${data.titre}</h1>
          <p class="meta">
            Patient : ${data.patient.nom}<br />
            Examen du ${data.examen ? formatDate(data.examen.rdvDate) : "—"}<br />
            Statut : ${data.statut === "VALIDE" ? `Validée le ${formatDateTime(data.valideLe)}${data.validePar ? ` par ${data.validePar}` : ""}` : "Brouillon"}<br />
            Édité le ${formatDateTime(data.genereLe)}
          </p>
-         <table>
-           <tbody>
-             <tr><th>IAH</th><td>${data.iah ?? "—"} /h</td></tr>
-             <tr><th>Index de désaturation</th><td>${data.indexDesaturation ?? "—"} /h</td></tr>
-             <tr><th>SpO2 moyenne / min</th><td>${data.spo2Moyenne ?? "—"}% / ${data.spo2Min ?? "—"}%</td></tr>
-             <tr><th>Efficacité du sommeil</th><td>${data.efficaciteSommeil ?? "—"}%</td></tr>
-             <tr><th>Latence d'endormissement / REM</th><td>${data.latenceEndormissement ?? "—"} min / ${data.latenceRem ?? "—"} min</td></tr>
-             <tr><th>Temps de sommeil total</th><td>${data.tempsSommeilTotal ?? "—"} min</td></tr>
-             <tr><th>Sévérité</th><td>${severiteLabel ?? "—"}</td></tr>
-           </tbody>
-         </table>
-         <h2 style="font-size:14px;margin-top:20px;">Conclusion</h2>
-         <div class="content">${data.conclusion.replaceAll("<", "&lt;")}</div>
-         ${data.recommandations ? `<h2 style="font-size:14px;margin-top:20px;">Recommandations</h2><div class="content">${data.recommandations.replaceAll("<", "&lt;")}</div>` : ""}`
+         <div class="content">${data.contenu.replaceAll("<", "&lt;")}</div>`
       );
     } catch (error) {
       setToast(error instanceof Error ? error.message : "L'export a échoué.");
@@ -285,14 +184,10 @@ export default function InterpretationPsgPage() {
                   Examen du {formatDate(selectedExam.rdvDate)} · {selectedExam.motif}
                 </p>
               </div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="rounded-3xl bg-surface-container p-4 text-center">
                   <p className="text-label-sm text-on-surface-variant uppercase">Terminé le</p>
                   <p className="font-label-md text-primary mt-2">{formatDateTime(selectedExam.termineLe)}</p>
-                </div>
-                <div className="rounded-3xl bg-surface-container p-4 text-center">
-                  <p className="text-label-sm text-on-surface-variant uppercase">IAH</p>
-                  <p className="font-label-md text-primary mt-2">{iahValue ?? "—"}</p>
                 </div>
                 <div className="rounded-3xl bg-surface-container p-4 text-center">
                   <p className="text-label-sm text-on-surface-variant uppercase">Statut</p>
@@ -384,15 +279,23 @@ export default function InterpretationPsgPage() {
 
           <section className="col-span-12 lg:col-span-8">
             <div className="bg-surface-container-lowest border border-outline-variant rounded-3xl shadow-sm flex flex-col h-full">
-              <div className="px-6 py-5 border-b border-outline-variant">
-                <p className="text-label-sm text-on-surface-variant uppercase tracking-[0.18em]">
-                  Résultats de l&apos;examen
-                </p>
-                <p className="mt-1 text-body-sm text-on-surface-variant">
-                  {selectedInterpretation
-                    ? `Dernière modification : ${formatDateTime(selectedInterpretation.updatedAt)}`
-                    : "Renseignez les indices mesurés puis rédigez la conclusion."}
-                </p>
+              <div className="px-6 py-5 border-b border-outline-variant flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex-1">
+                  <p className="text-label-sm text-on-surface-variant uppercase tracking-[0.18em]">
+                    Titre de l&apos;interprétation
+                  </p>
+                  <input
+                    type="text"
+                    value={titre}
+                    onChange={(event) => setTitre(event.target.value)}
+                    disabled={!selectedExam || isLocked}
+                    placeholder="Interprétation de polysomnographie"
+                    className="mt-2 w-full rounded-2xl border border-outline-variant bg-surface-container px-3 py-2 font-headline-sm text-headline-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-60"
+                  />
+                </div>
+                <div className="rounded-3xl bg-surface-container p-3 text-sm text-on-surface-variant shrink-0">
+                  Dernière modification : {formatDateTime(selectedInterpretation?.updatedAt)}
+                </div>
               </div>
 
               <div className="p-6">
@@ -403,104 +306,17 @@ export default function InterpretationPsgPage() {
                     est verrouillée et ne peut plus être modifiée.
                   </p>
                 )}
-
-                {!selectedExam ? (
-                  <p className="text-body-sm text-on-surface-variant">
-                    Sélectionnez un examen terminé pour commencer.
-                  </p>
-                ) : (
-                  <div className="space-y-6">
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      {NUMERIC_FIELDS.map((field) => (
-                        <div key={field.key}>
-                          <label
-                            htmlFor={`psgi-${field.key}`}
-                            className="mb-2 block text-[11px] font-bold uppercase tracking-[0.12em] text-on-surface-variant"
-                          >
-                            {field.label}
-                          </label>
-                          <div className="relative">
-                            <input
-                              id={`psgi-${field.key}`}
-                              type="number"
-                              step={field.step ?? "1"}
-                              value={numeric[field.key]}
-                              onChange={(event) => setNumericField(field.key, event.target.value)}
-                              disabled={isLocked}
-                              className="h-11 w-full rounded-2xl border border-outline-variant bg-surface-container px-3 pr-12 text-sm font-medium text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-60"
-                            />
-                            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-on-surface-variant">
-                              {field.unit}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div>
-                      <span className="mb-2 block text-[11px] font-bold uppercase tracking-[0.12em] text-on-surface-variant">
-                        Sévérité du SAOS
-                        {suggestedSeverite && !severite && (
-                          <span className="ml-2 normal-case font-medium text-primary">
-                            (suggestion d&apos;après l&apos;IAH : {SEVERITE_OPTIONS.find((o) => o.value === suggestedSeverite)?.label})
-                          </span>
-                        )}
-                      </span>
-                      <div className="flex flex-wrap gap-2">
-                        {SEVERITE_OPTIONS.map((option) => (
-                          <button
-                            key={option.value}
-                            type="button"
-                            disabled={isLocked}
-                            onClick={() => setSeverite(option.value)}
-                            className={cn(
-                              "rounded-full px-3 py-2 text-xs font-bold uppercase tracking-wider transition-all disabled:cursor-not-allowed disabled:opacity-60",
-                              severite === option.value
-                                ? option.className
-                                : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"
-                            )}
-                          >
-                            {option.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="psgi-conclusion"
-                        className="mb-2 block text-[11px] font-bold uppercase tracking-[0.12em] text-on-surface-variant"
-                      >
-                        Conclusion
-                      </label>
-                      <textarea
-                        id="psgi-conclusion"
-                        value={conclusion}
-                        onChange={(event) => setConclusion(event.target.value)}
-                        placeholder="Rédigez la conclusion diagnostique de l'examen..."
-                        disabled={isLocked}
-                        className="w-full min-h-[160px] resize-none rounded-3xl border border-outline-variant bg-background p-5 text-body-md text-on-surface focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
-                      />
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="psgi-recommandations"
-                        className="mb-2 block text-[11px] font-bold uppercase tracking-[0.12em] text-on-surface-variant"
-                      >
-                        Recommandations (facultatif)
-                      </label>
-                      <textarea
-                        id="psgi-recommandations"
-                        value={recommandations}
-                        onChange={(event) => setRecommandations(event.target.value)}
-                        placeholder="Prise en charge proposée, orientation, suivi..."
-                        disabled={isLocked}
-                        className="w-full min-h-[120px] resize-none rounded-3xl border border-outline-variant bg-background p-5 text-body-md text-on-surface focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
-                      />
-                    </div>
-                  </div>
-                )}
+                <textarea
+                  value={draft}
+                  onChange={(event) => setDraft(event.target.value)}
+                  placeholder={
+                    selectedExam
+                      ? "Rédigez ici votre interprétation de l'examen sélectionné..."
+                      : "Sélectionnez un examen terminé pour commencer"
+                  }
+                  disabled={!selectedExam || isLocked || areInterpretationsLoading}
+                  className="w-full min-h-[480px] resize-none rounded-3xl border border-outline-variant bg-background p-5 text-body-lg text-on-surface focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
+                />
               </div>
 
               <div className="px-6 py-5 border-t border-outline-variant bg-surface-bright rounded-b-3xl flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -543,7 +359,7 @@ export default function InterpretationPsgPage() {
                   <ActionButton
                     permission={selectedInterpretation ? "psg:interpret_update" : "psg:interpret_create"}
                     onClick={saveInterpretation}
-                    disabled={!selectedExam || !conclusion.trim() || isLocked}
+                    disabled={!selectedExam || !draft.trim() || isLocked}
                     pending={isSaving}
                     pendingLabel={
                       <>

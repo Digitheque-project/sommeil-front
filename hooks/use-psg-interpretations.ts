@@ -4,7 +4,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   psgInterpretationApi,
   type PsgInterpretation,
-  type PsgInterpretationPayload,
   type PsgInterpretationStatut,
 } from "@/lib/api/psg-interpretations";
 
@@ -32,15 +31,14 @@ function usePsgInterpretationMutation<TVariables>(
 }
 
 export function useCreatePsgInterpretation() {
-  return usePsgInterpretationMutation(
-    (data: PsgInterpretationPayload & { psgId: string; conclusion: string }) =>
-      psgInterpretationApi.create(data)
+  return usePsgInterpretationMutation((data: Parameters<typeof psgInterpretationApi.create>[0]) =>
+    psgInterpretationApi.create(data)
   );
 }
 
 export function useUpdatePsgInterpretation() {
   return usePsgInterpretationMutation(
-    ({ id, ...data }: { id: string } & PsgInterpretationPayload) =>
+    ({ id, ...data }: { id: string; titre?: string; contenu?: string }) =>
       psgInterpretationApi.update(id, data)
   );
 }
