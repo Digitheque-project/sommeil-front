@@ -33,6 +33,14 @@ const patientLabel = (consultation: ConsultationApi) =>
   [consultation.patient?.prenom, consultation.patient?.nom].filter(Boolean).join(" ") ??
   "Patient inconnu";
 
+type ReportWorkStatus = "NOUVEAU" | "BROUILLON" | "VALIDE";
+
+const STATUS_META: Record<ReportWorkStatus, { label: string; icon: string; className: string }> = {
+  VALIDE: { label: "Validé", icon: "check_circle", className: "bg-green-100 text-green-800" },
+  BROUILLON: { label: "Brouillon", icon: "edit_note", className: "bg-sky-100 text-sky-800" },
+  NOUVEAU: { label: "Nouveau", icon: "radio_button_unchecked", className: "bg-surface-container-high text-on-surface-variant" },
+};
+
 export default function CompteRenduPage() {
   const { user } = useAuth();
   const [selectedConsultationId, setSelectedConsultationId] = useState<string | null>(null);
@@ -40,9 +48,50 @@ export default function CompteRenduPage() {
   const [draft, setDraft] = useState("");
   const [title, setTitle] = useState("");
   const [toast, setToast] = useState<string | null>(null);
+  const [filters, setFilters] = useState({ nom: "", motif: "", statut: "" as "" | ReportWorkStatus });
 
   const { data: consultations = [], isLoading: areConsultationsLoading } = useAllConsultations();
   const { data: reports = [], isLoading: areReportsLoading } = useComptesRendus();
+
+  // Regroupe les comptes rendus par consultation pour dériver un statut par dossier
+  // (Nouveau / Brouillon / Validé), à la manière de la worklist "Comptes rendus" du
+  // service endoscopie.
+  const reportsByConsultation = useMemo(() => {
+    const map = new Map<string, CompteRendu[]>();
+    for (const report of reports as CompteRendu[]) {
+      const list = map.get(report.consultationId) ?? [];
+      list.push(report);
+      map.set(report.consultationId, list);
+    }
+    return map;
+  }, [reports]);
+
+  const getConsultationStatus = (consultationId: string): ReportWorkStatus => {
+    const consultationReportsFor = reportsByConsultation.get(consultationId) ?? [];
+    if (consultationReportsFor.some((report) => report.statut === "VALIDE")) return "VALIDE";
+    if (consultationReportsFor.length > 0) return "BROUILLON";
+    return "NOUVEAU";
+  };
+
+  const motifOptions = useMemo(() => {
+    const motifs = new Set<string>();
+    for (const consultation of consultations as ConsultationApi[]) {
+      if (consultation.motif) motifs.add(consultation.motif);
+    }
+    return Array.from(motifs).sort((a, b) => a.localeCompare(b));
+  }, [consultations]);
+
+  const filteredConsultations = useMemo(() => {
+    const nom = filters.nom.trim().toLowerCase();
+    return (consultations as ConsultationApi[]).filter((consultation) => {
+      const matchesNom = !nom || patientLabel(consultation).toLowerCase().includes(nom);
+      const matchesMotif = !filters.motif || consultation.motif === filters.motif;
+      const matchesStatut =
+        !filters.statut || getConsultationStatus(String(consultation.id)) === filters.statut;
+      return matchesNom && matchesMotif && matchesStatut;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [consultations, filters, reportsByConsultation]);
 
   const createMutation = useCreateCompteRendu();
   const updateMutation = useUpdateCompteRendu();
@@ -231,20 +280,60 @@ export default function CompteRenduPage() {
         <div className="grid grid-cols-12 gap-6">
           <aside className="col-span-12 lg:col-span-4 space-y-4">
             <section className="bg-surface-container-lowest border border-outline-variant rounded-3xl p-5 shadow-sm">
-              <h2 className="font-label-md text-label-md text-on-surface-variant uppercase mb-5">
+              <h2 className="font-label-md text-label-md text-on-surface-variant uppercase mb-4">
                 Consultations
               </h2>
+
+              <div className="flex flex-col gap-2 mb-5">
+                <input
+                  type="text"
+                  value={filters.nom}
+                  onChange={(event) => setFilters((f) => ({ ...f, nom: event.target.value }))}
+                  placeholder="Rechercher un patient..."
+                  className="w-full rounded-xl border border-outline-variant bg-surface-container px-3 py-2 text-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+                />
+                <div className="flex gap-2">
+                  <select
+                    value={filters.motif}
+                    onChange={(event) => setFilters((f) => ({ ...f, motif: event.target.value }))}
+                    className="flex-1 rounded-xl border border-outline-variant bg-surface-container px-3 py-2 text-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  >
+                    <option value="">Tous les motifs</option>
+                    {motifOptions.map((motif) => (
+                      <option key={motif} value={motif}>
+                        {motif}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={filters.statut}
+                    onChange={(event) =>
+                      setFilters((f) => ({ ...f, statut: event.target.value as "" | ReportWorkStatus }))
+                    }
+                    className="flex-1 rounded-xl border border-outline-variant bg-surface-container px-3 py-2 text-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  >
+                    <option value="">Tous les statuts</option>
+                    <option value="NOUVEAU">Nouveau</option>
+                    <option value="BROUILLON">Brouillon</option>
+                    <option value="VALIDE">Validé</option>
+                  </select>
+                </div>
+              </div>
+
               {areConsultationsLoading ? (
                 <p className="text-body-sm text-on-surface-variant">Chargement…</p>
-              ) : consultations.length === 0 ? (
-                <p className="text-body-sm text-on-surface-variant">Aucune consultation enregistrée.</p>
+              ) : filteredConsultations.length === 0 ? (
+                <p className="text-body-sm text-on-surface-variant">
+                  {consultations.length === 0
+                    ? "Aucune consultation enregistrée."
+                    : "Aucune consultation ne correspond aux filtres."}
+                </p>
               ) : (
                 <div className="space-y-3">
-                  {(consultations as ConsultationApi[]).map((consultation) => {
+                  {filteredConsultations.map((consultation) => {
                     const id = String(consultation.id);
-                    const count = (reports as CompteRendu[]).filter(
-                      (report) => report.consultationId === id
-                    ).length;
+                    const status = getConsultationStatus(id);
+                    const meta = STATUS_META[status];
 
                     return (
                       <button
@@ -268,13 +357,10 @@ export default function CompteRenduPage() {
                             </p>
                           </div>
                           <span
-                            className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${
-                              count > 0
-                                ? "bg-primary text-on-primary"
-                                : "bg-surface-container-high text-on-surface-variant"
-                            }`}
+                            className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${meta.className}`}
                           >
-                            {count} CR
+                            <span className="material-symbols-outlined text-[13px]">{meta.icon}</span>
+                            {meta.label}
                           </span>
                         </div>
                       </button>
