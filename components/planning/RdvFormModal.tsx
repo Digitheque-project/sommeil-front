@@ -20,11 +20,18 @@ function estWeekend(date: string): boolean {
   return jour === 0 || jour === 6;
 }
 
-const PRIORITES: PrioriteRdv[] = ["NORMALE", "URGENTE", "STAT"];
+const PRIORITES: PrioriteRdv[] = ["NORMALE", "URGENTE", "TRES_URGENTE"];
 const PRIORITE_LABEL: Record<PrioriteRdv, string> = {
   NORMALE: "Normale",
   URGENTE: "Urgente",
-  STAT: "STAT",
+  TRES_URGENTE: "Très urgente",
+};
+// Code couleur d'urgence de l'hôpital : bleue = normale, orange = urgente,
+// rouge = très urgente -- même code que PanneauDetailRDV / CalendrierSemaine.
+const PRIORITE_STYLE_SELECTIONNE: Record<PrioriteRdv, string> = {
+  NORMALE: "border-blue-500 bg-blue-50 text-blue-700",
+  URGENTE: "border-orange-500 bg-orange-50 text-orange-700",
+  TRES_URGENTE: "border-red-500 bg-red-50 text-red-700",
 };
 
 export default function RdvFormModal({ titre, valeurInitiale, onClose, onConfirm }: RdvFormModalProps) {
@@ -139,7 +146,7 @@ export default function RdvFormModal({ titre, valeurInitiale, onClose, onConfirm
                   onClick={() => setPriorite(p)}
                   className={`flex-1 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${
                     priorite === p
-                      ? "border-blue-500 bg-blue-50 text-blue-700"
+                      ? PRIORITE_STYLE_SELECTIONNE[p]
                       : "border-slate-200 text-slate-500 hover:bg-slate-50"
                   }`}
                 >

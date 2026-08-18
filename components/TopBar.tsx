@@ -33,10 +33,13 @@ const timeFormatter = new Intl.DateTimeFormat("fr-FR", {
   minute: "2-digit",
 });
 
+// Code couleur d'urgence de l'hôpital : bleue = normale, orange = urgente,
+// rouge = très urgente -- à respecter partout où une priorité est affichée
+// (cf. le même code déjà utilisé pour les rendez-vous du planning).
 const PRIORITY_STYLES: Record<NotificationItem["priority"], { dot: string; label: string }> = {
-  critical: { dot: "bg-red-500", label: "Critique" },
-  urgent: { dot: "bg-amber-500", label: "Urgent" },
-  normal: { dot: "bg-emerald-500", label: "Normal" },
+  critical: { dot: "bg-red-500", label: "Très urgente" },
+  urgent: { dot: "bg-orange-500", label: "Urgente" },
+  normal: { dot: "bg-blue-500", label: "Normale" },
 };
 
 // Composant séparé : le tick chaque seconde ne doit re-render que l'horloge,

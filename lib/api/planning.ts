@@ -1,7 +1,7 @@
 import { sommeilApi } from "./http";
 
 export type StatutRdv = "EN_ATTENTE" | "REALISE" | "NON_REALISE" | "ANNULE";
-export type PrioriteRdv = "STAT" | "URGENTE" | "NORMALE";
+export type PrioriteRdv = "TRES_URGENTE" | "URGENTE" | "NORMALE";
 
 export type RendezVousPlanning = {
   id: string;

@@ -17,7 +17,7 @@ const NB_JOURS = JOURS.length;
 const HEURES_BASE = Array.from({ length: 11 }, (_, i) => i + 8); // 08..18
 
 const PRIORITE_COULEUR: Record<string, string> = {
-  STAT: "bg-red-50 border-red-500 text-red-700",
+  TRES_URGENTE: "bg-red-50 border-red-500 text-red-700",
   URGENTE: "bg-orange-50 border-orange-500 text-orange-700",
   NORMALE: "bg-blue-50 border-blue-500 text-blue-700",
 };

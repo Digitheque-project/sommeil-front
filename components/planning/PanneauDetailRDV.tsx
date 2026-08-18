@@ -28,13 +28,13 @@ const STATUT_BADGE: Record<string, string> = {
 };
 
 const PRIORITE_LABEL: Record<string, string> = {
-  STAT: "STAT",
+  TRES_URGENTE: "Très urgente",
   URGENTE: "Urgente",
   NORMALE: "Normale",
 };
 
 const PRIORITE_BARRE: Record<string, string> = {
-  STAT: "bg-red-500",
+  TRES_URGENTE: "bg-red-500",
   URGENTE: "bg-orange-500",
   NORMALE: "bg-blue-500",
 };
