@@ -33,6 +33,13 @@ export const NAV_ITEMS: NavItem[] = [
     permission: "prescription:list",
   },
   {
+    label: "Planning",
+    href: "/planning",
+    icon: "calendar_month",
+    shortLabel: "Planning",
+    permission: "planning:list",
+  },
+  {
     label: "Polysomnographie",
     href: "/polysomnographie",
     icon: "sleep",

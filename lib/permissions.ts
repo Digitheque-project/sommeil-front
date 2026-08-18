@@ -26,6 +26,13 @@ export const PERMISSION_CATALOG = {
   "prescription:sign": "Signer une prescription",
   "prescription:print": "Imprimer une prescription",
 
+  // 3bis. Planning
+  "planning:list": "Lister les rendez-vous du planning",
+  "planning:read": "Consulter un rendez-vous du planning",
+  "planning:create": "Créer un rendez-vous du planning",
+  "planning:update": "Modifier un rendez-vous du planning",
+  "planning:delete": "Supprimer un rendez-vous du planning",
+
   // 4. Polysomnographie
   "psg:create": "Programmer un examen PSG",
   "psg:read": "Consulter un examen PSG",
@@ -134,6 +141,10 @@ const MEDECIN_PERMISSIONS: Permission[] = [
   "prescription:delete",
   "prescription:sign",
   "prescription:print",
+  "planning:list",
+  "planning:read",
+  "planning:create",
+  "planning:update",
   "psg:read",
   "psg:list",
   "psg:view_waveform",
@@ -162,6 +173,10 @@ const PARAMED_PERMISSIONS: Permission[] = [
   "dashboard:view",
   "consultation:list",
   "consultation:read",
+  "planning:list",
+  "planning:read",
+  "planning:create",
+  "planning:update",
   "psg:create",
   "psg:read",
   "psg:list",
@@ -223,6 +238,7 @@ export const ROUTE_PERMISSIONS: Array<{ path: string; permission: Permission }> 
   { path: "/", permission: "dashboard:view" },
   { path: "/consultation", permission: "consultation:list" },
   { path: "/prescription", permission: "prescription:list" },
+  { path: "/planning", permission: "planning:list" },
   { path: "/polysomnographie", permission: "psg:list" },
   { path: "/interpretation-psg", permission: "psg:interpret_list" },
   { path: "/comptes-rendus", permission: "report:list" },
