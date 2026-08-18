@@ -2,8 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSidebar } from "@/components/AppShell";
+import { useBackendStatus } from "@/hooks/use-backend-status";
 import { useMarkNotificationsRead, useNotifications } from "@/hooks/use-notifications";
 import { usePermissions } from "@/hooks/use-permissions";
 import type { NotificationItem } from "@/lib/api/notifications";
@@ -38,6 +39,49 @@ const PRIORITY_STYLES: Record<NotificationItem["priority"], { dot: string; label
   normal: { dot: "bg-emerald-500", label: "Normal" },
 };
 
+// Composant séparé : le tick chaque seconde ne doit re-render que l'horloge,
+// pas tout TopBar (notifications + menu compte inclus).
+function HeaderClock() {
+  // Démarre à null et se peuple seulement après le montage (useEffect,
+  // jamais exécuté côté serveur) -- sinon l'heure figée dans le HTML rendu
+  // côté serveur ne correspond jamais à l'heure du navigateur au moment de
+  // l'hydratation, ce que React signale comme une erreur d'hydratation.
+  const [now, setNow] = useState<Date | null>(null);
+
+  useEffect(() => {
+    // Tick initial volontairement synchrone (voir le commentaire au-dessus
+    // sur la désynchronisation serveur/client) -- pas une valeur dérivable
+    // du rendu.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setNow(new Date());
+    const interval = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  if (!now) return null;
+
+  const time = now.toLocaleTimeString("fr-FR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+  const date = now
+    .toLocaleDateString("fr-FR", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    })
+    .toUpperCase();
+
+  return (
+    <div className="hidden text-right leading-tight md:block">
+      <p className="text-sm font-extrabold tabular-nums text-slate-800">{time}</p>
+      <p className="text-[11px] font-medium uppercase tracking-wider text-slate-400">{date}</p>
+    </div>
+  );
+}
+
 export default function TopBar({
   title,
   searchPlaceholder = "Rechercher un dossier patient...",
@@ -49,6 +93,7 @@ export default function TopBar({
   const { toggleSidebar } = useSidebar();
   const { user } = useAuth();
   const { permissions } = usePermissions();
+  const backendReady = useBackendStatus();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const { data: notifications = [], isLoading } = useNotifications();
@@ -107,6 +152,9 @@ export default function TopBar({
             aria-label={searchPlaceholder}
           />
         </div>
+
+        <HeaderClock />
+        <div className="hidden h-8 w-px bg-outline-variant md:block" />
 
         <div className="relative">
           <button
@@ -210,29 +258,42 @@ export default function TopBar({
             onClick={() => setAccountOpen((open) => !open)}
             aria-expanded={accountOpen}
             aria-label="Menu du compte"
-            className="flex items-center gap-3 cursor-pointer hover:bg-slate-100 p-1 pr-3 rounded-full transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="flex items-center gap-3 cursor-pointer rounded-full py-1 pl-3 pr-1 transition-all hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
-          {avatarSrc ? (
-            <Image
-              className="w-8 h-8 rounded-full object-cover"
-              src={avatarSrc}
-              alt={displayName}
-              width={32}
-              height={32}
-            />
-          ) : (
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-              <span className="material-symbols-outlined text-[20px]">
-                person
-              </span>
-            </div>
-          )}
-            <div className="hidden sm:block text-left">
-              <p className="text-label-sm font-bold text-primary">{displayName}</p>
-              <p className="text-[10px] text-on-surface-variant uppercase tracking-wider">
+            <span className="hidden text-right leading-tight sm:block">
+              <span className="block text-sm font-bold text-slate-700">{displayName}</span>
+              <span className="block text-[11px] font-medium uppercase tracking-wider text-slate-400">
                 {displayRole}
-              </p>
-            </div>
+              </span>
+            </span>
+            <span className="relative flex h-11 w-11 shrink-0 md:h-12 md:w-12">
+              <span className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-[#e0f2fe] to-[#d7deea] text-sm font-bold text-primary shadow-md ring-2 ring-white">
+                {avatarSrc ? (
+                  <Image
+                    className="h-full w-full object-cover"
+                    src={avatarSrc}
+                    alt={displayName}
+                    width={48}
+                    height={48}
+                  />
+                ) : (
+                  displayName
+                    .split(" ")
+                    .filter(Boolean)
+                    .map((value) => value[0])
+                    .join("")
+                    .slice(0, 2)
+                    .toUpperCase()
+                )}
+              </span>
+              {/* Point de statut : vert si le backend répond, gris sinon */}
+              <span
+                title={backendReady ? "Backend connecté" : "Backend indisponible"}
+                className={`pointer-events-none absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full ring-2 ring-white ${
+                  backendReady ? "bg-[#4CAF50]" : "bg-slate-300"
+                }`}
+              />
+            </span>
           </button>
 
           {accountOpen && (
