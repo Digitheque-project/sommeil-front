@@ -1,0 +1,102 @@
+:root {
+  --surface: #F7F9FA;
+  --on-surface: #3A3F44;
+  --surface-muted: #E0E4E8;
+  --primary: #2563EB;
+  --primary-strong: #1E3A8A;
+  --primary-light: #BFDBFE;
+  --success: #4CAF50;
+  --warning: #FFA726;
+  --danger: #EF5350;
+
+  /* Menu/Sidebar Colors */
+  --menu-bg-primary: #2563EB;
+  --menu-bg-secondary: #1E3A8A;
+  --menu-text-primary: #FFFFFF;
+  --menu-text-secondary: #E0F2FE;
+  --menu-hover-bg: rgba(255, 255, 255, 0.15);
+  --menu-active-bg: rgba(255, 255, 255, 0.25);
+  --menu-divider: rgba(255, 255, 255, 0.1);
+}
+
+.bg-surface {
+  background-color: var(--surface);
+}
+
+.text-on-surface {
+  color: var(--on-surface);
+}
+
+/* === MENU/SIDEBAR ENHANCED STYLES === */
+
+.app-shell-header {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fbff 55%, #eef4ff 100%);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+}
+
+.app-shell-header-title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.app-shell-header-eyebrow {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.app-shell-header-main-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: #0f172a;
+}
+
+.app-shell-brand-pill {
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 0.55rem 0.75rem;
+  color: #1e3a8a;
+  font-size: 0.9rem;
+  font-weight: 600;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.menu-container {
+  background: linear-gradient(180deg, var(--menu-bg-primary) 0%, var(--menu-bg-secondary) 100%);
+}
+
+.menu-item-group {
+  border-top: 1px solid var(--menu-divider);
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+}
+
+.menu-item-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--menu-text-secondary);
+  opacity: 0.85;
+  margin-bottom: 0.5rem;
+  padding: 0 1rem;
+}
+
+.menu-section-title {
+  color: var(--menu-text-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 1rem 1rem 0.5rem;
+  opacity: 0.9;
+}
