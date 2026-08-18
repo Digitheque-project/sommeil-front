@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Calendar, CalendarRange, CalendarClock, Search, Filter, X, Plus, ChevronRight, Archive as ArchiveIcon, UserCheck } from "lucide-react";
+import { Calendar, CalendarClock, Search, Filter, X, Plus, ChevronRight, Archive as ArchiveIcon, UserCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import TopBar from "@/components/TopBar";
 import ActionButton from "@/components/ActionButton";
@@ -98,8 +98,6 @@ export default function ConsultationPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<PatientStatus>("TOUS");
   const [visitTypeFilter, setVisitTypeFilter] = useState<VisitType>("TOUS");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
   const [toast, setToast] = useState<string | null>(null);
   const [reportTarget, setReportTarget] = useState<Appointment | null>(null);
   const [reportDate, setReportDate] = useState("");
@@ -118,14 +116,9 @@ export default function ConsultationPage() {
   const markArrivalMutation = useMarkArrival();
   const archiveMutation = useArchiveConsultation();
 
-  const hasDateRange = Boolean(dateFrom || dateTo);
-  const hasActiveFilters = hasDateRange || searchQuery.trim().length > 0 || statusFilter !== 'TOUS' || visitTypeFilter !== 'TOUS' || viewMode !== 'today';
+  const hasActiveFilters = searchQuery.trim().length > 0 || statusFilter !== 'TOUS' || visitTypeFilter !== 'TOUS' || viewMode !== 'today';
 
-  const queryFilters = hasDateRange
-    ? { dateFrom: dateFrom || undefined, dateTo: dateTo || undefined }
-    : undefined;
-
-  const { data: consultations = [], isLoading, error } = useAllConsultations(queryFilters);
+  const { data: consultations = [], isLoading, error } = useAllConsultations();
   const { data: todayConsultationsRaw = [] } = useAllConsultations();
   const { data: patientHistory = [], isLoading: isHistoryLoading } = usePatientConsultationHistory(
     showHistory ? selectedPatient?.patientId ?? null : null
@@ -139,8 +132,6 @@ export default function ConsultationPage() {
 
   const handleSetViewMode = (mode: "today" | "all") => {
     setViewMode(mode);
-    setDateFrom("");
-    setDateTo("");
   };
 
   const handleResetFilters = () => {
@@ -148,8 +139,6 @@ export default function ConsultationPage() {
     setSearchQuery("");
     setStatusFilter("TOUS");
     setVisitTypeFilter("TOUS");
-    setDateFrom("");
-    setDateTo("");
   };
 
   const handleStart = async (appt: Appointment) => {
@@ -353,29 +342,9 @@ export default function ConsultationPage() {
         return false;
       }
 
-      if (viewMode === "all") {
-        const appointmentDate = new Date(appointment.date);
-
-        if (dateFrom) {
-          const fromDate = new Date(dateFrom);
-          fromDate.setHours(0, 0, 0, 0);
-          if (appointmentDate < fromDate) {
-            return false;
-          }
-        }
-
-        if (dateTo) {
-          const toDate = new Date(dateTo);
-          toDate.setHours(23, 59, 59, 999);
-          if (appointmentDate > toDate) {
-            return false;
-          }
-        }
-      }
-
       return true;
     });
-  }, [patients, searchQuery, statusFilter, visitTypeFilter, viewMode, dateFrom, dateTo]);
+  }, [patients, searchQuery, statusFilter, visitTypeFilter, viewMode]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -429,7 +398,7 @@ export default function ConsultationPage() {
                       onClick={() => handleSetViewMode('today')}
                       className={cn(
                         'flex h-7 items-center gap-1.5 rounded-lg px-3 text-[12px] font-semibold transition-colors whitespace-nowrap',
-                        viewMode === 'today' && !hasDateRange ? 'bg-white text-[#005b82] shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                        viewMode === 'today' ? 'bg-white text-[#005b82] shadow-sm' : 'text-slate-500 hover:text-slate-700'
                       )}
                     >
                       <Filter className="w-3.5 h-3.5" />
@@ -440,7 +409,7 @@ export default function ConsultationPage() {
                       onClick={() => handleSetViewMode('all')}
                       className={cn(
                         'h-7 rounded-lg px-3 text-[12px] font-semibold transition-colors whitespace-nowrap',
-                        viewMode === 'all' && !hasDateRange ? 'bg-white text-[#005b82] shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                        viewMode === 'all' ? 'bg-white text-[#005b82] shadow-sm' : 'text-slate-500 hover:text-slate-700'
                       )}
                     >
                       Tous
@@ -494,26 +463,6 @@ export default function ConsultationPage() {
                     <option value="CONTROLE">Contrôle</option>
                   </select>
 
-                  <div className={cn(
-                    "flex h-9 min-w-0 flex-[2] items-center gap-1.5 rounded-xl border px-2.5 transition-colors",
-                    hasDateRange ? "border-[#005b82]/40 bg-[#EAF3FA]" : "border-slate-200 bg-slate-50"
-                  )}>
-                    <CalendarRange className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-                    <input
-                      type="date"
-                      value={dateFrom}
-                      onChange={(event) => setDateFrom(event.target.value)}
-                      className="h-full min-w-0 flex-1 bg-transparent text-[12px] font-semibold text-slate-600 focus:outline-none"
-                    />
-                    <span className="shrink-0 text-slate-300">→</span>
-                    <input
-                      type="date"
-                      value={dateTo}
-                      onChange={(event) => setDateTo(event.target.value)}
-                      className="h-full min-w-0 flex-1 bg-transparent text-[12px] font-semibold text-slate-600 focus:outline-none"
-                    />
-                  </div>
-
                   {hasActiveFilters && (
                     <button
                       type="button"
@@ -550,7 +499,7 @@ export default function ConsultationPage() {
                               <div className="flex flex-col items-center gap-2">
                                 <Calendar className="w-8 h-8 text-slate-200" />
                                 <p className="text-[14px] font-semibold text-slate-500">
-                                  {viewMode === 'today' && !hasDateRange
+                                  {viewMode === 'today'
                                     ? 'Aucun patient à traiter aujourd\'hui'
                                     : 'Aucune consultation ne correspond à ces filtres'}
                                 </p>
