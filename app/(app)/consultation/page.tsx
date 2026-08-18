@@ -123,12 +123,10 @@ export default function ConsultationPage() {
 
   const queryFilters = hasDateRange
     ? { dateFrom: dateFrom || undefined, dateTo: dateTo || undefined }
-    : viewMode === 'today'
-      ? { date: getTodayDateKey() }
-      : undefined;
+    : undefined;
 
   const { data: consultations = [], isLoading, error } = useAllConsultations(queryFilters);
-  const { data: todayConsultationsRaw = [] } = useAllConsultations({ date: getTodayDateKey() });
+  const { data: todayConsultationsRaw = [] } = useAllConsultations();
   const { data: patientHistory = [], isLoading: isHistoryLoading } = usePatientConsultationHistory(
     showHistory ? selectedPatient?.patientId ?? null : null
   );
@@ -239,8 +237,11 @@ export default function ConsultationPage() {
   const doctorName = "Dr. Sarobidy RAMAMPIONOSON";
 
   // Quota d'aujourd'hui
-  const todayTotal = todayConsultationsRaw.length;
-  const todayCompleted = todayConsultationsRaw.filter(
+  const todayOnlyConsultations = todayConsultationsRaw.filter(
+    (c: ConsultationApi) => formatDateKey(c.date) === getTodayDateKey()
+  );
+  const todayTotal = todayOnlyConsultations.length;
+  const todayCompleted = todayOnlyConsultations.filter(
     (c: ConsultationApi) => c.termine || c.statut?.toUpperCase() === 'TERMINE' || c.statut?.toUpperCase() === 'TERMINÉ'
   ).length;
   const quotaMax = 18;
