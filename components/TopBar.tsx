@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSidebar } from "@/components/AppShell";
 import { useBackendStatus } from "@/hooks/use-backend-status";
 import { useMarkNotificationsRead, useNotifications } from "@/hooks/use-notifications";
@@ -10,6 +10,7 @@ import { usePermissions } from "@/hooks/use-permissions";
 import type { NotificationItem } from "@/lib/api/notifications";
 import { useAuth } from "@/context/AuthContext";
 import { roleLabel } from "@/lib/auth";
+import { playNotificationSound } from "@/lib/sound";
 
 type TopBarProps = {
   title: string;
@@ -101,6 +102,26 @@ export default function TopBar({
   const [accountOpen, setAccountOpen] = useState(false);
   const { data: notifications = [], isLoading } = useNotifications();
   const markReadMutation = useMarkNotificationsRead();
+
+  // Même son que côté pharmacie (cf. lib/sound.ts), joué uniquement pour les
+  // notifications réellement nouvelles -- le tout premier chargement peut
+  // rattraper des dizaines de notifications déjà existantes côté serveur, ce
+  // n'est pas une "nouvelle" notification à signaler par un son, seuls les
+  // arrivages découverts APRÈS ce premier chargement (via le polling de
+  // useNotifications) le sont.
+  const knownIdsRef = useRef<Set<string> | null>(null);
+  useEffect(() => {
+    const currentIds = new Set(notifications.map((n) => n.id));
+    const known = knownIdsRef.current;
+    // known === null uniquement au tout premier passage : on mémorise l'état
+    // de départ sans jouer de son (sinon un rechargement de page rejouerait
+    // le son pour des notifications déjà anciennes).
+    if (known !== null) {
+      const hasNewUnread = notifications.some((n) => !n.read && !known.has(n.id));
+      if (hasNewUnread) playNotificationSound();
+    }
+    knownIdsRef.current = currentIds;
+  }, [notifications]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
   const visibleNotifications = [...notifications]
