@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import TopBar from "@/components/TopBar";
 import ActionButton from "@/components/ActionButton";
-import { useAllConsultations } from "@/hooks/use-consultations";
+import { usePsgExams } from "@/hooks/use-psg";
 import {
   useComptesRendus,
   useCreateCompteRendu,
@@ -14,7 +14,7 @@ import {
 import { compteRenduApi, type CompteRendu } from "@/lib/api/comptes-rendus";
 import { useAuth } from "@/context/AuthContext";
 import { printDocument } from "@/lib/download";
-import type { ConsultationApi } from "@/lib/api/consultation";
+import type { PsgExam } from "@/lib/api/psg";
 
 const formatDateTime = (value?: string | null) => {
   if (!value) return "Jamais";
@@ -28,10 +28,7 @@ const formatDateTime = (value?: string | null) => {
   }).format(date);
 };
 
-const patientLabel = (consultation: ConsultationApi) =>
-  consultation.patient?.displayName ??
-  [consultation.patient?.prenom, consultation.patient?.nom].filter(Boolean).join(" ") ??
-  "Patient inconnu";
+const patientLabel = (exam: PsgExam) => `${exam.patientPrenom} ${exam.patientNom}`.trim() || "Patient inconnu";
 
 type ReportWorkStatus = "NOUVEAU" | "BROUILLON" | "VALIDE";
 
@@ -43,80 +40,81 @@ const STATUS_META: Record<ReportWorkStatus, { label: string; icon: string; class
 
 export default function CompteRenduPage() {
   const { user } = useAuth();
-  const [selectedConsultationId, setSelectedConsultationId] = useState<string | null>(null);
+  const [selectedExamId, setSelectedExamId] = useState<string | null>(null);
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [title, setTitle] = useState("");
   const [toast, setToast] = useState<string | null>(null);
   const [filters, setFilters] = useState({ nom: "", motif: "", statut: "" as "" | ReportWorkStatus });
 
-  const { data: consultations = [], isLoading: areConsultationsLoading } = useAllConsultations();
+  // Un compte rendu se rédige pour un examen PSG terminé : c'est la même liste
+  // que l'ancienne page "Interprétation PSG", désormais fusionnée ici.
+  const { data: exams = [], isLoading: areExamsLoading } = usePsgExams("TERMINE");
   const { data: reports = [], isLoading: areReportsLoading } = useComptesRendus();
 
-  // Regroupe les comptes rendus par consultation pour dériver un statut par dossier
+  // Regroupe les comptes rendus par examen pour dériver un statut par dossier
   // (Nouveau / Brouillon / Validé), à la manière de la worklist "Comptes rendus" du
   // service endoscopie.
-  const reportsByConsultation = useMemo(() => {
+  const reportsByExam = useMemo(() => {
     const map = new Map<string, CompteRendu[]>();
     for (const report of reports as CompteRendu[]) {
-      const list = map.get(report.consultationId) ?? [];
+      if (!report.psgId) continue;
+      const list = map.get(report.psgId) ?? [];
       list.push(report);
-      map.set(report.consultationId, list);
+      map.set(report.psgId, list);
     }
     return map;
   }, [reports]);
 
-  const getConsultationStatus = (consultationId: string): ReportWorkStatus => {
-    const consultationReportsFor = reportsByConsultation.get(consultationId) ?? [];
-    if (consultationReportsFor.some((report) => report.statut === "VALIDE")) return "VALIDE";
-    if (consultationReportsFor.length > 0) return "BROUILLON";
+  const getExamStatus = (examId: string): ReportWorkStatus => {
+    const examReportsFor = reportsByExam.get(examId) ?? [];
+    if (examReportsFor.some((report) => report.statut === "VALIDE")) return "VALIDE";
+    if (examReportsFor.length > 0) return "BROUILLON";
     return "NOUVEAU";
   };
 
   const motifOptions = useMemo(() => {
     const motifs = new Set<string>();
-    for (const consultation of consultations as ConsultationApi[]) {
-      if (consultation.motif) motifs.add(consultation.motif);
+    for (const exam of exams as PsgExam[]) {
+      if (exam.motif) motifs.add(exam.motif);
     }
     return Array.from(motifs).sort((a, b) => a.localeCompare(b));
-  }, [consultations]);
+  }, [exams]);
 
-  const filteredConsultations = useMemo(() => {
+  const sortedExams = useMemo(
+    () => [...(exams as PsgExam[])].sort((a, b) => (b.termineLe ?? "").localeCompare(a.termineLe ?? "")),
+    [exams]
+  );
+
+  const filteredExams = useMemo(() => {
     const nom = filters.nom.trim().toLowerCase();
-    return (consultations as ConsultationApi[]).filter((consultation) => {
-      const matchesNom = !nom || patientLabel(consultation).toLowerCase().includes(nom);
-      const matchesMotif = !filters.motif || consultation.motif === filters.motif;
-      const matchesStatut =
-        !filters.statut || getConsultationStatus(String(consultation.id)) === filters.statut;
+    return sortedExams.filter((exam) => {
+      const matchesNom = !nom || patientLabel(exam).toLowerCase().includes(nom);
+      const matchesMotif = !filters.motif || exam.motif === filters.motif;
+      const matchesStatut = !filters.statut || getExamStatus(exam.id) === filters.statut;
       return matchesNom && matchesMotif && matchesStatut;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [consultations, filters, reportsByConsultation]);
+  }, [sortedExams, filters, reportsByExam]);
 
   const createMutation = useCreateCompteRendu();
   const updateMutation = useUpdateCompteRendu();
   const validateMutation = useValidateCompteRendu();
   const deleteMutation = useDeleteCompteRendu();
 
-  const selectedConsultation = useMemo(
-    () =>
-      (consultations as ConsultationApi[]).find(
-        (consultation) => String(consultation.id) === selectedConsultationId
-      ) ?? null,
-    [consultations, selectedConsultationId]
+  const selectedExam = useMemo(
+    () => sortedExams.find((exam) => exam.id === selectedExamId) ?? null,
+    [sortedExams, selectedExamId]
   );
 
-  const consultationReports = useMemo(
-    () =>
-      (reports as CompteRendu[]).filter(
-        (report) => report.consultationId === selectedConsultationId
-      ),
-    [reports, selectedConsultationId]
+  const examReports = useMemo(
+    () => (reports as CompteRendu[]).filter((report) => report.psgId === selectedExamId),
+    [reports, selectedExamId]
   );
 
   const selectedReport = useMemo(
-    () => consultationReports.find((report) => report.id === selectedReportId) ?? null,
-    [consultationReports, selectedReportId]
+    () => examReports.find((report) => report.id === selectedReportId) ?? null,
+    [examReports, selectedReportId]
   );
 
   const isLocked = selectedReport?.statut === "VALIDE";
@@ -134,10 +132,9 @@ export default function CompteRenduPage() {
     return () => window.clearTimeout(timeout);
   }, [toast]);
 
-  const selectConsultation = (consultation: ConsultationApi) => {
-    const id = String(consultation.id);
-    setSelectedConsultationId(id);
-    const existing = (reports as CompteRendu[]).find((report) => report.consultationId === id);
+  const selectExam = (exam: PsgExam) => {
+    setSelectedExamId(exam.id);
+    const existing = (reports as CompteRendu[]).find((report) => report.psgId === exam.id);
     setSelectedReportId(existing?.id ?? null);
     if (!existing) {
       setDraft("");
@@ -147,7 +144,7 @@ export default function CompteRenduPage() {
 
   /** `report:create` / `report:update` selon qu'un brouillon existe déjà. */
   const saveReport = async () => {
-    if (!selectedConsultation || !draft.trim()) return;
+    if (!selectedExam || !draft.trim()) return;
     try {
       if (selectedReport) {
         await updateMutation.mutateAsync({
@@ -160,12 +157,12 @@ export default function CompteRenduPage() {
       }
 
       const created = await createMutation.mutateAsync({
-        consultationId: String(selectedConsultation.id),
-        titre: title.trim() || `Compte rendu — ${patientLabel(selectedConsultation)}`,
+        psgId: selectedExam.id,
+        titre: title.trim() || `Compte rendu — ${patientLabel(selectedExam)}`,
         contenu: draft,
         type: "MEDICAL",
-        patientId: selectedConsultation.patientId,
-        patientNom: patientLabel(selectedConsultation),
+        patientId: selectedExam.patientId,
+        patientNom: patientLabel(selectedExam),
       });
       setSelectedReportId((created as CompteRendu).id);
       setToast("Compte rendu créé.");
@@ -234,28 +231,28 @@ export default function CompteRenduPage() {
 
       <main className="w-full mx-auto px-container-padding py-section-gap animate-fade-in">
         <section className="bg-surface-container-lowest border border-outline-variant rounded-3xl p-6 mb-6 shadow-sm">
-          {selectedConsultation ? (
+          {selectedExam ? (
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <p className="text-label-sm text-on-surface-variant uppercase tracking-[0.18em] mb-2">
                   Patient
                 </p>
                 <h1 className="font-headline-sm text-headline-sm text-primary">
-                  {patientLabel(selectedConsultation)}
+                  {patientLabel(selectedExam)}
                 </h1>
                 <p className="text-body-sm text-on-surface-variant mt-2">
-                  Dossier {selectedConsultation.patient?.dossier ?? selectedConsultation.patientId} ·
-                  Consultation du {new Date(selectedConsultation.date).toLocaleDateString("fr-FR")}
+                  Dossier {selectedExam.patientId} · Examen PSG terminé le{" "}
+                  {formatDateTime(selectedExam.termineLe)}
                 </p>
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <div className="rounded-3xl bg-surface-container p-4 text-center">
                   <p className="text-label-sm text-on-surface-variant uppercase">Motif</p>
-                  <p className="font-label-md text-primary mt-2">{selectedConsultation.motif || "—"}</p>
+                  <p className="font-label-md text-primary mt-2">{selectedExam.motif || "—"}</p>
                 </div>
                 <div className="rounded-3xl bg-surface-container p-4 text-center">
                   <p className="text-label-sm text-on-surface-variant uppercase">Comptes rendus</p>
-                  <p className="font-label-md text-primary mt-2">{consultationReports.length}</p>
+                  <p className="font-label-md text-primary mt-2">{examReports.length}</p>
                 </div>
                 <div className="rounded-3xl bg-surface-container p-4 text-center">
                   <p className="text-label-sm text-on-surface-variant uppercase">Statut</p>
@@ -268,10 +265,10 @@ export default function CompteRenduPage() {
           ) : (
             <div className="text-center py-12">
               <p className="font-headline-sm text-headline-sm text-primary mb-2">
-                Sélectionnez une consultation pour commencer
+                Sélectionnez un patient pour commencer
               </p>
               <p className="text-body-sm text-on-surface-variant">
-                Le compte rendu est rattaché à la consultation choisie.
+                Le compte rendu est rattaché à l&apos;examen de polysomnographie terminé.
               </p>
             </div>
           )}
@@ -281,7 +278,7 @@ export default function CompteRenduPage() {
           <aside className="col-span-12 lg:col-span-4 space-y-4">
             <section className="bg-surface-container-lowest border border-outline-variant rounded-3xl p-5 shadow-sm">
               <h2 className="font-label-md text-label-md text-on-surface-variant uppercase mb-4">
-                Consultations
+                Patients ayant réalisé une PSG
               </h2>
 
               <div className="flex flex-col gap-2 mb-5">
@@ -320,40 +317,39 @@ export default function CompteRenduPage() {
                 </div>
               </div>
 
-              {areConsultationsLoading ? (
+              {areExamsLoading ? (
                 <p className="text-body-sm text-on-surface-variant">Chargement…</p>
-              ) : filteredConsultations.length === 0 ? (
+              ) : filteredExams.length === 0 ? (
                 <p className="text-body-sm text-on-surface-variant">
-                  {consultations.length === 0
-                    ? "Aucune consultation enregistrée."
-                    : "Aucune consultation ne correspond aux filtres."}
+                  {exams.length === 0
+                    ? "Aucun examen PSG terminé."
+                    : "Aucun patient ne correspond aux filtres."}
                 </p>
               ) : (
                 <div className="space-y-3">
-                  {filteredConsultations.map((consultation) => {
-                    const id = String(consultation.id);
-                    const status = getConsultationStatus(id);
+                  {filteredExams.map((exam) => {
+                    const status = getExamStatus(exam.id);
                     const meta = STATUS_META[status];
 
                     return (
                       <button
-                        key={id}
+                        key={exam.id}
                         type="button"
-                        onClick={() => selectConsultation(consultation)}
+                        onClick={() => selectExam(exam)}
                         className={`w-full text-left rounded-3xl border px-4 py-4 transition-colors ${
-                          selectedConsultationId === id
+                          selectedExamId === exam.id
                             ? "border-primary bg-primary/10"
                             : "border-outline-variant bg-surface-container"
                         }`}
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <p className="font-semibold text-on-surface">{patientLabel(consultation)}</p>
+                            <p className="font-semibold text-on-surface">{patientLabel(exam)}</p>
                             <p className="text-body-sm text-on-surface-variant mt-1">
-                              {new Date(consultation.date).toLocaleDateString("fr-FR")} · {consultation.heure}
+                              Terminé le {formatDateTime(exam.termineLe)}
                             </p>
                             <p className="text-body-sm text-on-surface-variant mt-1 line-clamp-1">
-                              {consultation.motif || "Sans motif"}
+                              {exam.motif || "Sans motif"}
                             </p>
                           </div>
                           <span
@@ -370,13 +366,13 @@ export default function CompteRenduPage() {
               )}
             </section>
 
-            {consultationReports.length > 1 && (
+            {examReports.length > 1 && (
               <section className="bg-surface-container-lowest border border-outline-variant rounded-3xl p-5 shadow-sm">
                 <h2 className="font-label-md text-label-md text-on-surface-variant uppercase mb-4">
                   Comptes rendus du dossier
                 </h2>
                 <div className="space-y-2">
-                  {consultationReports.map((report) => (
+                  {examReports.map((report) => (
                     <button
                       key={report.id}
                       type="button"
@@ -409,7 +405,7 @@ export default function CompteRenduPage() {
                     type="text"
                     value={title}
                     onChange={(event) => setTitle(event.target.value)}
-                    disabled={!selectedConsultation || isLocked}
+                    disabled={!selectedExam || isLocked}
                     placeholder="Compte rendu de polysomnographie"
                     className="mt-2 w-full rounded-2xl border border-outline-variant bg-surface-container px-3 py-2 font-headline-sm text-headline-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-60"
                   />
@@ -431,11 +427,11 @@ export default function CompteRenduPage() {
                   value={draft}
                   onChange={(event) => setDraft(event.target.value)}
                   placeholder={
-                    selectedConsultation
-                      ? "Rédigez ici votre compte rendu pour la consultation sélectionnée..."
-                      : "Sélectionnez une consultation pour commencer"
+                    selectedExam
+                      ? "Rédigez ici votre compte rendu pour le patient sélectionné..."
+                      : "Sélectionnez un patient pour commencer"
                   }
-                  disabled={!selectedConsultation || isLocked || areReportsLoading}
+                  disabled={!selectedExam || isLocked || areReportsLoading}
                   className="w-full min-h-[480px] resize-none rounded-3xl border border-outline-variant bg-background p-5 text-body-lg text-on-surface focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
                 />
               </div>
@@ -480,7 +476,7 @@ export default function CompteRenduPage() {
                   <ActionButton
                     permission={selectedReport ? "report:update" : "report:create"}
                     onClick={saveReport}
-                    disabled={!selectedConsultation || !draft.trim() || isLocked}
+                    disabled={!selectedExam || !draft.trim() || isLocked}
                     pending={isSaving}
                     pendingLabel={
                       <>

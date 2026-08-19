@@ -240,7 +240,6 @@ export const ROUTE_PERMISSIONS: Array<{ path: string; permission: Permission }> 
   { path: "/prescription", permission: "prescription:list" },
   { path: "/planning", permission: "planning:list" },
   { path: "/polysomnographie", permission: "psg:list" },
-  { path: "/interpretation-psg", permission: "psg:interpret_list" },
   { path: "/comptes-rendus", permission: "report:list" },
   { path: "/rapports", permission: "stats:view" },
   { path: "/archives", permission: "archive:list" },

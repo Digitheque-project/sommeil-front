@@ -110,12 +110,12 @@ export default function PolysomnographiePage() {
     }
   };
 
-  /** `psg:stop` — clôt l'acquisition ; l'examen bascule vers Interprétation PSG. */
+  /** `psg:stop` — clôt l'acquisition ; l'examen bascule vers Compte rendu. */
   const stop = async (exam: PsgExam) => {
     try {
       await stopMutation.mutateAsync(exam.id);
       setToast(
-        `Enregistrement terminé pour ${exam.patientPrenom} ${exam.patientNom} — l'examen est maintenant disponible dans Interprétation PSG.`
+        `Enregistrement terminé pour ${exam.patientPrenom} ${exam.patientNom} — l'examen est maintenant disponible dans Compte rendu.`
       );
     } catch (error) {
       setToast(error instanceof Error ? error.message : "L'arrêt a échoué.");

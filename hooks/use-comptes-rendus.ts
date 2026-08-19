@@ -9,6 +9,7 @@ export function useComptesRendus(filters?: {
   statut?: CompteRenduStatut;
   patientId?: string;
   consultationId?: string;
+  psgId?: string;
 }) {
   return useQuery({
     queryKey: [...KEY, filters ?? null],

@@ -47,13 +47,6 @@ export const NAV_ITEMS: NavItem[] = [
     permission: "psg:list",
   },
   {
-    label: "Interprétation PSG",
-    href: "/interpretation-psg",
-    icon: "insights",
-    shortLabel: "Interpr.",
-    permission: "psg:interpret_list",
-  },
-  {
     label: "Compte rendu",
     href: "/comptes-rendus",
     icon: "description",

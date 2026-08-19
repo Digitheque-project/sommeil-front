@@ -4,7 +4,8 @@ export type CompteRenduStatut = "BROUILLON" | "VALIDE";
 
 export type CompteRendu = {
   id: string;
-  consultationId: string;
+  consultationId?: string | null;
+  psgId?: string | null;
   titre: string;
   contenu: string;
   type: string;
@@ -28,16 +29,21 @@ export type CompteRenduExport = {
   genereLe: string;
   patient: { id: string | null; nom: string | null; dossier: string | null };
   consultation: { id: string; date: string; heure: string; motif: string } | null;
+  examen: { id: string; rdvDate: string; rdvHeure: string; motif: string; termineLe: string | null } | null;
 };
 
 export const compteRenduApi = {
-  list: (filters?: { statut?: CompteRenduStatut; patientId?: string; consultationId?: string }) =>
-    sommeilApi<CompteRendu[]>("/comptes-rendus", { query: filters }),
+  list: (filters?: {
+    statut?: CompteRenduStatut;
+    patientId?: string;
+    consultationId?: string;
+    psgId?: string;
+  }) => sommeilApi<CompteRendu[]>("/comptes-rendus", { query: filters }),
 
   get: (id: string) => sommeilApi<CompteRendu>(`/comptes-rendus/${id}`),
 
   create: (data: {
-    consultationId: string;
+    psgId: string;
     titre?: string;
     contenu: string;
     type?: string;
