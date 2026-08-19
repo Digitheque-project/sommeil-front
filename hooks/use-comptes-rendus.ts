@@ -35,7 +35,7 @@ export function useCreateCompteRendu() {
 
 export function useUpdateCompteRendu() {
   return useCompteRenduMutation(
-    ({ id, ...data }: { id: string; titre?: string; contenu?: string; type?: string }) =>
+    ({ id, ...data }: { id: string } & Parameters<typeof compteRenduApi.update>[1]) =>
       compteRenduApi.update(id, data)
   );
 }

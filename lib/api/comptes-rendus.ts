@@ -8,6 +8,8 @@ export type CompteRendu = {
   psgId?: string | null;
   titre: string;
   contenu: string;
+  conclusion?: string | null;
+  photoUrl?: string | null;
   type: string;
   statut: CompteRenduStatut;
   valideLe?: string | null;
@@ -22,6 +24,8 @@ export type CompteRenduExport = {
   id: string;
   titre: string;
   contenu: string;
+  conclusion?: string | null;
+  photoUrl?: string | null;
   type: string;
   statut: CompteRenduStatut;
   valideLe?: string | null;
@@ -46,13 +50,17 @@ export const compteRenduApi = {
     psgId: string;
     titre?: string;
     contenu: string;
+    conclusion?: string;
+    photoUrl?: string;
     type?: string;
     patientId?: string;
     patientNom?: string;
   }) => sommeilApi<CompteRendu>("/comptes-rendus", { method: "POST", body: data }),
 
-  update: (id: string, data: { titre?: string; contenu?: string; type?: string }) =>
-    sommeilApi<CompteRendu>(`/comptes-rendus/${id}`, { method: "PUT", body: data }),
+  update: (
+    id: string,
+    data: { titre?: string; contenu?: string; conclusion?: string; photoUrl?: string | null; type?: string }
+  ) => sommeilApi<CompteRendu>(`/comptes-rendus/${id}`, { method: "PUT", body: data }),
 
   validate: (id: string, validePar?: string) =>
     sommeilApi<CompteRendu>(`/comptes-rendus/${id}/validate`, {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import TopBar from "@/components/TopBar";
 import ActionButton from "@/components/ActionButton";
 import { usePsgExams } from "@/hooks/use-psg";
@@ -11,6 +11,7 @@ import {
   useUpdateCompteRendu,
   useValidateCompteRendu,
 } from "@/hooks/use-comptes-rendus";
+import { useUploadPhoto } from "@/hooks/use-uploads";
 import { compteRenduApi, type CompteRendu } from "@/lib/api/comptes-rendus";
 import { useAuth } from "@/context/AuthContext";
 import { printDocument } from "@/lib/download";
@@ -44,8 +45,11 @@ export default function CompteRenduPage() {
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [title, setTitle] = useState("");
+  const [conclusion, setConclusion] = useState("");
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [filters, setFilters] = useState({ nom: "", motif: "", statut: "" as "" | ReportWorkStatus });
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   // Un compte rendu se rédige pour un examen PSG terminé : c'est la même liste
   // que l'ancienne page "Interprétation PSG", désormais fusionnée ici.
@@ -101,6 +105,7 @@ export default function CompteRenduPage() {
   const updateMutation = useUpdateCompteRendu();
   const validateMutation = useValidateCompteRendu();
   const deleteMutation = useDeleteCompteRendu();
+  const uploadPhotoMutation = useUploadPhoto();
 
   const selectedExam = useMemo(
     () => sortedExams.find((exam) => exam.id === selectedExamId) ?? null,
@@ -124,6 +129,8 @@ export default function CompteRenduPage() {
   useEffect(() => {
     setDraft(selectedReport?.contenu ?? "");
     setTitle(selectedReport?.titre ?? "");
+    setConclusion(selectedReport?.conclusion ?? "");
+    setPhotoUrl(selectedReport?.photoUrl ?? null);
   }, [selectedReport]);
 
   useEffect(() => {
@@ -139,6 +146,27 @@ export default function CompteRenduPage() {
     if (!existing) {
       setDraft("");
       setTitle("");
+      setConclusion("");
+      setPhotoUrl(null);
+    }
+  };
+
+  /** `report:create`/`report:update` implicite via ActionButton : importe la photo
+   * dès la sélection du fichier, puis la conserve en brouillon local jusqu'à
+   * l'enregistrement du compte rendu. */
+  const importPhoto = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setToast("Le fichier doit être une image.");
+      return;
+    }
+    try {
+      const { url } = await uploadPhotoMutation.mutateAsync(file);
+      setPhotoUrl(url);
+    } catch (error) {
+      setToast(error instanceof Error ? error.message : "L'import de la photo a échoué.");
     }
   };
 
@@ -151,6 +179,8 @@ export default function CompteRenduPage() {
           id: selectedReport.id,
           titre: title.trim() || "Compte rendu",
           contenu: draft,
+          conclusion,
+          photoUrl,
         });
         setToast("Compte rendu enregistré.");
         return;
@@ -160,6 +190,8 @@ export default function CompteRenduPage() {
         psgId: selectedExam.id,
         titre: title.trim() || `Compte rendu — ${patientLabel(selectedExam)}`,
         contenu: draft,
+        conclusion: conclusion.trim() || undefined,
+        photoUrl: photoUrl ?? undefined,
         type: "MEDICAL",
         patientId: selectedExam.patientId,
         patientNom: patientLabel(selectedExam),
@@ -194,6 +226,8 @@ export default function CompteRenduPage() {
       setSelectedReportId(null);
       setDraft("");
       setTitle("");
+      setConclusion("");
+      setPhotoUrl(null);
       setToast("Compte rendu supprimé.");
     } catch (error) {
       setToast(error instanceof Error ? error.message : "La suppression a échoué.");
@@ -213,7 +247,9 @@ export default function CompteRenduPage() {
            Statut : ${data.statut === "VALIDE" ? `Validé le ${formatDateTime(data.valideLe)}${data.validePar ? ` par ${data.validePar}` : ""}` : "Brouillon"}<br />
            Édité le ${formatDateTime(data.genereLe)}
          </p>
-         <div class="content">${data.contenu.replaceAll("<", "&lt;")}</div>`
+         <div class="content">${data.contenu.replaceAll("<", "&lt;")}</div>
+         ${data.photoUrl ? `<img src="${data.photoUrl}" alt="Photo jointe" style="max-width:100%;margin-top:16px;" />` : ""}
+         ${data.conclusion ? `<h2>Conclusion</h2><div class="content">${data.conclusion.replaceAll("<", "&lt;")}</div>` : ""}`
       );
     } catch (error) {
       setToast(error instanceof Error ? error.message : "L'export a échoué.");
@@ -434,6 +470,70 @@ export default function CompteRenduPage() {
                   disabled={!selectedExam || isLocked || areReportsLoading}
                   className="w-full min-h-[480px] resize-none rounded-3xl border border-outline-variant bg-background p-5 text-body-lg text-on-surface focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
                 />
+
+                <div className="mt-4">
+                  <input
+                    ref={photoInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={importPhoto}
+                  />
+                  <ActionButton
+                    permission={selectedReport ? "report:update" : "report:create"}
+                    onClick={() => photoInputRef.current?.click()}
+                    disabled={!selectedExam || isLocked}
+                    pending={uploadPhotoMutation.isPending}
+                    pendingLabel={
+                      <>
+                        <span className="material-symbols-outlined text-[18px]">sync</span>
+                        Import…
+                      </>
+                    }
+                    className="action-secondary inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-body-sm font-semibold"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">add_photo_alternate</span>
+                    Importer une photo
+                  </ActionButton>
+
+                  {photoUrl && (
+                    <div className="relative mt-3 inline-block">
+                      {/* eslint-disable-next-line @next/next/no-img-element -- URL externe (service-upload), non gérable par next/image */}
+                      <img
+                        src={photoUrl}
+                        alt="Photo jointe au compte rendu"
+                        className="max-h-40 rounded-2xl border border-outline-variant object-cover"
+                      />
+                      {!isLocked && (
+                        <button
+                          type="button"
+                          onClick={() => setPhotoUrl(null)}
+                          aria-label="Retirer la photo"
+                          className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-white shadow"
+                        >
+                          <span className="material-symbols-outlined text-[14px]">close</span>
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-6">
+                  <label
+                    htmlFor="cr-conclusion"
+                    className="mb-2 block text-[11px] font-bold uppercase tracking-[0.12em] text-on-surface-variant"
+                  >
+                    Conclusion
+                  </label>
+                  <textarea
+                    id="cr-conclusion"
+                    value={conclusion}
+                    onChange={(event) => setConclusion(event.target.value)}
+                    placeholder="Rédigez ici la conclusion du compte rendu..."
+                    disabled={!selectedExam || isLocked || areReportsLoading}
+                    className="w-full min-h-[140px] resize-none rounded-3xl border border-outline-variant bg-background p-4 text-body-md text-on-surface focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
+                  />
+                </div>
               </div>
 
               <div className="px-6 py-5 border-t border-outline-variant bg-surface-bright rounded-b-3xl flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
