@@ -12,9 +12,8 @@ import {
   useValidateCompteRendu,
 } from "@/hooks/use-comptes-rendus";
 import { useUploadPhoto } from "@/hooks/use-uploads";
-import { compteRenduApi, type CompteRendu } from "@/lib/api/comptes-rendus";
+import type { CompteRendu } from "@/lib/api/comptes-rendus";
 import { useAuth } from "@/context/AuthContext";
-import { printDocument } from "@/lib/download";
 import type { PsgExam } from "@/lib/api/psg";
 
 const formatDateTime = (value?: string | null) => {
@@ -34,7 +33,7 @@ const patientLabel = (exam: PsgExam) => `${exam.patientPrenom} ${exam.patientNom
 type ReportWorkStatus = "NOUVEAU" | "BROUILLON" | "VALIDE";
 
 const STATUS_META: Record<ReportWorkStatus, { label: string; icon: string; className: string }> = {
-  VALIDE: { label: "Validé", icon: "check_circle", className: "bg-green-100 text-green-800" },
+  VALIDE: { label: "Envoyé", icon: "send", className: "bg-green-100 text-green-800" },
   BROUILLON: { label: "Brouillon", icon: "edit_note", className: "bg-sky-100 text-sky-800" },
   NOUVEAU: { label: "Nouveau", icon: "radio_button_unchecked", className: "bg-surface-container-high text-on-surface-variant" },
 };
@@ -57,7 +56,7 @@ export default function CompteRenduPage() {
   const { data: reports = [], isLoading: areReportsLoading } = useComptesRendus();
 
   // Regroupe les comptes rendus par examen pour dériver un statut par dossier
-  // (Nouveau / Brouillon / Validé), à la manière de la worklist "Comptes rendus" du
+  // (Nouveau / Brouillon / Envoyé), à la manière de la worklist "Comptes rendus" du
   // service endoscopie.
   const reportsByExam = useMemo(() => {
     const map = new Map<string, CompteRendu[]>();
@@ -123,7 +122,8 @@ export default function CompteRenduPage() {
   );
 
   const isLocked = selectedReport?.statut === "VALIDE";
-  const isSaving = createMutation.isPending || updateMutation.isPending;
+  const isSending =
+    createMutation.isPending || updateMutation.isPending || validateMutation.isPending;
 
   // Le brouillon suit le compte rendu sélectionné.
   useEffect(() => {
@@ -139,16 +139,18 @@ export default function CompteRenduPage() {
     return () => window.clearTimeout(timeout);
   }, [toast]);
 
+  const resetForm = () => {
+    setDraft("");
+    setTitle("");
+    setConclusion("");
+    setPhotoUrl(null);
+  };
+
   const selectExam = (exam: PsgExam) => {
     setSelectedExamId(exam.id);
     const existing = (reports as CompteRendu[]).find((report) => report.psgId === exam.id);
     setSelectedReportId(existing?.id ?? null);
-    if (!existing) {
-      setDraft("");
-      setTitle("");
-      setConclusion("");
-      setPhotoUrl(null);
-    }
+    if (!existing) resetForm();
   };
 
   /** `report:create`/`report:update` implicite via ActionButton : importe la photo
@@ -170,90 +172,81 @@ export default function CompteRenduPage() {
     }
   };
 
-  /** `report:create` / `report:update` selon qu'un brouillon existe déjà. */
-  const saveReport = async () => {
+  /**
+   * Le module n'expose que deux actions : « Valider » et « Annuler ».
+   * Valider enchaîne `report:create`/`report:update` puis `report:validate` :
+   * la saisie est enregistrée, signée, puis envoyée au prescripteur.
+   */
+  const validateAndSend = async () => {
     if (!selectedExam || !draft.trim()) return;
     try {
-      if (selectedReport) {
+      let reportId = selectedReport?.id ?? null;
+
+      if (reportId) {
         await updateMutation.mutateAsync({
-          id: selectedReport.id,
+          id: reportId,
           titre: title.trim() || "Compte rendu",
           contenu: draft,
           conclusion,
           photoUrl,
         });
-        setToast("Compte rendu enregistré.");
-        return;
+      } else {
+        const created = await createMutation.mutateAsync({
+          psgId: selectedExam.id,
+          titre: title.trim() || `Compte rendu — ${patientLabel(selectedExam)}`,
+          contenu: draft,
+          conclusion: conclusion.trim() || undefined,
+          photoUrl: photoUrl ?? undefined,
+          type: "MEDICAL",
+          patientId: selectedExam.patientId,
+          patientNom: patientLabel(selectedExam),
+        });
+        reportId = (created as CompteRendu).id;
+        setSelectedReportId(reportId);
       }
 
-      const created = await createMutation.mutateAsync({
-        psgId: selectedExam.id,
-        titre: title.trim() || `Compte rendu — ${patientLabel(selectedExam)}`,
-        contenu: draft,
-        conclusion: conclusion.trim() || undefined,
-        photoUrl: photoUrl ?? undefined,
-        type: "MEDICAL",
-        patientId: selectedExam.patientId,
-        patientNom: patientLabel(selectedExam),
-      });
-      setSelectedReportId((created as CompteRendu).id);
-      setToast("Compte rendu créé.");
-    } catch (error) {
-      setToast(error instanceof Error ? error.message : "L'enregistrement a échoué.");
-    }
-  };
-
-  /** `report:validate` — verrouille définitivement le document. */
-  const validateReport = async () => {
-    if (!selectedReport) return;
-    try {
       await validateMutation.mutateAsync({
-        id: selectedReport.id,
+        id: reportId,
         validePar: user ? `${user.firstName} ${user.lastName}`.trim() : undefined,
       });
-      setToast("Compte rendu validé et signé.");
+      // TODO(prescripteur) : brancher l'appel au service prescriptions pour
+      // transmettre le document. Tant qu'il n'existe pas, un compte rendu
+      // validé vaut « envoyé au prescripteur ».
+      setToast("Compte rendu validé et envoyé au prescripteur.");
     } catch (error) {
       setToast(error instanceof Error ? error.message : "La validation a échoué.");
     }
   };
 
-  /** `report:delete` — seulement tant que le compte rendu est un brouillon. */
-  const deleteReport = async () => {
-    if (!selectedReport) return;
-    if (!window.confirm("Supprimer définitivement ce compte rendu ?")) return;
-    try {
-      await deleteMutation.mutateAsync(selectedReport.id);
-      setSelectedReportId(null);
-      setDraft("");
-      setTitle("");
-      setConclusion("");
-      setPhotoUrl(null);
-      setToast("Compte rendu supprimé.");
-    } catch (error) {
-      setToast(error instanceof Error ? error.message : "La suppression a échoué.");
-    }
-  };
+  /**
+   * `report:delete` — Annuler abandonne la saisie en cours et supprime le
+   * brouillon déjà enregistré. Un compte rendu validé étant verrouillé, on se
+   * contente alors de refermer le dossier.
+   */
+  const cancelReport = async () => {
+    const draftToDelete = selectedReport && !isLocked ? selectedReport : null;
+    const hasPendingInput = Boolean(draft.trim() || conclusion.trim() || title.trim() || photoUrl);
 
-  /** `report:export` — génère le PDF via l'impression du navigateur. */
-  const exportReport = async () => {
-    if (!selectedReport) return;
-    try {
-      const data = await compteRenduApi.export(selectedReport.id);
-      printDocument(
-        data.titre,
-        `<h1>${data.titre}</h1>
-         <p class="meta">
-           Patient : ${data.patient.nom ?? "non renseigné"}${data.patient.dossier ? ` · Dossier ${data.patient.dossier}` : ""}<br />
-           Statut : ${data.statut === "VALIDE" ? `Validé le ${formatDateTime(data.valideLe)}${data.validePar ? ` par ${data.validePar}` : ""}` : "Brouillon"}<br />
-           Édité le ${formatDateTime(data.genereLe)}
-         </p>
-         <div class="content">${data.contenu.replaceAll("<", "&lt;")}</div>
-         ${data.photoUrl ? `<img src="${data.photoUrl}" alt="Photo jointe" style="max-width:100%;margin-top:16px;" />` : ""}
-         ${data.conclusion ? `<h2>Conclusion</h2><div class="content">${data.conclusion.replaceAll("<", "&lt;")}</div>` : ""}`
-      );
-    } catch (error) {
-      setToast(error instanceof Error ? error.message : "L'export a échoué.");
+    if (draftToDelete || hasPendingInput) {
+      const message = draftToDelete
+        ? "Abandonner la saisie et supprimer le brouillon enregistré ?"
+        : "Abandonner la saisie en cours ?";
+      if (!window.confirm(message)) return;
     }
+
+    if (draftToDelete) {
+      try {
+        await deleteMutation.mutateAsync(draftToDelete.id);
+      } catch (error) {
+        setToast(error instanceof Error ? error.message : "La suppression du brouillon a échoué.");
+        return;
+      }
+    }
+
+    setSelectedExamId(null);
+    setSelectedReportId(null);
+    resetForm();
+    setToast(draftToDelete ? "Saisie annulée, brouillon supprimé." : "Saisie annulée.");
   };
 
   return (
@@ -293,7 +286,7 @@ export default function CompteRenduPage() {
                 <div className="rounded-3xl bg-surface-container p-4 text-center">
                   <p className="text-label-sm text-on-surface-variant uppercase">Statut</p>
                   <p className="font-label-md text-primary mt-2">
-                    {selectedReport ? (isLocked ? "Validé" : "Brouillon") : "Nouveau"}
+                    {selectedReport ? (isLocked ? "Envoyé" : "Brouillon") : "Nouveau"}
                   </p>
                 </div>
               </div>
@@ -348,7 +341,7 @@ export default function CompteRenduPage() {
                     <option value="">Tous les statuts</option>
                     <option value="NOUVEAU">Nouveau</option>
                     <option value="BROUILLON">Brouillon</option>
-                    <option value="VALIDE">Validé</option>
+                    <option value="VALIDE">Envoyé</option>
                   </select>
                 </div>
               </div>
@@ -421,7 +414,7 @@ export default function CompteRenduPage() {
                     >
                       <span className="font-semibold text-on-surface">{report.titre}</span>
                       <span className="ml-2 text-[10px] font-bold uppercase text-on-surface-variant">
-                        {report.statut === "VALIDE" ? "Validé" : "Brouillon"}
+                        {report.statut === "VALIDE" ? "Envoyé" : "Brouillon"}
                       </span>
                     </button>
                   ))}
@@ -468,8 +461,8 @@ export default function CompteRenduPage() {
                   {isLocked && (
                     <p className="mb-4 rounded-2xl bg-green-50 px-4 py-3 text-sm font-semibold text-green-800">
                       Ce compte rendu a été validé le {formatDateTime(selectedReport?.valideLe)}
-                      {selectedReport?.validePar ? ` par ${selectedReport.validePar}` : ""} : il est
-                      verrouillé et ne peut plus être modifié.
+                      {selectedReport?.validePar ? ` par ${selectedReport.validePar}` : ""} et envoyé
+                      au prescripteur : il est verrouillé et ne peut plus être modifié.
                     </p>
                   )}
                   <textarea
@@ -547,56 +540,35 @@ export default function CompteRenduPage() {
 
                 <div className="px-6 py-5 border-t border-outline-variant bg-surface-bright rounded-b-3xl flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="text-body-sm text-on-surface-variant hidden md:block">
-                    Enregistrez le brouillon autant de fois que nécessaire, puis validez pour signer
-                    définitivement le compte rendu.
+                    La validation signe le compte rendu et l&apos;envoie au prescripteur : il ne
+                    sera plus modifiable.
                   </div>
                   <div className="flex flex-wrap items-center justify-end gap-2">
                     <ActionButton
-                      permission="report:delete"
-                      onClick={deleteReport}
-                      disabled={!selectedReport || isLocked}
+                      permission={selectedReport && !isLocked ? "report:delete" : "report:create"}
+                      onClick={cancelReport}
                       pending={deleteMutation.isPending}
-                      pendingLabel="Suppression…"
-                      className="action-danger inline-flex items-center gap-2 rounded-3xl px-4 py-3 text-body-md font-semibold"
+                      pendingLabel="Annulation…"
+                      className="action-secondary inline-flex items-center gap-2 rounded-3xl px-6 py-3 text-body-md font-semibold"
                     >
-                      <span className="material-symbols-outlined text-[20px]">delete</span>
-                      Supprimer
-                    </ActionButton>
-                    <ActionButton
-                      permission="report:export"
-                      onClick={exportReport}
-                      disabled={!selectedReport}
-                      className="action-secondary inline-flex items-center gap-2 rounded-3xl px-4 py-3 text-body-md font-semibold"
-                    >
-                      <span className="material-symbols-outlined text-[20px]">picture_as_pdf</span>
-                      Exporter
+                      <span className="material-symbols-outlined text-[20px]">close</span>
+                      Annuler
                     </ActionButton>
                     <ActionButton
                       permission="report:validate"
-                      onClick={validateReport}
-                      disabled={!selectedReport || isLocked}
-                      pending={validateMutation.isPending}
-                      pendingLabel="Validation…"
-                      className="action-warning inline-flex items-center gap-2 rounded-3xl px-4 py-3 text-body-md font-semibold"
-                    >
-                      <span className="material-symbols-outlined text-[20px]">verified</span>
-                      {isLocked ? "Validé" : "Valider et signer"}
-                    </ActionButton>
-                    <ActionButton
-                      permission={selectedReport ? "report:update" : "report:create"}
-                      onClick={saveReport}
+                      onClick={validateAndSend}
                       disabled={!draft.trim() || isLocked}
-                      pending={isSaving}
+                      pending={isSending}
                       pendingLabel={
                         <>
                           <span className="material-symbols-outlined">sync</span>
-                          Enregistrement…
+                          Envoi au prescripteur…
                         </>
                       }
                       className="action-success inline-flex items-center gap-2 rounded-3xl px-6 py-3 text-body-md font-semibold"
                     >
-                      <span className="material-symbols-outlined">save</span>
-                      Enregistrer
+                      <span className="material-symbols-outlined text-[20px]">send</span>
+                      {isLocked ? "Envoyé au prescripteur" : "Valider et envoyer"}
                     </ActionButton>
                   </div>
                 </div>
