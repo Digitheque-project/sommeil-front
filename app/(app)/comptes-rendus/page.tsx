@@ -431,167 +431,177 @@ export default function CompteRenduPage() {
           </aside>
 
           <section className="col-span-12 lg:col-span-8">
-            <div className="bg-surface-container-lowest border border-outline-variant rounded-3xl shadow-sm flex flex-col h-full">
-              <div className="px-6 py-5 border-b border-outline-variant flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex-1">
-                  <p className="text-label-sm text-on-surface-variant uppercase tracking-[0.18em]">
-                    Titre du compte rendu
-                  </p>
-                  <input
-                    type="text"
-                    value={title}
-                    onChange={(event) => setTitle(event.target.value)}
-                    disabled={!selectedExam || isLocked}
-                    placeholder="Compte rendu de polysomnographie"
-                    className="mt-2 w-full rounded-2xl border border-outline-variant bg-surface-container px-3 py-2 font-headline-sm text-headline-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-60"
-                  />
-                </div>
-                <div className="rounded-3xl bg-surface-container p-3 text-sm text-on-surface-variant shrink-0">
-                  Dernière modification : {formatDateTime(selectedReport?.updatedAt)}
-                </div>
+            {!selectedExam ? (
+              <div className="bg-surface-container-lowest border border-outline-variant rounded-3xl shadow-sm flex h-full min-h-[420px] flex-col items-center justify-center gap-2 p-6 text-center">
+                <span className="material-symbols-outlined text-[40px] text-on-surface-variant">
+                  touch_app
+                </span>
+                <p className="font-headline-sm text-headline-sm text-primary">
+                  Cliquez sur un patient pour rédiger son compte rendu
+                </p>
+                <p className="text-body-sm text-on-surface-variant">
+                  Le formulaire s&apos;affiche une fois un dossier sélectionné dans la liste.
+                </p>
               </div>
+            ) : (
+              <div className="bg-surface-container-lowest border border-outline-variant rounded-3xl shadow-sm flex flex-col h-full">
+                <div className="px-6 py-5 border-b border-outline-variant flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex-1">
+                    <p className="text-label-sm text-on-surface-variant uppercase tracking-[0.18em]">
+                      Titre du compte rendu
+                    </p>
+                    <input
+                      type="text"
+                      value={title}
+                      onChange={(event) => setTitle(event.target.value)}
+                      disabled={isLocked}
+                      placeholder="Compte rendu de polysomnographie"
+                      className="mt-2 w-full rounded-2xl border border-outline-variant bg-surface-container px-3 py-2 font-headline-sm text-headline-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-60"
+                    />
+                  </div>
+                  <div className="rounded-3xl bg-surface-container p-3 text-sm text-on-surface-variant shrink-0">
+                    Dernière modification : {formatDateTime(selectedReport?.updatedAt)}
+                  </div>
+                </div>
 
-              <div className="p-6">
-                {isLocked && (
-                  <p className="mb-4 rounded-2xl bg-green-50 px-4 py-3 text-sm font-semibold text-green-800">
-                    Ce compte rendu a été validé le {formatDateTime(selectedReport?.valideLe)}
-                    {selectedReport?.validePar ? ` par ${selectedReport.validePar}` : ""} : il est
-                    verrouillé et ne peut plus être modifié.
-                  </p>
-                )}
-                <textarea
-                  value={draft}
-                  onChange={(event) => setDraft(event.target.value)}
-                  placeholder={
-                    selectedExam
-                      ? "Rédigez ici votre compte rendu pour le patient sélectionné..."
-                      : "Sélectionnez un patient pour commencer"
-                  }
-                  disabled={!selectedExam || isLocked || areReportsLoading}
-                  className="w-full min-h-[480px] resize-none rounded-3xl border border-outline-variant bg-background p-5 text-body-lg text-on-surface focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
-                />
-
-                <div className="mt-4">
-                  <input
-                    ref={photoInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={importPhoto}
-                  />
-                  <ActionButton
-                    permission={selectedReport ? "report:update" : "report:create"}
-                    onClick={() => photoInputRef.current?.click()}
-                    disabled={!selectedExam || isLocked}
-                    pending={uploadPhotoMutation.isPending}
-                    pendingLabel={
-                      <>
-                        <span className="material-symbols-outlined text-[18px]">sync</span>
-                        Import…
-                      </>
-                    }
-                    className="action-secondary inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-body-sm font-semibold"
-                  >
-                    <span className="material-symbols-outlined text-[18px]">add_photo_alternate</span>
-                    Importer une photo
-                  </ActionButton>
-
-                  {photoUrl && (
-                    <div className="relative mt-3 inline-block">
-                      {/* eslint-disable-next-line @next/next/no-img-element -- URL externe (service-upload), non gérable par next/image */}
-                      <img
-                        src={photoUrl}
-                        alt="Photo jointe au compte rendu"
-                        className="max-h-40 rounded-2xl border border-outline-variant object-cover"
-                      />
-                      {!isLocked && (
-                        <button
-                          type="button"
-                          onClick={() => setPhotoUrl(null)}
-                          aria-label="Retirer la photo"
-                          className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-white shadow"
-                        >
-                          <span className="material-symbols-outlined text-[14px]">close</span>
-                        </button>
-                      )}
-                    </div>
+                <div className="p-6">
+                  {isLocked && (
+                    <p className="mb-4 rounded-2xl bg-green-50 px-4 py-3 text-sm font-semibold text-green-800">
+                      Ce compte rendu a été validé le {formatDateTime(selectedReport?.valideLe)}
+                      {selectedReport?.validePar ? ` par ${selectedReport.validePar}` : ""} : il est
+                      verrouillé et ne peut plus être modifié.
+                    </p>
                   )}
-                </div>
-
-                <div className="mt-6">
-                  <label
-                    htmlFor="cr-conclusion"
-                    className="mb-2 block text-[11px] font-bold uppercase tracking-[0.12em] text-on-surface-variant"
-                  >
-                    Conclusion
-                  </label>
                   <textarea
-                    id="cr-conclusion"
-                    value={conclusion}
-                    onChange={(event) => setConclusion(event.target.value)}
-                    placeholder="Rédigez ici la conclusion du compte rendu..."
-                    disabled={!selectedExam || isLocked || areReportsLoading}
-                    className="w-full min-h-[140px] resize-none rounded-3xl border border-outline-variant bg-background p-4 text-body-md text-on-surface focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
+                    value={draft}
+                    onChange={(event) => setDraft(event.target.value)}
+                    placeholder="Rédigez ici votre compte rendu pour le patient sélectionné..."
+                    disabled={isLocked || areReportsLoading}
+                    className="w-full min-h-[480px] resize-none rounded-3xl border border-outline-variant bg-background p-5 text-body-lg text-on-surface focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
                   />
-                </div>
-              </div>
 
-              <div className="px-6 py-5 border-t border-outline-variant bg-surface-bright rounded-b-3xl flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="text-body-sm text-on-surface-variant hidden md:block">
-                  Enregistrez le brouillon autant de fois que nécessaire, puis validez pour signer
-                  définitivement le compte rendu.
+                  <div className="mt-4">
+                    <input
+                      ref={photoInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={importPhoto}
+                    />
+                    <ActionButton
+                      permission={selectedReport ? "report:update" : "report:create"}
+                      onClick={() => photoInputRef.current?.click()}
+                      disabled={isLocked}
+                      pending={uploadPhotoMutation.isPending}
+                      pendingLabel={
+                        <>
+                          <span className="material-symbols-outlined text-[18px]">sync</span>
+                          Import…
+                        </>
+                      }
+                      className="action-secondary inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-body-sm font-semibold"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">add_photo_alternate</span>
+                      Importer une photo
+                    </ActionButton>
+
+                    {photoUrl && (
+                      <div className="relative mt-3 inline-block">
+                        {/* eslint-disable-next-line @next/next/no-img-element -- URL externe (service-upload), non gérable par next/image */}
+                        <img
+                          src={photoUrl}
+                          alt="Photo jointe au compte rendu"
+                          className="max-h-40 rounded-2xl border border-outline-variant object-cover"
+                        />
+                        {!isLocked && (
+                          <button
+                            type="button"
+                            onClick={() => setPhotoUrl(null)}
+                            aria-label="Retirer la photo"
+                            className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-white shadow"
+                          >
+                            <span className="material-symbols-outlined text-[14px]">close</span>
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-6">
+                    <label
+                      htmlFor="cr-conclusion"
+                      className="mb-2 block text-[11px] font-bold uppercase tracking-[0.12em] text-on-surface-variant"
+                    >
+                      Conclusion
+                    </label>
+                    <textarea
+                      id="cr-conclusion"
+                      value={conclusion}
+                      onChange={(event) => setConclusion(event.target.value)}
+                      placeholder="Rédigez ici la conclusion du compte rendu..."
+                      disabled={isLocked || areReportsLoading}
+                      className="w-full min-h-[140px] resize-none rounded-3xl border border-outline-variant bg-background p-4 text-body-md text-on-surface focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
+                    />
+                  </div>
                 </div>
-                <div className="flex flex-wrap items-center justify-end gap-2">
-                  <ActionButton
-                    permission="report:delete"
-                    onClick={deleteReport}
-                    disabled={!selectedReport || isLocked}
-                    pending={deleteMutation.isPending}
-                    pendingLabel="Suppression…"
-                    className="action-danger inline-flex items-center gap-2 rounded-3xl px-4 py-3 text-body-md font-semibold"
-                  >
-                    <span className="material-symbols-outlined text-[20px]">delete</span>
-                    Supprimer
-                  </ActionButton>
-                  <ActionButton
-                    permission="report:export"
-                    onClick={exportReport}
-                    disabled={!selectedReport}
-                    className="action-secondary inline-flex items-center gap-2 rounded-3xl px-4 py-3 text-body-md font-semibold"
-                  >
-                    <span className="material-symbols-outlined text-[20px]">picture_as_pdf</span>
-                    Exporter
-                  </ActionButton>
-                  <ActionButton
-                    permission="report:validate"
-                    onClick={validateReport}
-                    disabled={!selectedReport || isLocked}
-                    pending={validateMutation.isPending}
-                    pendingLabel="Validation…"
-                    className="action-warning inline-flex items-center gap-2 rounded-3xl px-4 py-3 text-body-md font-semibold"
-                  >
-                    <span className="material-symbols-outlined text-[20px]">verified</span>
-                    {isLocked ? "Validé" : "Valider et signer"}
-                  </ActionButton>
-                  <ActionButton
-                    permission={selectedReport ? "report:update" : "report:create"}
-                    onClick={saveReport}
-                    disabled={!selectedExam || !draft.trim() || isLocked}
-                    pending={isSaving}
-                    pendingLabel={
-                      <>
-                        <span className="material-symbols-outlined">sync</span>
-                        Enregistrement…
-                      </>
-                    }
-                    className="action-success inline-flex items-center gap-2 rounded-3xl px-6 py-3 text-body-md font-semibold"
-                  >
-                    <span className="material-symbols-outlined">save</span>
-                    Enregistrer
-                  </ActionButton>
+
+                <div className="px-6 py-5 border-t border-outline-variant bg-surface-bright rounded-b-3xl flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="text-body-sm text-on-surface-variant hidden md:block">
+                    Enregistrez le brouillon autant de fois que nécessaire, puis validez pour signer
+                    définitivement le compte rendu.
+                  </div>
+                  <div className="flex flex-wrap items-center justify-end gap-2">
+                    <ActionButton
+                      permission="report:delete"
+                      onClick={deleteReport}
+                      disabled={!selectedReport || isLocked}
+                      pending={deleteMutation.isPending}
+                      pendingLabel="Suppression…"
+                      className="action-danger inline-flex items-center gap-2 rounded-3xl px-4 py-3 text-body-md font-semibold"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">delete</span>
+                      Supprimer
+                    </ActionButton>
+                    <ActionButton
+                      permission="report:export"
+                      onClick={exportReport}
+                      disabled={!selectedReport}
+                      className="action-secondary inline-flex items-center gap-2 rounded-3xl px-4 py-3 text-body-md font-semibold"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">picture_as_pdf</span>
+                      Exporter
+                    </ActionButton>
+                    <ActionButton
+                      permission="report:validate"
+                      onClick={validateReport}
+                      disabled={!selectedReport || isLocked}
+                      pending={validateMutation.isPending}
+                      pendingLabel="Validation…"
+                      className="action-warning inline-flex items-center gap-2 rounded-3xl px-4 py-3 text-body-md font-semibold"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">verified</span>
+                      {isLocked ? "Validé" : "Valider et signer"}
+                    </ActionButton>
+                    <ActionButton
+                      permission={selectedReport ? "report:update" : "report:create"}
+                      onClick={saveReport}
+                      disabled={!draft.trim() || isLocked}
+                      pending={isSaving}
+                      pendingLabel={
+                        <>
+                          <span className="material-symbols-outlined">sync</span>
+                          Enregistrement…
+                        </>
+                      }
+                      className="action-success inline-flex items-center gap-2 rounded-3xl px-6 py-3 text-body-md font-semibold"
+                    >
+                      <span className="material-symbols-outlined">save</span>
+                      Enregistrer
+                    </ActionButton>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </section>
         </div>
       </main>
