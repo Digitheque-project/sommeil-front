@@ -377,7 +377,9 @@ export default function CompteRenduPage() {
       />
 
       <div className="min-h-[calc(100vh-5rem)] bg-[#F8FAFC]">
-        <main className="mx-auto w-full max-w-[1440px] animate-fade-in px-5 py-6 md:px-8 md:py-8">
+        {/* Pas de largeur maximale : l'écran de rédaction occupe toute la
+            surface disponible, la colonne de gauche gardant une largeur fixe. */}
+        <main className="w-full animate-fade-in px-4 py-5 md:px-6 md:py-6">
           {/* ---------- Bandeau patient ---------- */}
           <section className="mb-6 overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-sm">
             {selectedExam ? (
@@ -473,9 +475,11 @@ export default function CompteRenduPage() {
             )}
           </section>
 
-          <div className="grid grid-cols-12 gap-6">
+          {/* La worklist garde une largeur constante ; tout l'espace restant va
+              à l'éditeur, quelle que soit la largeur de l'écran. */}
+          <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
             {/* ---------- Worklist ---------- */}
-            <aside className="col-span-12 space-y-4 xl:col-span-4">
+            <aside className="space-y-4 xl:sticky xl:top-6">
               <section className="overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-sm">
                 <div className="border-b border-[#E2E8F0] p-4">
                   <div className="mb-3 flex items-center justify-between gap-2">
@@ -665,9 +669,9 @@ export default function CompteRenduPage() {
             </aside>
 
             {/* ---------- Éditeur ---------- */}
-            <section className="col-span-12 xl:col-span-8">
+            <section className="min-w-0">
               {!selectedExam ? (
-                <div className="flex h-full min-h-[440px] flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-[#CBD5E1] bg-white p-8 text-center">
+                <div className="flex h-full min-h-[calc(100vh-14rem)] flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-[#CBD5E1] bg-white p-8 text-center">
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#EFF6FF]">
                     <span className="material-symbols-outlined text-[32px] text-[#2563EB]">
                       touch_app
@@ -682,7 +686,7 @@ export default function CompteRenduPage() {
                   </p>
                 </div>
               ) : (
-                <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-sm">
+                <div className="flex h-full min-h-[calc(100vh-14rem)] flex-col overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-sm">
                   <div className="border-b border-[#E2E8F0] bg-gradient-to-r from-white to-[#F8FAFC] px-5 py-4 md:px-6">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                       <div className="min-w-0 flex-1">
@@ -712,7 +716,7 @@ export default function CompteRenduPage() {
                     </div>
                   </div>
 
-                  <div className="flex-1 space-y-6 p-5 md:p-6">
+                  <div className="flex min-h-0 flex-1 flex-col gap-6 p-5 md:p-6">
                     {isLocked && (
                       <div className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
                         <span className="material-symbols-outlined text-[20px] text-emerald-600">
@@ -727,7 +731,8 @@ export default function CompteRenduPage() {
                       </div>
                     )}
 
-                    <div>
+                    {/* La zone de saisie absorbe la hauteur restante de la carte. */}
+                    <div className="flex min-h-0 flex-1 flex-col">
                       <FieldLabel
                         icon="description"
                         htmlFor="cr-contenu"
@@ -741,7 +746,7 @@ export default function CompteRenduPage() {
                         onChange={(event) => setDraft(event.target.value)}
                         placeholder="Rédigez ici votre compte rendu pour le patient sélectionné..."
                         disabled={isLocked || areReportsLoading}
-                        className="min-h-[320px] w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 text-[15px] leading-relaxed text-[#0F172A] transition placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 disabled:cursor-not-allowed disabled:opacity-70"
+                        className="min-h-[280px] w-full flex-1 resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 text-[15px] leading-relaxed text-[#0F172A] transition placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 disabled:cursor-not-allowed disabled:opacity-70"
                       />
                     </div>
 
