@@ -1,4 +1,26 @@
-import { API_BASE_URLS } from '../config';
+import { API_BASE_URLS, CHU_ID } from '../config';
+
+/**
+ * Patient tel que renvoyé par le service accueil (swagger /accueil/api/docs).
+ * Le swagger ne décrit que les DTO d'écriture : les champs de lecture sont
+ * donc tous traités comme facultatifs.
+ */
+export type AccueilPatient = {
+  id: string;
+  nom?: string | null;
+  prenom?: string | null;
+  sexe?: 'MALE' | 'FEMALE' | string | null;
+  dateNaissance?: string | null;
+  cin?: string | null;
+  profession?: string | null;
+  adresse?: string | null;
+  allergie?: string | null;
+  telephone?: string | null;
+  contactUrgence?: string | null;
+  chuId?: string | null;
+  priseEnChargeId?: string | null;
+  createdAt?: string | null;
+};
 
 export type DoctorQuota = {
   medecinId: string;
@@ -63,6 +85,30 @@ async function handleResponse(res: Response) {
 }
 
 export const accueilApi = {
+  /**
+   * Fiche patient du service accueil. Renvoie `null` quand le patient est
+   * inconnu du CHU (404) : l'appelant retombe alors sur l'identité portée par
+   * l'examen, sans faire échouer l'écran.
+   */
+  async getPatient(id: string, chuId: string = CHU_ID): Promise<AccueilPatient | null> {
+    const res = await fetch(
+      `${API_BASE_URLS.accueil}/patients/${encodeURIComponent(id)}?chuId=${encodeURIComponent(chuId)}`,
+      { headers: authHeaders() },
+    );
+    if (res.status === 404) return null;
+    return handleResponse(res);
+  },
+
+  /** Liste des patients enregistrés pour le CHU. */
+  async listPatients(chuId: string = CHU_ID): Promise<AccueilPatient[]> {
+    const res = await fetch(
+      `${API_BASE_URLS.accueil}/patients?chuId=${encodeURIComponent(chuId)}`,
+      { headers: authHeaders() },
+    );
+    if (!res.ok) return [];
+    return handleResponse(res);
+  },
+
   async getDoctorQuota(medecinId: string, date?: string): Promise<DoctorQuota> {
     const params = new URLSearchParams();
     if (date) params.set('date', date);
