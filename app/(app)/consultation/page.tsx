@@ -6,6 +6,7 @@ import { Calendar, CalendarClock, Search, Filter, X, Plus, ChevronRight, Archive
 import { cn } from "@/lib/utils";
 import TopBar from "@/components/TopBar";
 import ActionButton from "@/components/ActionButton";
+import { useAuth } from "@/context/AuthContext";
 import {
   useAllConsultations,
   useArchiveConsultation,
@@ -93,6 +94,7 @@ const buildObservationNotes = (parameters: ClinicalParameterRow[], notes: string
 
 export default function ConsultationPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [selectedPatient, setSelectedPatient] = useState<Appointment | null>(null);
   const [viewMode, setViewMode] = useState<"today" | "all">("today");
   const [searchQuery, setSearchQuery] = useState("");
@@ -223,7 +225,9 @@ export default function ConsultationPage() {
   const updateParameter = (id: number, field: "nom" | "valeur" | "unite", value: string) =>
     setClinicalParameters((rows) => rows.map((row) => (row.id === id ? { ...row, [field]: value } : row)));
 
-  const doctorName = "Dr. Sarobidy RAMAMPIONOSON";
+  // Praticien connecté : aucune valeur de substitution, le sous-titre
+  // disparaît tant que l'identité n'est pas connue.
+  const doctorName = user ? `${user.firstName} ${user.lastName}`.trim() : "";
 
   // Quota d'aujourd'hui
   const todayOnlyConsultations = todayConsultationsRaw.filter(
@@ -350,12 +354,7 @@ export default function ConsultationPage() {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
-        <TopBar
-          title="Consultation"
-          searchPlaceholder="Rechercher un patient, un motif..."
-          doctorName={doctorName}
-          doctorRole="Somnologue"
-        />
+        <TopBar title="Consultation" searchPlaceholder="Rechercher un patient, un motif..." />
 
         {/* Patient List View */}
         {!selectedPatient && (
@@ -365,7 +364,7 @@ export default function ConsultationPage() {
               <div className="mb-6 flex items-center justify-between">
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900">Mes consultations du jour</h1>
-                  <p className="text-sm text-gray-500 mt-1">{doctorName}</p>
+                  {doctorName && <p className="text-sm text-gray-500 mt-1">{doctorName}</p>}
                 </div>
                 <div className="flex items-center gap-2.5 rounded-2xl border border-gray-100 bg-white px-4 py-2.5 shadow-[0px_4px_16px_rgba(17,17,26,0.05)]">
                   <div className="relative h-9 w-9 shrink-0">

@@ -123,12 +123,7 @@ export default function RapportsPage() {
 
   return (
     <>
-      <TopBar
-        title="Rapports & Statistiques"
-        searchPlaceholder="Rechercher un rapport..."
-        doctorName="Dr. Morel"
-        doctorRole="Spécialiste Sommeil"
-      />
+      <TopBar title="Rapports & Statistiques" searchPlaceholder="Rechercher un rapport..." />
 
       <div className="page-content p-8 bg-[#F7FBFD] min-h-[calc(100vh-84px)]">
         <div className="max-w-[1500px] mx-auto space-y-6">

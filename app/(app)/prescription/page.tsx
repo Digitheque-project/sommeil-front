@@ -88,12 +88,7 @@ export default function PrescriptionPage() {
 
   return (
     <>
-      <TopBar
-        title="Prescriptions"
-        searchPlaceholder="Rechercher une prescription..."
-        doctorName="Dr. Laurent Morel"
-        doctorRole="Spécialiste Sommeil"
-      />
+      <TopBar title="Prescriptions" searchPlaceholder="Rechercher une prescription..." />
 
       <div className="p-6 md:p-8 flex flex-col min-h-[calc(100vh-5rem)] max-w-7xl mx-auto w-full">
         {/* Page Header */}

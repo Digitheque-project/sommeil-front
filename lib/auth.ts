@@ -1,5 +1,4 @@
 import {
-  ALLOW_UNKNOWN_ACCOUNTS,
   DEFAULT_ROLE,
   ROUTE_PERMISSIONS,
   type Permission,
@@ -29,38 +28,54 @@ export type SleepUser = {
   grantedPermissions: string[];
 };
 
-type SleepUserProfile = Pick<SleepUser, "firstName" | "lastName" | "role">;
-
-const USERS: Record<string, SleepUserProfile> = {
-  "para@gmail.com": {
-    firstName: "Paramed",
-    lastName: "Sommeil",
-    role: "PARAMED",
-  },
-  "maj@gmail.com": {
-    firstName: "major",
-    lastName: "sommeil",
-    role: "MAJOR",
-  },
-  "med@gmail.com": {
-    firstName: "medecin",
-    lastName: "sommeil",
-    role: "MEDECIN",
-  },
-};
-
 type JwtPayload = {
   sub?: string;
   id?: string;
   email?: string;
   name?: string;
   firstname?: string;
+  role?: string | { name?: string };
   // Le service d'authentification CHU expose des rôles porteurs de permissions
   // (`POST /roles` : `permissionIds`). Selon la configuration, le jeton peut
   // transporter les permissions à plat ou imbriquées dans les rôles.
   permissions?: Array<string | { name?: string }>;
   roles?: Array<string | { name?: string; permissions?: Array<string | { name?: string }> }>;
 };
+
+/**
+ * Rôle applicatif porté par le jeton. Les noms de rôles du service
+ * d'authentification CHU sont variés (`MEDECIN`, `Médecin Spécialiste`,
+ * `TECHNICIEN_PSG`...) : on les rattache aux trois rôles du Centre de Sommeil.
+ * `DEFAULT_ROLE` s'applique quand le jeton n'en porte aucun de reconnaissable.
+ */
+function readRole(payload: JwtPayload): SleepRole {
+  const names: string[] = [];
+
+  const push = (entry: string | { name?: string } | undefined) => {
+    if (typeof entry === "string") names.push(entry);
+    else if (entry?.name) names.push(entry.name);
+  };
+
+  push(payload.role);
+  payload.roles?.forEach((role) =>
+    push(typeof role === "object" ? { name: role.name } : role)
+  );
+
+  for (const name of names) {
+    const normalized = name.trim().toUpperCase();
+    if (normalized.includes("MAJOR") || normalized.includes("ADMIN")) return "MAJOR";
+    if (
+      normalized.includes("PARAMED") ||
+      normalized.includes("TECHNICIEN") ||
+      normalized.includes("INFIRM")
+    ) {
+      return "PARAMED";
+    }
+    if (normalized.includes("MEDECIN") || normalized.includes("MÉDECIN")) return "MEDECIN";
+  }
+
+  return DEFAULT_ROLE;
+}
 
 /** Aplatit les permissions du jeton, quelle que soit leur forme. */
 function readGrantedPermissions(payload: JwtPayload): string[] {
@@ -107,24 +122,15 @@ export function getSleepUserFromToken(token: string | null | undefined): SleepUs
     const email = payload.email?.trim().toLowerCase();
     if (!email) return null;
 
-    // Seuls trois comptes de démonstration sont listés nominativement. Tant que
-    // l'ouverture temporaire est active, tout autre compte authentifié est
-    // accepté avec le rôle par défaut au lieu d'être refusé à l'entrée.
-    if (!USERS[email] && !ALLOW_UNKNOWN_ACCOUNTS) return null;
-
-    const user = USERS[email] ?? {
-      firstName: payload.firstname?.trim() || payload.name?.trim() || email,
-      lastName: "",
-      role: DEFAULT_ROLE,
-    };
     // Le SSO peut renvoyer soit `firstname` + `name`, soit uniquement le
     // nom complet dans `name`. Dans ce second cas, ne dupliquons pas le nom.
-    const firstName = payload.firstname?.trim() || (payload.name?.trim() ? payload.name.trim() : user.firstName);
-    const lastName = payload.firstname?.trim() ? payload.name?.trim() || user.lastName : "";
+    // Dernier recours : l'adresse e-mail, seule identité toujours présente.
+    const firstName = payload.firstname?.trim() || payload.name?.trim() || email;
+    const lastName = payload.firstname?.trim() ? payload.name?.trim() || "" : "";
 
     return {
       email,
-      role: user.role,
+      role: readRole(payload),
       firstName,
       lastName,
       userId: payload.sub ?? payload.id,

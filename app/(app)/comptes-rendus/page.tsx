@@ -369,12 +369,7 @@ export default function CompteRenduPage() {
 
   return (
     <>
-      <TopBar
-        title="Rédaction du compte rendu"
-        searchPlaceholder="Rechercher un dossier..."
-        doctorName="Dr. Morel"
-        doctorRole="Somnologue"
-      />
+      <TopBar title="Rédaction du compte rendu" searchPlaceholder="Rechercher un dossier..." />
 
       <div className="min-h-[calc(100vh-5rem)] bg-[#F8FAFC]">
         {/* Pas de largeur maximale : l'écran de rédaction occupe toute la

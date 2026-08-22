@@ -170,12 +170,7 @@ export default function PolysomnographiePage() {
 
   return (
     <>
-      <TopBar
-        title="Polysomnographie"
-        searchPlaceholder="Rechercher un patient planifié..."
-        doctorName="Dr. Laurent Morel"
-        doctorRole="Spécialiste Sommeil"
-      />
+      <TopBar title="Polysomnographie" searchPlaceholder="Rechercher un patient planifié..." />
 
       <div className="p-6 md:p-8 flex flex-col min-h-[calc(100vh-5rem)] max-w-7xl mx-auto w-full">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">

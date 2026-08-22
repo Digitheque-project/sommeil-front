@@ -15,8 +15,6 @@ import { playNotificationSound } from "@/lib/sound";
 type TopBarProps = {
   title: string;
   searchPlaceholder?: string;
-  doctorName?: string;
-  doctorRole?: string;
   avatarSrc?: string;
   logoSrc?: string;
 };
@@ -89,8 +87,6 @@ function HeaderClock() {
 export default function TopBar({
   title,
   searchPlaceholder = "Rechercher un dossier patient...",
-  doctorName = "Dr. Laurent Morel",
-  doctorRole = "Spécialiste Sommeil",
   avatarSrc,
   logoSrc = "/chu.png",
 }: Readonly<TopBarProps>) {
@@ -137,8 +133,10 @@ export default function TopBar({
     if (!item.read) markReadMutation.mutate([item.id]);
   };
 
-  const displayName = user ? `${user.firstName} ${user.lastName}`.trim() : doctorName;
-  const displayRole = user ? roleLabel(user.role) : doctorRole;
+  // Identité du compte connecté uniquement : tant que le jeton n'est pas lu,
+  // on n'affiche pas de nom de substitution.
+  const displayName = user ? `${user.firstName} ${user.lastName}`.trim() : "—";
+  const displayRole = user ? roleLabel(user.role) : "Compte non identifié";
 
   return (
     <header className="app-shell-header sticky top-0 z-30 flex h-[84px] w-full items-center justify-between border-b border-slate-200 px-4 md:px-8 print:hidden">

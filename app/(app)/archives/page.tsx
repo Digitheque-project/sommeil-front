@@ -181,7 +181,7 @@ export default function ArchivesPage() {
 
   return (
     <>
-      <TopBar title="Archives" searchPlaceholder="Rechercher un dossier..." doctorName="Dr. Morel" doctorRole="Spécialiste Sommeil" />
+      <TopBar title="Archives" searchPlaceholder="Rechercher un dossier..." />
       <div className="min-h-[calc(100vh-4rem)] max-w-[1400px] mx-auto space-y-8 bg-[#F8FAFC] p-6 md:p-8">
         <div className="flex flex-col lg:flex-row justify-between items-start gap-6">
           <div className="space-y-1">

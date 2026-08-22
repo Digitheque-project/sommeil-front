@@ -2,13 +2,19 @@
 
 import Link from "next/link";
 import TopBar from "@/components/TopBar";
+import { useAuth } from "@/context/AuthContext";
 import { useAllConsultations } from "@/hooks/use-consultations";
 import { usePsgExams } from "@/hooks/use-psg";
 import type { ConsultationApi } from "@/lib/api/consultation";
 
 export default function DashboardPage() {
+  const { user } = useAuth();
   const { data: consultations = [], isLoading } = useAllConsultations();
   const { data: psgExams = [] } = usePsgExams();
+
+  // Le nom vient du compte connecté ; sans jeton lu, salutation neutre.
+  const fullName = user ? `${user.firstName} ${user.lastName}`.trim() : "";
+  const greeting = fullName ? `Bonjour, ${fullName}` : "Bonjour";
   const today = new Date().toISOString().slice(0, 10);
   const todayConsultations = (consultations as ConsultationApi[]).filter((item) => item.date.slice(0, 10) === today);
   const completed = todayConsultations.filter((item) => item.termine).length;
@@ -61,7 +67,7 @@ export default function DashboardPage() {
         {/* Welcome Section */}
         <div className="mb-8">
           <h1 className="text-[28px] font-extrabold text-[#0F172A] font-headline">
-            Bonjour, Dr. Morel
+            {greeting}
           </h1>
           <p className="text-[#64748B] text-sm mt-1">
             Bienvenue au centre de sommeil — voici l&apos;essentiel de l&apos;activité d&apos;aujourd&apos;hui.
@@ -80,10 +86,6 @@ export default function DashboardPage() {
                 <span className="material-symbols-outlined text-[32px]" style={{ fontVariationSettings: '"FILL" 1' }}>
                   clinical_notes
                 </span>
-              </div>
-              <div className="bg-[#1B5E20] text-[#81C784] border-[#4CAF50]/30 px-2 py-1 rounded-md text-[11px] font-bold flex items-center gap-1 border">
-                <span className="material-symbols-outlined text-[14px]">trending_up</span>
-                +12%
               </div>
             </div>
             <div>

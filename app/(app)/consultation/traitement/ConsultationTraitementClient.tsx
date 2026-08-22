@@ -249,7 +249,7 @@ export default function ConsultationTraitementClient({
   const historyEntries = (history as ConsultationHistoryEntry[]).slice(0, 4);
 
   return <>
-    <TopBar title={isControlMode ? "Gestion du contrôle" : "Traitement de la consultation"} searchPlaceholder="Rechercher un patient..." doctorName="Dr. Sarobidy RAMAMPIONOSON" doctorRole="Somnologue Senior" />
+    <TopBar title={isControlMode ? "Gestion du contrôle" : "Traitement de la consultation"} searchPlaceholder="Rechercher un patient..." />
     <main className="min-h-screen bg-[#F5F8FA] px-4 py-7 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl animate-fade-in">
         <button type="button" onClick={cancelAndGoBack} className="mb-6 inline-flex items-center gap-2 rounded-xl px-2 py-2 text-sm font-bold text-slate-500 transition hover:bg-white hover:text-[#006A8C]">
