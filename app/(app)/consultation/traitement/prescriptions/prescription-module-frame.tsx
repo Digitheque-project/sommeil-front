@@ -2,9 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import PrescriptionLayout from "@/components/prescription/PrescriptionLayout";
-
-const CHU_ID = process.env.NEXT_PUBLIC_CHU_ID ?? "1e5bbbb7-fa10-4d59-8848-2d0ce96a9394";
-const SLEEP_SERVICE_ID = process.env.NEXT_PUBLIC_SLEEP_SERVICE_ID ?? process.env.NEXT_PUBLIC_NOTIFICATION_SERVICE_ID;
+import { CHU_ID, SLEEP_SERVICE_ID } from "@/lib/config";
 
 export default function PrescriptionModuleFrame({ params }: Readonly<{ params: Record<string, string> }>) {
   const router = useRouter();

@@ -2,12 +2,7 @@
 // Base URL du hub (sans préfixe ni suffixe) : les routes REST sont exposées
 // directement à la racine (ex. /notifications), les clients temps réel sur
 // /socket.io/. Le swagger, lui, est monté sous /notification/api/docs.
-import { API_BASE_URLS } from '../config';
-
-// Identifiant du service sommeil dans la plateforme CHU. Les notifications
-// diffusées à un service sont consultables sous l'utilisateur pseudo
-// "broadcast:service:{serviceId}".
-const DEFAULT_NOTIFICATION_SERVICE_ID = '79beaa8b-24ef-4f46-81ca-9a2b7c99a56b';
+import { API_BASE_URLS, SLEEP_SERVICE_ID } from '../config';
 
 export type NotificationItem = {
   id: string;
@@ -24,10 +19,9 @@ export type NotificationItem = {
 
 const getNotificationHubUrl = () => API_BASE_URLS.notificationHub;
 
-const getNotificationServiceId = () =>
-  process.env.NEXT_PUBLIC_NOTIFICATION_SERVICE_ID || DEFAULT_NOTIFICATION_SERVICE_ID;
-
-const getBroadcastUserId = () => `broadcast:service:${getNotificationServiceId()}`;
+// Les notifications diffusées à un service sont consultables sous
+// l'utilisateur pseudo "broadcast:service:{serviceId}".
+const getBroadcastUserId = () => `broadcast:service:${SLEEP_SERVICE_ID}`;
 
 const handleResponse = async (res: Response) => {
   if (!res.ok) {
@@ -37,13 +31,28 @@ const handleResponse = async (res: Response) => {
   return res.json();
 };
 
+/**
+ * Second verrou côté client : le hub scope déjà par pseudo-utilisateur, mais
+ * une notification qui désigne explicitement un AUTRE service ne doit jamais
+ * s'afficher ici. Celles qui ne déclarent aucun service sont conservées —
+ * elles nous sont adressées par construction.
+ */
+const isForSleepService = (item: NotificationItem): boolean => {
+  const data = (item.data ?? {}) as Record<string, unknown>;
+  const declared = [data.serviceDestId, data.serviceId]
+    .filter((value): value is string => typeof value === 'string' && value.length > 0);
+
+  return declared.length === 0 || declared.includes(SLEEP_SERVICE_ID);
+};
+
 export const notificationApi = {
   // Notifications diffusées au service sommeil (broadcast:service:{id}).
   async getNotifications(): Promise<NotificationItem[]> {
     const res = await fetch(`${getNotificationHubUrl()}/notifications/user/${encodeURIComponent(getBroadcastUserId())}`, {
       cache: 'no-store',
     });
-    return handleResponse(res);
+    const items = (await handleResponse(res)) as NotificationItem[];
+    return Array.isArray(items) ? items.filter(isForSleepService) : [];
   },
 
   // Accuse de lecture PERSONNEL (userId = pseudo utilisateur du service) :

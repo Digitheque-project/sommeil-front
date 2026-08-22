@@ -74,6 +74,17 @@ export const API_ROUTES = {
 export const CHU_ID = process.env.NEXT_PUBLIC_CHU_ID ?? "1e5bbbb7-fa10-4d59-8848-2d0ce96a9394";
 
 /**
+ * Identifiant du service Centre de Sommeil dans l'annuaire du CHU.
+ *
+ * Source de vérité unique : c'est ce même identifiant qui sert de
+ * `serviceIdDest` pour les prescriptions et de destinataire des notifications
+ * (`broadcast:service:{id}`). Les payloads reçus le confirment —
+ * `serviceDestId: "82238f37-…"`, `serviceDestNom: "Centre de Sommeil"`.
+ */
+export const SLEEP_SERVICE_ID =
+  process.env.NEXT_PUBLIC_SLEEP_SERVICE_ID ?? "82238f37-2df8-4614-9ea7-3b789e5a7e39";
+
+/**
  * Racines d'appel = base URL + préfixe de chemin réel du service (celui des
  * contrôleurs, pas celui de la doc swagger).
  */
