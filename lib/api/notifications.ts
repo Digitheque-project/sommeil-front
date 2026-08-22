@@ -1,8 +1,9 @@
 // Client du hub de notification centralisé du CHU.
-// Base URL du hub (sans préfixe ni suffixe). Les routes REST sont exposées
+// Base URL du hub (sans préfixe ni suffixe) : les routes REST sont exposées
 // directement à la racine (ex. /notifications), les clients temps réel sur
-// /socket.io/.
-const DEFAULT_NOTIFICATION_HUB_URL = 'https://notification-back-xrl2.onrender.com';
+// /socket.io/. Le swagger, lui, est monté sous /notification/api/docs.
+import { API_BASE_URLS } from '../config';
+
 // Identifiant du service sommeil dans la plateforme CHU. Les notifications
 // diffusées à un service sont consultables sous l'utilisateur pseudo
 // "broadcast:service:{serviceId}".
@@ -21,8 +22,7 @@ export type NotificationItem = {
   priority: 'normal' | 'urgent' | 'critical';
 };
 
-const getNotificationHubUrl = () =>
-  (process.env.NEXT_PUBLIC_NOTIFICATION_HUB_URL || DEFAULT_NOTIFICATION_HUB_URL).replace(/\/+$/, '');
+const getNotificationHubUrl = () => API_BASE_URLS.notificationHub;
 
 const getNotificationServiceId = () =>
   process.env.NEXT_PUBLIC_NOTIFICATION_SERVICE_ID || DEFAULT_NOTIFICATION_SERVICE_ID;

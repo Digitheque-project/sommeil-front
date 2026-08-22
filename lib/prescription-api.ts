@@ -1,6 +1,10 @@
+import { API_BASE_URLS } from './config';
+
 const PRESCRIPTION_URL = process.env.NEXT_PUBLIC_PRESCRIPTION_URL || 'http://localhost:3334';
 const PHARMACIE_URL = process.env.NEXT_PUBLIC_PHARMACIE_URL || 'http://localhost:3335';
-const SERVICE_REGISTRY_URL = (process.env.NEXT_PUBLIC_SERVICE_REGISTRY_URL || 'https://service-service-0f7p.onrender.com').replace(/\/+$/, '');
+// Registre des services du CHU : routes servies à la racine (/services),
+// le swagger étant monté à part sous /services/api/docs.
+const SERVICE_REGISTRY_URL = API_BASE_URLS.services;
 
 const URGENCE_MAP: Record<string, string> = {
   n: 'NORMAL',

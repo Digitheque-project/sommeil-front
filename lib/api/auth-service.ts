@@ -6,7 +6,7 @@
  * routes `/roles` et `/permissions` sont servies à la racine du service et
  * exigent un jeton porteur.
  */
-const DEFAULT_AUTH_SERVICE_URL = "https://auth-service-4q6g.onrender.com";
+import { SERVICE_ORIGINS } from "../config";
 
 export type AuthPermission = {
   id: string;
@@ -25,8 +25,7 @@ export type AuthRole = {
   permissionIds?: string[];
 };
 
-const getAuthServiceUrl = () =>
-  (process.env.NEXT_PUBLIC_AUTH_SERVICE_URL || DEFAULT_AUTH_SERVICE_URL).replace(/\/+$/, "");
+const getAuthServiceUrl = () => SERVICE_ORIGINS.auth;
 
 function getToken(): string | null {
   if (typeof window === "undefined") return null;
