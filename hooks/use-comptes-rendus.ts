@@ -17,8 +17,11 @@ export function useComptesRendus(filters?: {
   });
 }
 
-function useCompteRenduMutation<TVariables>(
-  mutationFn: (variables: TVariables) => Promise<unknown>
+// TData est inféré depuis `mutationFn` : sans lui, `mutateAsync` renvoyait
+// `unknown` et les appelants perdaient le corps de la réponse (par exemple
+// `prescripteurNotifie` à la validation).
+function useCompteRenduMutation<TVariables, TData>(
+  mutationFn: (variables: TVariables) => Promise<TData>
 ) {
   const queryClient = useQueryClient();
   return useMutation({

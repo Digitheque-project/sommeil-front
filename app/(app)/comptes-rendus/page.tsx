@@ -318,14 +318,18 @@ export default function CompteRenduPage() {
         setSelectedReportId(reportId);
       }
 
-      await validateMutation.mutateAsync({
+      const validated = await validateMutation.mutateAsync({
         id: reportId,
         validePar: user ? `${user.firstName} ${user.lastName}`.trim() : undefined,
       });
-      // TODO(prescripteur) : brancher l'appel au service prescriptions pour
-      // transmettre le document. Tant qu'il n'existe pas, un compte rendu
-      // validé vaut « envoyé au prescripteur ».
-      setToast("Compte rendu validé et envoyé au prescripteur.");
+      // La signature est acquise même si la transmission échoue : le message
+      // doit dire lequel des deux a réellement eu lieu, sans quoi le praticien
+      // croirait le prescripteur informé alors qu'il ne l'est pas.
+      setToast(
+        validated.prescripteurNotifie
+          ? "Compte rendu validé et envoyé au prescripteur."
+          : "Compte rendu validé, mais l'envoi au prescripteur a échoué : il sera à relancer."
+      );
     } catch (error) {
       setToast(error instanceof Error ? error.message : "La validation a échoué.");
     }

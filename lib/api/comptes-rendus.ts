@@ -63,7 +63,7 @@ export const compteRenduApi = {
   ) => sommeilApi<CompteRendu>(`/comptes-rendus/${id}`, { method: "PUT", body: data }),
 
   validate: (id: string, validePar?: string) =>
-    sommeilApi<CompteRendu>(`/comptes-rendus/${id}/validate`, {
+    sommeilApi<CompteRendu & { prescripteurNotifie: boolean }>(`/comptes-rendus/${id}/validate`, {
       method: "POST",
       body: { validePar },
     }),
