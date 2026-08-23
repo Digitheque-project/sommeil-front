@@ -31,6 +31,10 @@ export type SleepUser = {
 type JwtPayload = {
   sub?: string;
   id?: string;
+  // Champ réellement porté par le jeton émis par le service d'authentification
+  // CHU en production (vérifié sur un jeton réel) — `sub`/`id` n'y figurent
+  // jamais. Sans lui, `SleepUser.userId` restait toujours `undefined`.
+  userId?: string;
   email?: string;
   name?: string;
   firstname?: string;
@@ -180,7 +184,7 @@ export function getSleepUserFromToken(token: string | null | undefined): SleepUs
       role: readRole(payload),
       firstName,
       lastName,
-      userId: payload.sub ?? payload.id,
+      userId: payload.userId ?? payload.sub ?? payload.id,
       grantedPermissions: readGrantedPermissions(payload),
     };
   } catch {
