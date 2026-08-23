@@ -19,10 +19,14 @@ const STOCK_LEVEL_CLASS: Record<StockLevel, string> = {
   out: 'text-red-600',
 };
 
+const formatPrix = (value: number) => `${value.toLocaleString('fr-FR')} Ar`;
+
 /**
  * Champ "nom du médicament" : liste déroulante du catalogue pharmacie complet
- * (chargé une seule fois), comme un <select> — filtrable en tapant. N'affiche
- * que le nom, coloré selon l'état du stock (jamais de chiffre ni de seuil).
+ * (chargé une seule fois), comme un <select> — filtrable en tapant. Affiche le
+ * nom (coloré selon l'état du stock, jamais de chiffre ni de seuil) et le prix
+ * de vente : le prescripteur doit voir ce que coûte l'article avant de le
+ * choisir, pas le découvrir après coup sur l'ordonnance.
  */
 export function MedicamentAutocomplete({ value, onChangeText, onSelectArticle, chuId, placeholder, className }: Props) {
   const [allArticles, setAllArticles] = useState<PharmacieArticle[]>([]);
@@ -77,16 +81,22 @@ export function MedicamentAutocomplete({ value, onChangeText, onSelectArticle, c
           ) : (
             results.map((article) => {
               const level = getStockLevel(article);
+              const prix = article.sale_price != null ? Number(article.sale_price) : null;
               return (
                 <button
                   key={article.id}
                   type="button"
                   onClick={() => { onSelectArticle(article); setOpen(false); }}
-                  className="flex w-full items-center px-4 py-2 text-left hover:bg-[#F8FAFC] transition-colors border-b border-gray-50 last:border-b-0"
+                  className="flex w-full items-center justify-between gap-3 px-4 py-2 text-left hover:bg-[#F8FAFC] transition-colors border-b border-gray-50 last:border-b-0"
                 >
                   <p className={`text-[13px] font-bold whitespace-normal break-words ${STOCK_LEVEL_CLASS[level]}`}>
                     {article.dci}
                   </p>
+                  {prix != null && !Number.isNaN(prix) && (
+                    <span className="shrink-0 text-[12px] font-semibold text-gray-500">
+                      {formatPrix(prix)}
+                    </span>
+                  )}
                 </button>
               );
             })

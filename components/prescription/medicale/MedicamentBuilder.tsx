@@ -148,7 +148,10 @@ export default function MedicamentBuilder({ medicaments, onChange, chuId }: Prop
                 <div key={m.id} style={{ display: "flex", alignItems: "flex-start", gap: 8, background: "var(--navy-lt)", border: "1.5px solid var(--navy-mid)", borderRadius: 9, padding: "8px 10px" }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 12, color: "var(--navy)", fontWeight: 600 }}>{m.nom} {m.dose}</div>
-                    <div style={{ fontSize: 11, color: "var(--txt2)" }}>qté {m.quantite} {m.quantiteType}</div>
+                    <div style={{ fontSize: 11, color: "var(--txt2)" }}>
+                      qté {m.quantite} {m.quantiteType}
+                      {m.prixUnitaire != null && ` · ${m.prixUnitaire.toLocaleString('fr-FR')} Ar / unité`}
+                    </div>
                   </div>
                   <button type="button" onClick={() => removeMedicament(m.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--txt3)", padding: 2, lineHeight: 1 }}>
                     <span className="ms" style={{ fontSize: 15 }}>close</span>
