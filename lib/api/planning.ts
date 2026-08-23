@@ -56,6 +56,18 @@ export const planningApi = {
   annulerRdv: (id: string) =>
     sommeilApi<RendezVousPlanning>(`/planning/${id}/annuler`, { method: "PATCH" }),
 
+  /**
+   * Réception du patient : le RDV passe à REALISE et la consultation à
+   * traiter est ouverte côté backend. `consultation.id` est la cible de
+   * l'écran de traitement.
+   */
+  marquerRealise: (id: string) =>
+    sommeilApi<{
+      success: boolean;
+      rendezVous: RendezVousPlanning;
+      consultation: { id: string; patientId: string };
+    }>(`/planning/${id}/realise`, { method: "PATCH" }),
+
   marquerNonRealise: (id: string) =>
     sommeilApi<RendezVousPlanning>(`/planning/${id}/non-realise`, { method: "PATCH" }),
 

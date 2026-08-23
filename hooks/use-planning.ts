@@ -48,6 +48,18 @@ export function useAnnulerRdv() {
   });
 }
 
+export function useMarquerRealise() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => planningApi.marquerRealise(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [PLANNING_QUERY_KEY] });
+      // La consultation ouverte doit apparaître immédiatement dans le fil.
+      queryClient.invalidateQueries({ queryKey: ["consultations"] });
+    },
+  });
+}
+
 export function useMarquerNonRealise() {
   const queryClient = useQueryClient();
   return useMutation({

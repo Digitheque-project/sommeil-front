@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useSidebar } from "@/components/AppShell";
 import { useBackendStatus } from "@/hooks/use-backend-status";
@@ -10,6 +11,7 @@ import { usePermissions } from "@/hooks/use-permissions";
 import type { NotificationItem } from "@/lib/api/notifications";
 import { useAuth } from "@/context/AuthContext";
 import { roleLabel } from "@/lib/auth";
+import { resolveNotificationTarget } from "@/lib/notification-routing";
 import { playNotificationSound } from "@/lib/sound";
 
 type TopBarProps = {
@@ -91,6 +93,7 @@ export default function TopBar({
   logoSrc = "/chu.png",
 }: Readonly<TopBarProps>) {
   const { toggleSidebar } = useSidebar();
+  const router = useRouter();
   const { user } = useAuth();
   const { permissions } = usePermissions();
   const backendReady = useBackendStatus();
@@ -131,6 +134,21 @@ export default function TopBar({
 
   const markOneRead = (item: NotificationItem) => {
     if (!item.read) markReadMutation.mutate([item.id]);
+  };
+
+  /**
+   * Une notification est un point d'entrée vers un dossier, pas un simple
+   * accusé de lecture : le clic marque comme lue PUIS ouvre l'écran concerné
+   * (cf. lib/notification-routing.ts). Les notifications purement
+   * informatives, sans dossier rattaché, restent cliquables mais ne
+   * naviguent nulle part.
+   */
+  const openNotification = (item: NotificationItem) => {
+    markOneRead(item);
+    const target = resolveNotificationTarget(item);
+    if (!target) return;
+    setNotificationsOpen(false);
+    router.push(target);
   };
 
   // Identité du compte connecté uniquement : tant que le jeton n'est pas lu,
@@ -229,11 +247,13 @@ export default function TopBar({
                     <ul className="divide-y divide-outline-variant/60">
                       {visibleNotifications.map((item) => {
                         const priority = PRIORITY_STYLES[item.priority] ?? PRIORITY_STYLES.normal;
+                        const hasTarget = resolveNotificationTarget(item) !== null;
                         return (
                           <li key={item.id}>
                             <button
                               type="button"
-                              onClick={() => markOneRead(item)}
+                              onClick={() => openNotification(item)}
+                              title={hasTarget ? "Ouvrir le dossier concerné" : undefined}
                               className={`w-full text-left px-4 py-3 hover:bg-surface-container transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                                 item.read ? "opacity-60" : ""
                               }`}
@@ -255,11 +275,23 @@ export default function TopBar({
                                   <p className="mt-0.5 text-xs text-on-surface-variant line-clamp-2">
                                     {item.message}
                                   </p>
-                                  {item.source && (
-                                    <p className="mt-1 text-[10px] uppercase tracking-wider text-secondary">
-                                      {item.source}
-                                    </p>
-                                  )}
+                                  <div className="mt-1 flex items-center justify-between gap-2">
+                                    {item.source ? (
+                                      <p className="text-[10px] uppercase tracking-wider text-secondary truncate">
+                                        {item.source}
+                                      </p>
+                                    ) : (
+                                      <span />
+                                    )}
+                                    {hasTarget && (
+                                      <span className="flex shrink-0 items-center gap-0.5 text-[10px] font-bold text-primary">
+                                        Ouvrir
+                                        <span className="material-symbols-outlined text-[14px]">
+                                          arrow_forward
+                                        </span>
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             </button>

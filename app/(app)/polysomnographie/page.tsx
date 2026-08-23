@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import TopBar from "@/components/TopBar";
 import ActionButton from "@/components/ActionButton";
 import { useDeletePsg, usePsgExams, useStartPsg, useStopPsg, useUpdatePsg } from "@/hooks/use-psg";
@@ -40,7 +41,24 @@ const STATUS_STYLES: Record<PsgExam["statut"], { label: string; className: strin
   TERMINE: { label: "Terminé", className: "bg-green-100 text-green-800" },
 };
 
+/**
+ * `useSearchParams` bascule l'arbre client jusqu'à la frontière `Suspense` la
+ * plus proche : sans cette limite, le prérendu de la route échoue.
+ */
 export default function PolysomnographiePage() {
+  return (
+    <Suspense fallback={<TopBar title="Polysomnographie" />}>
+      <PolysomnographiePageContent />
+    </Suspense>
+  );
+}
+
+function PolysomnographiePageContent() {
+  const searchParams = useSearchParams();
+  // Examen désigné par une notification : il peut être identifié par l'id de
+  // l'examen local comme par celui de la prescription d'origine.
+  const focusId = searchParams.get("focus");
+
   const [searchQuery, setSearchQuery] = useState("");
   const [toast, setToast] = useState<string | null>(null);
   const [startTarget, setStartTarget] = useState<PsgExam | null>(null);
@@ -61,6 +79,15 @@ export default function PolysomnographiePage() {
     const timeout = window.setTimeout(() => setToast(null), 3500);
     return () => window.clearTimeout(timeout);
   }, [toast]);
+
+  const isFocused = (item: PsgExam) =>
+    focusId !== null && (item.id === focusId || item.prescriptionId === focusId);
+
+  const focusedExam = useMemo(
+    () => (focusId ? exams.find((item) => isFocused(item)) ?? null : null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [focusId, exams]
+  );
 
   const filtered = useMemo(() => {
     const list = [...exams].sort((a, b) => a.rdvDate.localeCompare(b.rdvDate));
@@ -211,6 +238,22 @@ export default function PolysomnographiePage() {
           ))}
         </div>
 
+        {/* L'examen visé par la notification n'a pas encore été planifié : il
+            est encore dans la liste des prescriptions à traiter. */}
+        {focusId && !isLoading && !focusedExam && (
+          <Link
+            href={`/prescription?focus=${encodeURIComponent(focusId)}`}
+            className="mb-6 flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 transition-colors hover:bg-amber-100"
+          >
+            <span className="material-symbols-outlined text-amber-700">info</span>
+            <p className="flex-1 text-sm font-semibold text-amber-900">
+              Aucun examen planifié ne correspond à cette notification — ouvrir la prescription
+              d&apos;origine pour poser le rendez-vous.
+            </p>
+            <span className="material-symbols-outlined text-amber-700">arrow_forward</span>
+          </Link>
+        )}
+
         <div className="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden mb-6 shadow-sm">
           <div className="p-4 border-b border-outline-variant">
             <div className="relative w-full max-w-md">
@@ -254,7 +297,13 @@ export default function PolysomnographiePage() {
               {filtered.map((item) => {
                 const status = STATUS_STYLES[item.statut] ?? STATUS_STYLES.PLANIFIE;
                 return (
-                  <li key={item.id} className="flex flex-col gap-4 px-6 py-5 hover:bg-tertiary-fixed transition-colors xl:flex-row xl:items-center">
+                  <li
+                    key={item.id}
+                    className={cn(
+                      "flex flex-col gap-4 px-6 py-5 hover:bg-tertiary-fixed transition-colors xl:flex-row xl:items-center",
+                      isFocused(item) && "bg-secondary-fixed/40 ring-2 ring-inset ring-secondary"
+                    )}
+                  >
                     <div className="flex items-center gap-3 xl:w-[260px] shrink-0">
                       <div className={cn(
                         "w-11 h-11 rounded-full flex items-center justify-center font-bold shrink-0",

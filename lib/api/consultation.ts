@@ -1,7 +1,7 @@
 import { getSommeilApiUrl } from './consultation-config';
 
 export type ConsultationHistoryEntry = {
-  id: number;
+  id: string;
   date: string;
   heure: string;
   statut: string;
@@ -33,7 +33,10 @@ export type ConsultationListFilters = {
 };
 
 export type ConsultationApi = {
-  id: number;
+  /** Identifiant dans le centre de sommeil (cuid). */
+  id: string;
+  /** Identifiant dans le service qui a créé la consultation, s'il en vient un. */
+  consultationId?: string;
   date: string;
   heure: string;
   patientId: string;

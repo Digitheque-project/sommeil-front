@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Calendar, CalendarClock, Search, Filter, X, Plus, ChevronRight, Archive as ArchiveIcon, UserCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import TopBar from "@/components/TopBar";
@@ -22,7 +22,7 @@ type PatientStatus = "TOUS" | "EN ATTENTE" | "EN COURS" | "EFFECTUÉ";
 type VisitType = "TOUS" | "INITIALE" | "CONTROLE";
 
 type Appointment = {
-  id: number;
+  id: string;
   time: string;
   name: string;
   date: string;
@@ -40,6 +40,8 @@ type Appointment = {
   dossier: string;
   searchText: string;
   medecinId: string;
+  /** Identifiant de la consultation dans le service qui l'a créée. */
+  reference: string;
   allergies?: string;
   timeline?: Array<{
     title: string;
@@ -92,8 +94,24 @@ const buildObservationNotes = (parameters: ClinicalParameterRow[], notes: string
     .join("\n\n");
 };
 
+/**
+ * `useSearchParams` bascule l'arbre client jusqu'à la frontière `Suspense` la
+ * plus proche : sans cette limite, le prérendu de la route échoue.
+ */
 export default function ConsultationPage() {
+  return (
+    <Suspense fallback={<TopBar title="Consultation" />}>
+      <ConsultationPageContent />
+    </Suspense>
+  );
+}
+
+function ConsultationPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // Dossier désigné par une notification (cf. lib/notification-routing.ts).
+  const focusConsultationId = searchParams.get("consultationId");
+  const focusPatientId = searchParams.get("patientId");
   const { user } = useAuth();
   const [selectedPatient, setSelectedPatient] = useState<Appointment | null>(null);
   const [viewMode, setViewMode] = useState<"today" | "all">("today");
@@ -285,6 +303,7 @@ export default function ConsultationPage() {
         dossier: consultation.patient?.dossier || consultation.patientId,
         searchText,
         medecinId: consultation.medecinId,
+        reference: String(consultation.consultationId ?? consultation.id),
         allergies: 'Aucune signalée',
         timeline: [],
       };
@@ -350,6 +369,34 @@ export default function ConsultationPage() {
     });
   }, [patients, searchQuery, statusFilter, visitTypeFilter, viewMode]);
 
+  // Ouverture depuis une notification. Le dossier visé n'est pas forcément du
+  // jour : la vue bascule sur « Tous » avant de l'ouvrir. Le repère n'est
+  // suivi qu'une fois, l'utilisateur reste libre de naviguer ensuite. Une
+  // notification peut porter l'identifiant local comme celui du service qui a
+  // créé la consultation : les deux sont acceptés.
+  // Traité pendant le rendu (motif « ajuster l'état quand les props
+  // changent ») : un effet aurait affiché la liste filtrée du jour avant de
+  // basculer, avec un clignotement visible.
+  const [focusHandled, setFocusHandled] = useState(false);
+  const focusRequested = focusConsultationId ?? focusPatientId;
+
+  if (focusRequested && !focusHandled && !isLoading) {
+    const match = focusConsultationId
+      ? patients.find(
+          (item) => String(item.id) === focusConsultationId || item.reference === focusConsultationId
+        )
+      : patients.find((item) => item.patientId === focusPatientId);
+
+    setFocusHandled(true);
+
+    if (match) {
+      setViewMode("all");
+      handleOpenPatientInfo(match);
+    } else {
+      setToast("Le dossier signalé par la notification n'est pas (ou plus) dans les consultations.");
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Main Content */}
@@ -380,7 +427,7 @@ export default function ConsultationPage() {
                     </svg>
                   </div>
                   <div className="leading-tight">
-                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Quota aujourd'hui</p>
+                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Quota aujourd&apos;hui</p>
                     <p className="text-[15px] font-black text-[#005b82]">
                       {todayTotal}<span className="text-gray-300 font-bold">/{quotaMax}</span>
                     </p>
@@ -401,7 +448,7 @@ export default function ConsultationPage() {
                       )}
                     >
                       <Filter className="w-3.5 h-3.5" />
-                      Aujourd'hui
+                      Aujourd&apos;hui
                     </button>
                     <button
                       type="button"

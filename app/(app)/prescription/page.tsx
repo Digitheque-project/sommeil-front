@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import TopBar from "@/components/TopBar";
 import ActionButton from "@/components/ActionButton";
 import { usePolysomnographies, useSchedulePolysomnographie } from "@/hooks/use-prescriptions";
@@ -27,7 +28,25 @@ const getInitials = (item: PolysomnographieItem) => {
   return parts.map((p) => p[0]?.toUpperCase() ?? "").slice(0, 2).join("");
 };
 
+/**
+ * `useSearchParams` bascule l'arbre client jusqu'à la frontière `Suspense` la
+ * plus proche : sans cette limite, le prérendu de la route échoue.
+ */
 export default function PrescriptionPage() {
+  return (
+    <Suspense fallback={<TopBar title="Prescriptions" />}>
+      <PrescriptionPageContent />
+    </Suspense>
+  );
+}
+
+function PrescriptionPageContent() {
+  const searchParams = useSearchParams();
+  // Identifiant de prescription transmis par une notification (cf.
+  // lib/notification-routing.ts) : la ligne correspondante est mise en avant
+  // et sa planification ouverte directement.
+  const focusId = searchParams.get("focus");
+
   const [searchQuery, setSearchQuery] = useState("");
   const [urgentOnly, setUrgentOnly] = useState(false);
   const [scheduleTarget, setScheduleTarget] = useState<PolysomnographieItem | null>(null);
@@ -37,6 +56,11 @@ export default function PrescriptionPage() {
 
   const { data: polysomnographies = [], isLoading } = usePolysomnographies();
   const scheduleMutation = useSchedulePolysomnographie();
+
+  const focusedItem = useMemo(
+    () => (focusId ? polysomnographies.find((item) => item.id === focusId) ?? null : null),
+    [focusId, polysomnographies]
+  );
 
   const stats = useMemo(() => {
     const total = polysomnographies.length;
@@ -66,6 +90,16 @@ export default function PrescriptionPage() {
     setRdvDate(item.rdvDate ?? "");
     setRdvHeure(item.rdvHeure ?? "20:00");
   };
+
+  // Ouverture automatique une seule fois : rouvrir la fenêtre après une
+  // annulation de l'utilisateur serait un piège.
+  const autoOpenedFocusRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!focusedItem || focusedItem.statut === "PLANIFIE") return;
+    if (autoOpenedFocusRef.current === focusedItem.id) return;
+    autoOpenedFocusRef.current = focusedItem.id;
+    openSchedule(focusedItem);
+  }, [focusedItem]);
 
   const submitSchedule = async () => {
     if (!scheduleTarget || !rdvDate) return;
@@ -130,6 +164,32 @@ export default function PrescriptionPage() {
             </div>
           ))}
         </div>
+
+        {/* Notification ouverte sur une prescription : dire où elle en est.
+            Sans ce repère, un clic sur une notification déjà traitée
+            aboutissait à une liste où la ligne attendue avait disparu. */}
+        {focusId && !isLoading && !focusedItem && (
+          <div className="mb-6 flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4">
+            <span className="material-symbols-outlined text-amber-700">info</span>
+            <p className="flex-1 text-sm font-semibold text-amber-900">
+              La prescription signalée par la notification n&apos;est plus dans la liste du service
+              (traitée, annulée ou adressée à un autre service).
+            </p>
+          </div>
+        )}
+        {focusedItem?.statut === "PLANIFIE" && (
+          <Link
+            href={`/polysomnographie?focus=${encodeURIComponent(focusedItem.id)}`}
+            className="mb-6 flex items-center gap-3 rounded-xl border border-green-200 bg-green-50 px-5 py-4 transition-colors hover:bg-green-100"
+          >
+            <span className="material-symbols-outlined text-green-700">event_available</span>
+            <p className="flex-1 text-sm font-semibold text-green-900">
+              La prescription de {focusedItem.patientPrenom} {focusedItem.patientNom} est déjà
+              planifiée — ouvrir l&apos;examen dans la page Polysomnographie.
+            </p>
+            <span className="material-symbols-outlined text-green-700">arrow_forward</span>
+          </Link>
+        )}
 
         {stats.planned > 0 && (
           <Link
@@ -209,7 +269,13 @@ export default function PrescriptionPage() {
                 )}
                 {filtered.map((item) => {
                   return (
-                    <tr key={item.id} className="hover:bg-tertiary-fixed transition-colors group">
+                    <tr
+                      key={item.id}
+                      className={cn(
+                        "hover:bg-tertiary-fixed transition-colors group",
+                        item.id === focusId && "bg-secondary-fixed/40 ring-2 ring-inset ring-secondary"
+                      )}
+                    >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-3">
                           <div className={cn(

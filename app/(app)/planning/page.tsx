@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import PlanningToolbar from "@/components/planning/PlanningToolbar";
 import CalendrierSemaine from "@/components/planning/CalendrierSemaine";
 import PanneauDetailRDV from "@/components/planning/PanneauDetailRDV";
@@ -11,6 +12,7 @@ import {
   useModifierRdv,
   useAnnulerRdv,
   useMarquerNonRealise,
+  useMarquerRealise,
 } from "@/hooks/use-planning";
 import { dateISODansFuseauHopital } from "@/lib/planning-dates";
 import type { CreerRdvInput, RendezVousPlanning } from "@/lib/api/planning";
@@ -25,6 +27,7 @@ function getLundiSemaine(date: Date): Date {
 }
 
 export default function PlanningPage() {
+  const router = useRouter();
   const [dateDebut, setDateDebut] = useState<Date>(() => getLundiSemaine(new Date()));
   const [rdvSelectionne, setRdvSelectionne] = useState<RendezVousPlanning | null>(null);
   const [formulaireOuvert, setFormulaireOuvert] = useState(false);
@@ -49,6 +52,7 @@ export default function PlanningPage() {
   const modifierRdv = useModifierRdv();
   const annulerRdv = useAnnulerRdv();
   const marquerNonRealise = useMarquerNonRealise();
+  const marquerRealise = useMarquerRealise();
 
   useEffect(() => {
     if (!toast) return;
@@ -148,6 +152,13 @@ export default function PlanningPage() {
             await marquerNonRealise.mutateAsync(rdvSelectionne.id);
             setToast("RDV marqué non réalisé");
             setRdvSelectionne(null);
+          }}
+          onRecevoirPatient={async () => {
+            // Le backend ouvre (ou retrouve) la consultation du rendez-vous :
+            // on enchaîne directement sur son écran de traitement.
+            const result = await marquerRealise.mutateAsync(rdvSelectionne.id);
+            setRdvSelectionne(null);
+            router.push(`/consultation/traitement?id=${encodeURIComponent(result.consultation.id)}`);
           }}
         />
       )}

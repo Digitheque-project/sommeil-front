@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Pencil, CalendarX } from "lucide-react";
+import { X, Pencil, CalendarX, UserCheck } from "lucide-react";
 import ActionButton from "@/components/ActionButton";
 import type { RendezVousPlanning } from "@/lib/api/planning";
 
@@ -11,6 +11,8 @@ interface PanneauDetailRDVProps {
   onModifier: () => void;
   onAnnuler: () => Promise<unknown>;
   onMarquerNonRealise: () => Promise<unknown>;
+  /** Réception du patient : ouvre la consultation et bascule sur son traitement. */
+  onRecevoirPatient: () => Promise<unknown>;
 }
 
 const STATUT_LABEL: Record<string, string> = {
@@ -45,6 +47,7 @@ export default function PanneauDetailRDV({
   onModifier,
   onAnnuler,
   onMarquerNonRealise,
+  onRecevoirPatient,
 }: PanneauDetailRDVProps) {
   const [enCours, setEnCours] = useState<string | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
@@ -120,6 +123,17 @@ export default function PanneauDetailRDV({
         <div className="p-5 border-t border-slate-100 space-y-2">
           {erreur && <p className="text-xs text-red-600 pb-1">{erreur}</p>}
           {estRealise && <p className="text-xs text-slate-400 text-center pb-1">RDV déjà réalisé — non modifiable</p>}
+          {rdv.statut === "EN_ATTENTE" && (
+            <ActionButton
+              permission="consultation:treat"
+              disabled={enCours !== null}
+              onClick={() => action("recevoir", onRecevoirPatient)}
+              className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-[#006A8C] px-4 py-2 text-sm font-bold text-white hover:bg-[#004D66]"
+            >
+              <UserCheck size={16} />
+              {enCours === "recevoir" ? "Ouverture..." : "Recevoir le patient"}
+            </ActionButton>
+          )}
           <ActionButton
             permission="planning:update"
             disabled={estRealise}
