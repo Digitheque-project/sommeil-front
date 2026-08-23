@@ -21,6 +21,12 @@ const formatReceivedAt = (value: string) => {
   return new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", year: "numeric" }).format(date);
 };
 
+/** Nom affichable du patient. L'identifiant ne sert que de repli quand le
+ * service accueil n'a pas pu fournir l'identité : un UUID n'apprend rien au
+ * praticien, il ne doit jamais s'afficher à la place d'un nom disponible. */
+const patientLabel = (item: PolysomnographieItem) =>
+  `${item.patientPrenom} ${item.patientNom}`.trim() || item.patientId;
+
 const getInitials = (item: PolysomnographieItem) => {
   const fullName = `${item.patientPrenom} ${item.patientNom}`.trim();
   const parts = fullName.split(" ").filter(Boolean);
@@ -286,9 +292,8 @@ function PrescriptionPageContent() {
                           </div>
                           <div>
                             <div className="font-semibold text-primary">
-                              {item.patientPrenom} {item.patientNom}
+                              {patientLabel(item)}
                             </div>
-                            <div className="text-xs font-data-mono text-on-surface-variant">{item.patientId}</div>
                           </div>
                         </div>
                       </td>
