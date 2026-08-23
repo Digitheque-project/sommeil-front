@@ -12,14 +12,6 @@ interface RdvFormModalProps {
   onConfirm: (data: CreerRdvInput) => Promise<void>;
 }
 
-/** "YYYY-MM-DD" (ou ISO complet) → vrai si samedi ou dimanche.
- * new Date("YYYY-MM-DD") est toujours interprété en UTC minuit, donc
- * getUTCDay() est fiable quel que soit le fuseau du navigateur. */
-function estWeekend(date: string): boolean {
-  const jour = new Date(date.split("T")[0]).getUTCDay();
-  return jour === 0 || jour === 6;
-}
-
 const PRIORITES: PrioriteRdv[] = ["NORMALE", "URGENTE", "TRES_URGENTE"];
 const PRIORITE_LABEL: Record<PrioriteRdv, string> = {
   NORMALE: "Normale",
@@ -46,11 +38,10 @@ export default function RdvFormModal({ titre, valeurInitiale, onClose, onConfirm
   const [erreur, setErreur] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
 
-  const dateEstWeekend = date !== "" && estWeekend(date);
   const dureeMinutes = parseInt(dureeMinutesStr, 10);
   const dureeValide = !isNaN(dureeMinutes) && dureeMinutes > 0;
   const patientValide = patientNom.trim() !== "" && patientPrenom.trim() !== "";
-  const formValide = patientValide && !!date && !!heureDebut && !dateEstWeekend && dureeValide;
+  const formValide = patientValide && !!date && !!heureDebut && dureeValide;
 
   const handleConfirm = async () => {
     if (!formValide) return;
@@ -167,11 +158,6 @@ export default function RdvFormModal({ titre, valeurInitiale, onClose, onConfirm
               min={dateISODansFuseauHopital()}
               className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            {dateEstWeekend && (
-              <p className="text-xs text-red-600 mt-1.5">
-                Impossible de planifier un RDV le week-end — choisissez un jour de semaine.
-              </p>
-            )}
           </div>
 
           <div className="grid grid-cols-2 gap-3">

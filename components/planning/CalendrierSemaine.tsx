@@ -11,11 +11,14 @@ interface CalendrierSemaineProps {
   onSelectCreneauLibre?: (dateRDV: string, heureDebut: string) => void;
 }
 
-// Lundi à vendredi uniquement — impossible de planifier un RDV le week-end.
-const JOURS = ["Lun", "Mar", "Mer", "Jeu", "Ven"];
+// Semaine complète : le centre de sommeil reçoit aussi le week-end.
+const JOURS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
 const NB_JOURS = JOURS.length;
 
-const HEURES_BASE = Array.from({ length: 11 }, (_, i) => i + 8); // 08..18
+// La grille couvre les 24 heures : l'enregistrement du sommeil est un examen
+// de nuit (20:00 par défaut côté planification), une plage 08h-18h ne laissait
+// aucune case où poser — ni afficher — un rendez-vous nocturne.
+const HEURES = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, "0")}:00`);
 
 const PRIORITE_COULEUR: Record<string, string> = {
   TRES_URGENTE: "bg-red-50 border-red-500 text-red-700",
@@ -50,18 +53,6 @@ export default function CalendrierSemaine({
     return d;
   });
 
-  // Étend la grille si un RDV tombe hors de la plage 08h-18h, pour ne
-  // jamais faire disparaître silencieusement un créneau saisi librement.
-  const heuresRdvs = rdvs
-    .map((r) => parseInt(r.heureDebut.split(":")[0], 10))
-    .filter((h) => !Number.isNaN(h));
-  const heureMin = Math.min(HEURES_BASE[0], ...heuresRdvs);
-  const heureMax = Math.max(HEURES_BASE[HEURES_BASE.length - 1], ...heuresRdvs);
-  const HEURES = Array.from(
-    { length: heureMax - heureMin + 1 },
-    (_, i) => `${String(heureMin + i).padStart(2, "0")}:00`
-  );
-
   const aujourdhui = dateISODansFuseauHopital(new Date());
 
   return (
@@ -69,9 +60,9 @@ export default function CalendrierSemaine({
       {/* Défilement horizontal partagé entre l'en-tête et les lignes, pour
           que les colonnes restent alignées au lieu de s'écraser sur mobile. */}
       <div className="overflow-x-auto">
-        <div className="min-w-[640px]">
+        <div className="min-w-[880px]">
           {/* Header colonnes */}
-          <div className="grid grid-cols-6 border-b border-slate-100">
+          <div className="grid grid-cols-8 border-b border-slate-100">
             <div className="p-3 text-xs text-slate-400 text-center border-r border-slate-100">
               Heure
             </div>
@@ -98,7 +89,7 @@ export default function CalendrierSemaine({
           {/* Grille heures */}
           <div className="overflow-y-auto max-h-[600px]">
             {HEURES.map((heure) => (
-              <div key={heure} className="grid grid-cols-6 border-b border-slate-50 min-h-[64px]">
+              <div key={heure} className="grid grid-cols-8 border-b border-slate-50 min-h-[64px]">
                 <div className="p-2 text-xs text-slate-400 text-center border-r border-slate-100 pt-2">
                   {heure}
                 </div>
