@@ -14,21 +14,12 @@ import {
   useMarquerNonRealise,
   useMarquerRealise,
 } from "@/hooks/use-planning";
-import { dateISODansFuseauHopital } from "@/lib/planning-dates";
+import { dateISODansFuseauHopital, lundiDeLaSemaineHopital } from "@/lib/planning-dates";
 import type { CreerRdvInput, RendezVousPlanning } from "@/lib/api/planning";
-
-function getLundiSemaine(date: Date): Date {
-  const d = new Date(date);
-  const jour = d.getDay();
-  const diff = jour === 0 ? -6 : 1 - jour;
-  d.setDate(d.getDate() + diff);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
 
 export default function PlanningPage() {
   const router = useRouter();
-  const [dateDebut, setDateDebut] = useState<Date>(() => getLundiSemaine(new Date()));
+  const [dateDebut, setDateDebut] = useState<Date>(() => lundiDeLaSemaineHopital());
   const [rdvSelectionne, setRdvSelectionne] = useState<RendezVousPlanning | null>(null);
   const [formulaireOuvert, setFormulaireOuvert] = useState(false);
   const [rdvAModifier, setRdvAModifier] = useState<RendezVousPlanning | null>(null);
@@ -37,7 +28,7 @@ export default function PlanningPage() {
 
   const dateFin = (() => {
     const d = new Date(dateDebut);
-    d.setDate(d.getDate() + 6);
+    d.setUTCDate(d.getUTCDate() + 6);
     return d;
   })();
 
@@ -63,7 +54,7 @@ export default function PlanningPage() {
   const semainePrecedente = () => {
     setDateDebut((d) => {
       const nd = new Date(d);
-      nd.setDate(d.getDate() - 7);
+      nd.setUTCDate(d.getUTCDate() - 7);
       return nd;
     });
     setRdvSelectionne(null);
@@ -72,7 +63,7 @@ export default function PlanningPage() {
   const semaineSuivante = () => {
     setDateDebut((d) => {
       const nd = new Date(d);
-      nd.setDate(d.getDate() + 7);
+      nd.setUTCDate(d.getUTCDate() + 7);
       return nd;
     });
     setRdvSelectionne(null);

@@ -1,6 +1,7 @@
 "use client";
 
 import { Plus } from "lucide-react";
+import { dateISODansFuseauHopital } from "@/lib/planning-dates";
 import type { RendezVousPlanning } from "@/lib/api/planning";
 
 interface CalendrierSemaineProps {
@@ -28,11 +29,13 @@ function jourIso(dateRdv: string): string {
   return dateRdv.split("T")[0];
 }
 
-/** Formate un Date local en "YYYY-MM-DD", pour comparaison directe avec
- * jourIso() sans jamais passer par toISOString() (qui décale le jour
- * selon le fuseau horaire du navigateur). */
-function jourLocal(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+/** Formate un jour de la grille (ancré à minuit UTC par le planning, comme
+ * jourIso()) en "YYYY-MM-DD". Utilise les accesseurs UTC plutôt que locaux :
+ * sinon, sur un navigateur dont le fuseau diffère de celui de l'hôpital, la
+ * colonne affichée ne correspond plus au jour réel du dateRdv et le RDV
+ * n'apparaît dans aucune colonne. */
+function jourGrille(d: Date): string {
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
 }
 
 export default function CalendrierSemaine({
@@ -43,7 +46,7 @@ export default function CalendrierSemaine({
 }: CalendrierSemaineProps) {
   const jours = Array.from({ length: NB_JOURS }, (_, i) => {
     const d = new Date(dateDebut);
-    d.setDate(dateDebut.getDate() + i);
+    d.setUTCDate(dateDebut.getUTCDate() + i);
     return d;
   });
 
@@ -59,7 +62,7 @@ export default function CalendrierSemaine({
     (_, i) => `${String(heureMin + i).padStart(2, "0")}:00`
   );
 
-  const aujourdhui = jourLocal(new Date());
+  const aujourdhui = dateISODansFuseauHopital(new Date());
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
@@ -73,7 +76,7 @@ export default function CalendrierSemaine({
               Heure
             </div>
             {jours.map((jour, i) => {
-              const estAujourdhui = jourLocal(jour) === aujourdhui;
+              const estAujourdhui = jourGrille(jour) === aujourdhui;
               return (
                 <div
                   key={i}
@@ -85,7 +88,7 @@ export default function CalendrierSemaine({
                     {JOURS[i]}
                   </p>
                   <p className={`text-sm font-bold ${estAujourdhui ? "text-blue-700" : "text-slate-800"}`}>
-                    {jour.getDate()}
+                    {jour.getUTCDate()}
                   </p>
                 </div>
               );
@@ -100,7 +103,7 @@ export default function CalendrierSemaine({
                   {heure}
                 </div>
                 {jours.map((jour, i) => {
-                  const jourCol = jourLocal(jour);
+                  const jourCol = jourGrille(jour);
                   const rdvsColonne = rdvs.filter(
                     (r) => jourIso(r.dateRdv) === jourCol && r.heureDebut.startsWith(heure.split(":")[0])
                   );

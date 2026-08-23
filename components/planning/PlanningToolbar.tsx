@@ -12,9 +12,12 @@ interface PlanningToolbarProps {
 
 function formatSemaine(dateDebut: Date): string {
   const dateFin = new Date(dateDebut);
-  dateFin.setDate(dateDebut.getDate() + 6);
-  const options: Intl.DateTimeFormatOptions = { day: "numeric", month: "long" };
-  const optionsFin: Intl.DateTimeFormatOptions = { day: "numeric", month: "long", year: "numeric" };
+  dateFin.setUTCDate(dateDebut.getUTCDate() + 6);
+  // dateDebut/dateFin sont ancrées à minuit UTC du jour calendaire hôpital :
+  // formater avec timeZone "UTC" lit ce jour tel quel, sans le laisser glisser
+  // au fuseau local du navigateur qui affiche la page.
+  const options: Intl.DateTimeFormatOptions = { day: "numeric", month: "long", timeZone: "UTC" };
+  const optionsFin: Intl.DateTimeFormatOptions = { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" };
   return `Semaine du ${dateDebut.toLocaleDateString("fr-FR", options)} — ${dateFin.toLocaleDateString("fr-FR", optionsFin)}`;
 }
 
