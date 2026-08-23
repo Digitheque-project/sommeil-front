@@ -1,8 +1,13 @@
 import { API_BASE_URLS } from './config';
 import { redirectToLogin } from '@/lib/auth';
 
-const PRESCRIPTION_URL = process.env.NEXT_PUBLIC_PRESCRIPTION_URL || 'http://localhost:3334';
-const PHARMACIE_URL = process.env.NEXT_PUBLIC_PHARMACIE_URL || 'http://localhost:3335';
+// Le repli localhost casse en production : le navigateur du client tente
+// alors de joindre SA PROPRE machine (« Failed to fetch »), faute de
+// NEXT_PUBLIC_PRESCRIPTION_URL/NEXT_PUBLIC_PHARMACIE_URL définies au build.
+// Repli sur les mêmes URLs de production que sommeil-back (PRESCRIPTIONS_URL)
+// et prescription_back (PHARMACY_API_URL) plutôt que sur localhost.
+const PRESCRIPTION_URL = process.env.NEXT_PUBLIC_PRESCRIPTION_URL || 'https://prescriptionback-production.up.railway.app';
+const PHARMACIE_URL = process.env.NEXT_PUBLIC_PHARMACIE_URL || 'https://pharmacie-back-1.onrender.com';
 // Registre des services du CHU : routes servies à la racine (/services),
 // le swagger étant monté à part sous /services/api/docs.
 const SERVICE_REGISTRY_URL = API_BASE_URLS.services;
