@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { AUTH_COOKIE_NAME, getSleepUserFromToken, type SleepUser } from "@/lib/auth";
+import { AUTH_COOKIE_NAME, clearAuthSession, getSleepUserFromToken, isTokenExpired, type SleepUser } from "@/lib/auth";
 
 type AuthState = {
   isLoading: boolean;
@@ -28,24 +28,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.getItem("access_token") ||
       localStorage.getItem("auth_token");
 
-    if (currentToken) {
+    if (currentToken && !isTokenExpired(currentToken)) {
       const decodedUser = getSleepUserFromToken(currentToken);
       setToken(currentToken);
       setUser(decodedUser);
       // Les modules de prescription existants attendent ces clés.
       localStorage.setItem("access_token", currentToken);
       localStorage.setItem("auth_token", currentToken);
+    } else if (currentToken) {
+      // Jeton présent mais expiré : on nettoie pour que AuthGate redirige
+      // proprement vers le SSO au lieu de laisser les appels API échouer un
+      // par un en 401 pendant que l'utilisateur travaille.
+      clearAuthSession();
     }
     setIsLoading(false);
   }, []);
 
   const logout = useCallback(() => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("token");
-    document.cookie = `${AUTH_COOKIE_NAME}=; Path=/; Max-Age=0; SameSite=Lax`;
-    document.cookie = "auth_token=; Path=/; Max-Age=0; SameSite=Lax";
-    document.cookie = "access_token=; Path=/; Max-Age=0; SameSite=Lax";
+    clearAuthSession();
     setToken(null);
     setUser(null);
   }, []);

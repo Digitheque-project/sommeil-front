@@ -1,4 +1,5 @@
 import { getSommeilApiUrl } from './consultation-config';
+import { redirectToLogin } from '@/lib/auth';
 
 export type ConsultationHistoryEntry = {
   id: string;
@@ -124,6 +125,10 @@ function authHeaders(): Record<string, string> {
 }
 
 async function handleResponse(res: Response) {
+  if (res.status === 401) {
+    redirectToLogin();
+    throw new Error('Session expirée, redirection vers la connexion…');
+  }
   if (!res.ok) {
     let message = `Erreur HTTP ${res.status}`;
     try {

@@ -1,4 +1,5 @@
 import { API_BASE_URLS } from './config';
+import { redirectToLogin } from '@/lib/auth';
 
 const PRESCRIPTION_URL = process.env.NEXT_PUBLIC_PRESCRIPTION_URL || 'http://localhost:3334';
 const PHARMACIE_URL = process.env.NEXT_PUBLIC_PHARMACIE_URL || 'http://localhost:3335';
@@ -135,6 +136,10 @@ async function normalizePayload(data: Record<string, unknown>, type: string): Pr
 }
 
 async function handleResponse(res: Response) {
+  if (res.status === 401) {
+    redirectToLogin();
+    throw new Error('Session expirée, redirection vers la connexion…');
+  }
   if (!res.ok) {
     let message = `Erreur lors de la création de la prescription (HTTP ${res.status}).`;
     try {

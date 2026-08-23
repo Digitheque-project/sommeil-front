@@ -1,4 +1,5 @@
 import { API_BASE_URLS, CHU_ID } from '../config';
+import { redirectToLogin } from '@/lib/auth';
 
 /**
  * Patient tel que renvoyé par le service accueil (swagger /accueil/api/docs).
@@ -69,6 +70,10 @@ function authHeaders(): Record<string, string> {
 }
 
 async function handleResponse(res: Response) {
+  if (res.status === 401) {
+    redirectToLogin();
+    throw new Error('Session expirée, redirection vers la connexion…');
+  }
   if (!res.ok) {
     let message = `Erreur HTTP ${res.status}`;
     try {

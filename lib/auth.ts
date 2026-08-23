@@ -34,6 +34,8 @@ type JwtPayload = {
   email?: string;
   name?: string;
   firstname?: string;
+  /** Timestamp Unix (secondes) d'expiration du jeton. */
+  exp?: number;
   role?: string | { name?: string };
   // Le service d'authentification CHU expose des rôles porteurs de permissions
   // (`POST /roles` : `permissionIds`). Selon la configuration, le jeton peut
@@ -106,6 +108,51 @@ function decodeBase64Url(value: string): string | null {
   } catch {
     return null;
   }
+}
+
+/**
+ * Un jeton présent mais expiré doit être traité comme absent : sans ce
+ * contrôle, `AuthGate` le laisse passer (il ne vérifie que la présence) et
+ * l'utilisateur ne découvre le problème qu'au premier appel API en échec
+ * (401 « Session expirée »), en pleine saisie.
+ */
+export function isTokenExpired(token: string | null | undefined): boolean {
+  if (!token) return true;
+
+  const payloadPart = token.split(".")[1];
+  if (!payloadPart) return true;
+
+  try {
+    const decoded = decodeBase64Url(payloadPart);
+    if (!decoded) return true;
+    const payload = JSON.parse(decoded) as JwtPayload;
+    // Pas de claim `exp` : on ne peut pas juger, on laisse passer plutôt que
+    // de bloquer un jeton potentiellement valide.
+    if (!payload.exp) return false;
+    return payload.exp * 1000 <= Date.now();
+  } catch {
+    return true;
+  }
+}
+
+/** Efface la session locale : storage et cookies posés par AuthContext. */
+export function clearAuthSession() {
+  localStorage.removeItem("access_token");
+  localStorage.removeItem("auth_token");
+  localStorage.removeItem("token");
+  document.cookie = `${AUTH_COOKIE_NAME}=; Path=/; Max-Age=0; SameSite=Lax`;
+  document.cookie = "auth_token=; Path=/; Max-Age=0; SameSite=Lax";
+  document.cookie = "access_token=; Path=/; Max-Age=0; SameSite=Lax";
+}
+
+/**
+ * Jeton expiré ou refusé (401) par un backend : on nettoie la session locale
+ * et on renvoie vers le SSO plutôt que de laisser l'utilisateur sur un écran
+ * qui échouera à chaque appel.
+ */
+export function redirectToLogin() {
+  clearAuthSession();
+  window.location.replace(AUTH_LOGIN_URL);
 }
 
 /** Lit uniquement les informations d'affichage d'un JWT déjà délivré par le SSO. */

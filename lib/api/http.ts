@@ -1,4 +1,5 @@
 import { getSommeilApiUrl } from "./consultation-config";
+import { redirectToLogin } from "@/lib/auth";
 
 /**
  * Accès HTTP mutualisé au backend sommeil-back.
@@ -26,6 +27,12 @@ export function authHeaders(): Record<string, string> {
  * affichés tels quels à l'utilisateur.
  */
 export async function handleResponse<T>(res: Response): Promise<T> {
+  if (res.status === 401) {
+    // Jeton expiré/refusé en cours de session : mieux vaut renvoyer au SSO
+    // que de laisser l'utilisateur face à un message d'erreur brut.
+    redirectToLogin();
+    throw new Error("Session expirée, redirection vers la connexion…");
+  }
   if (!res.ok) {
     let message = `Erreur HTTP ${res.status}`;
     try {

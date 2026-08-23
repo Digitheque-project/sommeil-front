@@ -1,3 +1,5 @@
+import { redirectToLogin } from '@/lib/auth';
+
 // Base URL du backend sommeil-back (sans préfixe ni suffixe). Le préfixe global
 // de l'API (par défaut "sommeil/api") est ajouté ici.
 const DEFAULT_SOMMEIL_BASE_URL = 'http://localhost:8888';
@@ -25,6 +27,10 @@ const authHeaders = (): Record<string, string> => {
 };
 
 const handleResponse = async (res: Response) => {
+  if (res.status === 401) {
+    redirectToLogin();
+    throw new Error('Session expirée, redirection vers la connexion…');
+  }
   if (!res.ok) {
     const error = await res.text();
     throw new Error(error || `HTTP error! status: ${res.status}`);
