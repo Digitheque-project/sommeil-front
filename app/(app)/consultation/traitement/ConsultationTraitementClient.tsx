@@ -11,6 +11,7 @@ import type { ClinicalParameter as ApiClinicalParameter, ConsultationHistoryEntr
 import type { PharmacieArticle } from "@/lib/prescription-api";
 import { MedicamentAutocomplete } from "@/components/prescription/medicament-autocomplete";
 import { CHU_ID } from "@/lib/config";
+import { useAuth } from "@/context/AuthContext";
 
 type ClinicalParameter = { id: number; nom: string; valeur: string; unite: string };
 type Medication = { id: number; nom: string; dosage: string; quantite: number; quantiteType: string; voie: string; frequenceType: string; frequenceValeur: number; dureeJours: number; instructions: string; remarques: string };
@@ -39,6 +40,11 @@ export default function ConsultationTraitementClient({
   const { data: consultation, isLoading, error } = useConsultation(consultationId ?? "");
   const { data: history = [] } = usePatientConsultationHistory(consultation?.patientId ?? null);
   const finalizeMutation = useFinalizeConsultation();
+  const { user } = useAuth();
+  // Repli sur le praticien connecté quand la consultation n'a pas de médecin
+  // assigné : sans identifiant valide, l'API prescription rejette tout envoi
+  // avec « prescripteurId must be a string ».
+  const prescripteurId = consultation?.medecinId || user?.userId;
 
   const [activeSection, setActiveSection] = useState<"medicament" | "non-medicament">("medicament");
   const [diagnosticSuspicion, setDiagnosticSuspicion] = useState("");
@@ -73,7 +79,9 @@ export default function ConsultationTraitementClient({
     if (consultation?.patient?.dateNaissance) params.set("patientDateNaissance", consultation.patient.dateNaissance);
     // Un médecin non renseigné ne doit pas se transmettre en « null » textuel :
     // le module de prescription le prendrait pour un identifiant valide.
-    if (consultation?.medecinId) params.set("prescripteurId", consultation.medecinId);
+    // À défaut de médecin assigné à la consultation, on retombe sur le
+    // praticien connecté plutôt que de laisser prescripteurId absent.
+    if (prescripteurId) params.set("prescripteurId", prescripteurId);
     if (origin) params.set("origin", origin);
     router.push(`/consultation/traitement/prescriptions?${params.toString()}`);
   };
@@ -183,7 +191,7 @@ export default function ConsultationTraitementClient({
         try {
           const prescription = await creerPrescriptionMedicale({
             patientId: consultation.patientId,
-            prescripteurId: consultation.medecinId,
+            prescripteurId,
             urgence: consultation.urgence ? "URGENT" : "NORMAL",
             medicaments: validMedications.map((item) => ({
               nom: item.nom, dose: item.dosage, quantite: item.quantite, quantiteType: item.quantiteType,
@@ -214,7 +222,7 @@ export default function ConsultationTraitementClient({
       try {
         await creerPrescriptionNonMedicale({
           patientId: consultation.patientId,
-          prescripteurId: consultation.medecinId,
+          prescripteurId,
           urgence: consultation.urgence ? "URGENT" : "NORMAL",
           items: validInstructions.map((item) => ({ type: item.type, typeLabel: item.type, description: item.libelle, dureeJours: item.dureeJours || undefined, frequenceType: item.frequenceType || undefined, frequenceValeur: item.frequenceValeur || undefined, instructions: item.instructions || undefined })),
         });
@@ -358,9 +366,11 @@ export default function ConsultationTraitementClient({
         </div>
 
         <section className="mt-7 overflow-hidden rounded-[30px] border border-slate-100 bg-white shadow-[0_4px_20px_rgba(17,17,26,.05)]">
-          <div className="flex flex-wrap overflow-x-auto border-b border-slate-100 px-6">
+          <div className="flex overflow-x-auto border-b border-slate-100 px-6">
             {[["medicament", "Médicaments", "medication"], ["non-medicament", "Prescriptions non médicamenteuses", "assignment"]].map(([key, label, icon]) => <button key={key} type="button" onClick={() => setActiveSection(key as typeof activeSection)} className={`relative flex shrink-0 items-center gap-2 px-4 py-5 text-[12px] font-extrabold uppercase tracking-wide transition ${activeSection === key ? "text-[#006A8C]" : "text-slate-400 hover:text-slate-700"}`}><span className="material-symbols-outlined text-[18px]">{icon}</span>{label}{activeSection === key && <span className="absolute inset-x-4 bottom-0 h-1 rounded-t-full bg-[#006A8C]" />}</button>)}
-            <ActionButton permission="prescription:create" onClick={goToParacliniques} className="relative flex shrink-0 items-center gap-2 px-4 py-5 text-[12px] font-extrabold uppercase tracking-wide text-slate-400 transition hover:text-slate-700"><span className="material-symbols-outlined text-[18px]">biotech</span>Examens para-cliniques<span className="material-symbols-outlined text-[16px]">arrow_forward</span></ActionButton>
+          </div>
+          <div className="border-b border-slate-100 px-6 py-3">
+            <ActionButton permission="prescription:create" onClick={goToParacliniques} className="flex w-full items-center gap-2 rounded-xl bg-[#EAF3FA] px-4 py-2.5 text-[12px] font-bold text-[#006A8C] hover:bg-[#D1E5F5] sm:w-fit"><span className="material-symbols-outlined text-[18px]">biotech</span> Examens para-cliniques <span className="material-symbols-outlined text-[16px]">arrow_forward</span></ActionButton>
           </div>
           <div className="p-6 sm:p-8">
             {activeSection === "medicament" ? <>
