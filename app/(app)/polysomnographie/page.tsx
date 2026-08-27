@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import TopBar from "@/components/TopBar";
@@ -9,6 +9,7 @@ import { useDeletePsg, usePsgExams, useStartPsg, useStopPsg, useUpdatePsg } from
 import { psgApi, type PsgExam } from "@/lib/api/psg";
 import { downloadJson } from "@/lib/download";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/components/ToastProvider";
 
 const formatDate = (value: string) => {
   const date = new Date(value);
@@ -60,7 +61,7 @@ function PolysomnographiePageContent() {
   const focusId = searchParams.get("focus");
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [toast, setToast] = useState<string | null>(null);
+  const { showSuccess, showError } = useToast();
   const [startTarget, setStartTarget] = useState<PsgExam | null>(null);
   const [room, setRoom] = useState("");
   const [editTarget, setEditTarget] = useState<PsgExam | null>(null);
@@ -73,12 +74,6 @@ function PolysomnographiePageContent() {
   const stopMutation = useStopPsg();
   const updateMutation = useUpdatePsg();
   const deleteMutation = useDeletePsg();
-
-  useEffect(() => {
-    if (!toast) return;
-    const timeout = window.setTimeout(() => setToast(null), 3500);
-    return () => window.clearTimeout(timeout);
-  }, [toast]);
 
   const isFocused = (item: PsgExam) =>
     focusId !== null && (item.id === focusId || item.prescriptionId === focusId);
@@ -129,11 +124,11 @@ function PolysomnographiePageContent() {
     if (!startTarget) return;
     try {
       await startMutation.mutateAsync({ id: startTarget.id, salle: room.trim() || undefined });
-      setToast(`Enregistrement démarré pour ${startTarget.patientPrenom} ${startTarget.patientNom}.`);
+      showSuccess(`Enregistrement démarré pour ${startTarget.patientPrenom} ${startTarget.patientNom}.`);
       setStartTarget(null);
       setRoom("");
     } catch (error) {
-      setToast(error instanceof Error ? error.message : "Le démarrage a échoué.");
+      showError(error instanceof Error ? error.message : "Le démarrage a échoué.");
     }
   };
 
@@ -141,11 +136,11 @@ function PolysomnographiePageContent() {
   const stop = async (exam: PsgExam) => {
     try {
       await stopMutation.mutateAsync(exam.id);
-      setToast(
+      showSuccess(
         `Enregistrement terminé pour ${exam.patientPrenom} ${exam.patientNom} — l'examen est maintenant disponible dans Compte rendu.`
       );
     } catch (error) {
-      setToast(error instanceof Error ? error.message : "L'arrêt a échoué.");
+      showError(error instanceof Error ? error.message : "L'arrêt a échoué.");
     }
   };
 
@@ -154,9 +149,9 @@ function PolysomnographiePageContent() {
     try {
       const data = await psgApi.exportData(exam.id);
       downloadJson(data, `psg-${exam.patientNom || exam.patientId}-${dateKey(exam.rdvDate)}.json`);
-      setToast("Données de l'examen exportées.");
+      showSuccess("Données de l'examen exportées.");
     } catch (error) {
-      setToast(error instanceof Error ? error.message : "L'export a échoué.");
+      showError(error instanceof Error ? error.message : "L'export a échoué.");
     }
   };
 
@@ -177,10 +172,10 @@ function PolysomnographiePageContent() {
         rdvHeure: editTime || undefined,
         salle: editRoom.trim(),
       });
-      setToast("Rendez-vous mis à jour.");
+      showSuccess("Rendez-vous mis à jour.");
       setEditTarget(null);
     } catch (error) {
-      setToast(error instanceof Error ? error.message : "La mise à jour a échoué.");
+      showError(error instanceof Error ? error.message : "La mise à jour a échoué.");
     }
   };
 
@@ -189,9 +184,9 @@ function PolysomnographiePageContent() {
     if (!window.confirm(`Supprimer l'examen de ${exam.patientPrenom} ${exam.patientNom} ?`)) return;
     try {
       await deleteMutation.mutateAsync(exam.id);
-      setToast("Examen supprimé.");
+      showSuccess("Examen supprimé.");
     } catch (error) {
-      setToast(error instanceof Error ? error.message : "La suppression a échoué.");
+      showError(error instanceof Error ? error.message : "La suppression a échoué.");
     }
   };
 
@@ -546,12 +541,6 @@ function PolysomnographiePageContent() {
               </ActionButton>
             </div>
           </div>
-        </div>
-      )}
-
-      {toast && (
-        <div role="status" className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full bg-slate-900 px-5 py-3 text-sm font-bold text-white shadow-xl">
-          {toast}
         </div>
       )}
     </>

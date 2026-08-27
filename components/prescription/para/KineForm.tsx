@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { creerPrescriptionKine } from '@/lib/prescription-api';
+import { useToast } from "@/components/ToastProvider";
 
 type Urgence = "n" | "u" | "tu";
 const urgenceClasses: Record<Urgence, string> = { n: "un", u: "uu", tu: "utu" };
@@ -28,8 +29,8 @@ export default function KineForm({ patient, prescripteur, onAddToCart }: Props) 
   const [kineAutre, setKineAutre] = useState(""); const [diagnostic, setDiagnostic] = useState("");
   const [ciSelected, setCiSelected] = useState<string[]>([]); const [ciAutre, setCiAutre] = useState(false); const [ciAutreText, setCiAutreText] = useState("");
   const [objectifs, setObjectifs] = useState(""); const [remarques, setRemarques] = useState("");
-  const [showModal, setShowModal] = useState(false); const [toast, setToast] = useState("");
-  const [loading, setLoading] = useState(false); const [apiError, setApiError] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [loading, setLoading] = useState(false); const { showSuccess, showError } = useToast();
   const [showValidationModal, setShowValidationModal] = useState(false);
   const [validatedPrescription, setValidatedPrescription] = useState<ValidatedPrescription | null>(null);
 
@@ -38,22 +39,20 @@ export default function KineForm({ patient, prescripteur, onAddToCart }: Props) 
 
   function toggleCI(val: string) { setCiSelected(prev => prev.includes(val) ? prev.filter(v => v !== val) : [...prev, val]); }
   const isFormValid = !!renseignements.trim() && !!kineType && (kineType !== "Autre" || !!kineAutre.trim()) && !!diagnostic.trim() && !!objectifs.trim();
-  function showToast(msg: string) { setToast(msg); setTimeout(() => setToast(""), 2800); }
 
   async function handleSubmit() {
-    setShowModal(false); setLoading(true); setApiError("");
+    setShowModal(false); setLoading(true);
     try {
       await creerPrescriptionKine({ patientId: patient.id, prescripteurId: prescripteur.id, chuId: prescripteur.chuId, serviceId: prescripteur.serviceId, urgence, alertes, renseignements, typeKine: kineType === "Autre" ? kineAutre : kineType, diagnostic, contreIndications: [...ciSelected, ciAutre ? ciAutreText : undefined].filter(Boolean), objectifs, remarques });
       setValidatedPrescription({ urgence, alertes, renseignements, kineType, kineAutre, diagnostic, ciSelected, ciAutre, ciAutreText, objectifs, remarques, patient: { ...patient, age, sexeLabel }, prescripteur, date: new Date().toLocaleString('fr-FR') });
       setShowValidationModal(true);
-      showToast("Prescription kiné transmise"); setUrgence("n"); setAlertes(""); setRenseign(""); setKineType(""); setKineAutre(""); setDiagnostic(""); setCiSelected([]); setCiAutre(false); setCiAutreText(""); setObjectifs(""); setRemarques("");
-    } catch { setApiError("Erreur lors de l'envoi."); }
+      showSuccess("Prescription kiné transmise"); setUrgence("n"); setAlertes(""); setRenseign(""); setKineType(""); setKineAutre(""); setDiagnostic(""); setCiSelected([]); setCiAutre(false); setCiAutreText(""); setObjectifs(""); setRemarques("");
+    } catch { showError("Erreur lors de l'envoi."); }
     finally { setLoading(false); }
   }
 
   return (
     <div>
-      {apiError && <div style={{background:"var(--red-lt)",border:"1px solid var(--red-bdr)",borderRadius:8,padding:"10px 12px",fontSize:12,color:"var(--red)",marginBottom:12}}>{apiError}</div>}
       <div className="g2-form mb12">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div className="card" style={{ padding: 12 }}><label className="lbl">Renseignements cliniques <span className="req">*</span></label><textarea rows={3} value={renseignements} onChange={e => setRenseign(e.target.value)} placeholder="Contexte clinique..." /></div>
@@ -96,7 +95,6 @@ export default function KineForm({ patient, prescripteur, onAddToCart }: Props) 
           </div>
         </div>
       )}
-      {toast && <div className="tst on"><span className="ms">check_circle</span>{toast}</div>}
     </div>
   );
 }

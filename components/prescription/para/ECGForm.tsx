@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { creerPrescriptionECG } from '@/lib/prescription-api';
+import { useToast } from "@/components/ToastProvider";
 
 type Urgence = "n" | "u" | "tu";
 const urgenceClasses: Record<Urgence, string> = { n: "un", u: "uu", tu: "utu" };
@@ -15,31 +16,28 @@ export default function ECGForm({ patient, prescripteur, onAddToCart }: Props) {
   const [renseignements, setRenseignements] = useState("");
   const [remarques, setRemarques] = useState("");
   const [showModal, setShowModal] = useState(false);
-  const [toast, setToast] = useState("");
   const [loading, setLoading] = useState(false);
-  const [apiError, setApiError] = useState("");
+  const { showSuccess, showError } = useToast();
   const [showValidationModal, setShowValidationModal] = useState(false);
   const [validatedPrescription, setValidatedPrescription] = useState<ValidatedPrescription | null>(null);
 
   const age = calcAge(patient?.dateNaissance);
   const sexeLabel = patient?.sexe === 'M' ? 'Masculin' : patient?.sexe === 'F' ? 'Féminin' : patient?.sexe;
   const isFormValid = !!renseignements.trim();
-  function showToast(msg: string) { setToast(msg); setTimeout(() => setToast(""), 2800); }
 
   async function handleSubmit() {
-    setShowModal(false); setLoading(true); setApiError("");
+    setShowModal(false); setLoading(true);
     try {
       await creerPrescriptionECG({ patientId: patient.id, prescripteurId: prescripteur.id, chuId: prescripteur.chuId, serviceId: prescripteur.serviceId, urgence, alertes, renseignements, remarques });
       setValidatedPrescription({ urgence, alertes, renseignements, remarques, patient: { ...patient, age, sexeLabel }, prescripteur, date: new Date().toLocaleString('fr-FR') });
       setShowValidationModal(true);
-      showToast("Demande ECG transmise"); setUrgence("n"); setAlertes(""); setRenseignements(""); setRemarques("");
-    } catch { setApiError("Erreur lors de l'envoi."); }
+      showSuccess("Demande ECG transmise"); setUrgence("n"); setAlertes(""); setRenseignements(""); setRemarques("");
+    } catch { showError("Erreur lors de l'envoi."); }
     finally { setLoading(false); }
   }
 
   return (
     <div>
-      {apiError && <div style={{background:"var(--red-lt)",border:"1px solid var(--red-bdr)",borderRadius:8,padding:"10px 12px",fontSize:12,color:"var(--red)",marginBottom:12}}>{apiError}</div>}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 16, alignItems: 'start' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div className="card" style={{ padding: 12 }}><label className="lbl">Renseignements cliniques <span className="req">*</span></label><textarea rows={3} value={renseignements} onChange={e => setRenseignements(e.target.value)} placeholder="Contexte clinique, indications pour l'ECG..." /></div>
@@ -65,7 +63,6 @@ export default function ECGForm({ patient, prescripteur, onAddToCart }: Props) {
           </div>
         </div>
       )}
-      {toast && <div className="tst on"><span className="ms">check_circle</span>{toast}</div>}
     </div>
   );
 }

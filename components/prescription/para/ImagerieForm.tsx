@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { creerPrescriptionImagerie } from '@/lib/prescription-api';
+import { useToast } from "@/components/ToastProvider";
 
 type Urgence = "n" | "u" | "tu";
 type ImgType = "scan" | "echo" | "rx" | "geste" | "rxsp";
@@ -110,11 +111,8 @@ export default function ImagerieForm({ patient, prescripteur, onAddToCart }: Pro
   const [showValidationModal, setShowValidationModal] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [validatedPrescription, setValidatedPrescription] = useState<any>(null);
-  const [toast, setToast]   = useState("");
   const [loading, setLoading] = useState(false);
-  const [apiError, setApiError] = useState("");
-
-  function showToast(msg: string) { setToast(msg); setTimeout(() => setToast(""), 2800); }
+  const { showSuccess, showError } = useToast();
 
   // ── Validation per type ──────────────────────────────────────
   const currentTypeValid = (() => {
@@ -164,7 +162,7 @@ export default function ImagerieForm({ patient, prescripteur, onAddToCart }: Pro
   }
 
   async function handleSubmit() {
-    setShowModal(false); setLoading(true); setApiError("");
+    setShowModal(false); setLoading(true);
     try {
       const result = await creerPrescriptionImagerie({
         patientId: patient.id, prescripteurId: prescripteur.id,
@@ -174,12 +172,12 @@ export default function ImagerieForm({ patient, prescripteur, onAddToCart }: Pro
       });
       setValidatedPrescription({ cart: [...cart], urgence, alertes, renseignements, questionRadio, remarques, patient: { ...patient, age, sexeLabel }, prescripteur, date: new Date().toLocaleString('fr-FR'), result });
       setShowValidationModal(true);
-      showToast("Demande d'imagerie transmise");
+      showSuccess("Demande d'imagerie transmise");
       // Reset everything
       setCart([]); setRenseignements(""); setAlertes(""); setRemarques(""); setQuestionRadio(""); setUrgence("n");
       setEstHospitalise(false); setLieuHosp(""); setServiceHosp(""); setMoyenDeplacement("");
     } catch (err: unknown) {
-      setApiError((err instanceof Error ? err.message : null) || "Erreur lors de l'envoi.");
+      showError((err instanceof Error ? err.message : null) || "Erreur lors de l'envoi.");
     } finally { setLoading(false); }
   }
 
@@ -196,8 +194,6 @@ export default function ImagerieForm({ patient, prescripteur, onAddToCart }: Pro
 
   return (
     <div>
-      {apiError && <div style={{ background:"var(--red-lt)", border:"1px solid var(--red-bdr)", borderRadius:8, padding:"10px 12px", fontSize:12, color:"var(--red)", marginBottom:12 }}>{apiError}</div>}
-
       <div className="g2-form">
         {/* ── Main column ── */}
         <div>
@@ -487,7 +483,6 @@ export default function ImagerieForm({ patient, prescripteur, onAddToCart }: Pro
         </div>
       )}
 
-      {toast && <div className="tst on"><span className="ms">check_circle</span>{toast}</div>}
     </div>
   );
 }

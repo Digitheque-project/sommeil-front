@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Calendar, CalendarClock, Search, Filter, X, Plus, ChevronRight, Archive as ArchiveIcon, UserCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -17,6 +17,7 @@ import {
   useTraiterConsultation,
 } from "@/hooks/use-consultations";
 import { consultationApi, getVisiteLabel, type ConsultationApi, type ConsultationHistoryEntry } from "@/lib/api/consultation";
+import { useToast } from "@/components/ToastProvider";
 
 type PatientStatus = "TOUS" | "EN ATTENTE" | "EN COURS" | "EFFECTUÉ";
 type VisitType = "TOUS" | "INITIALE" | "CONTROLE";
@@ -118,7 +119,7 @@ function ConsultationPageContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<PatientStatus>("TOUS");
   const [visitTypeFilter, setVisitTypeFilter] = useState<VisitType>("TOUS");
-  const [toast, setToast] = useState<string | null>(null);
+  const { showSuccess, showError } = useToast();
   const [reportTarget, setReportTarget] = useState<Appointment | null>(null);
   const [reportDate, setReportDate] = useState("");
   const [reportTime, setReportTime] = useState("");
@@ -143,12 +144,6 @@ function ConsultationPageContent() {
   const { data: patientHistory = [], isLoading: isHistoryLoading } = usePatientConsultationHistory(
     showHistory ? selectedPatient?.patientId ?? null : null
   );
-
-  useEffect(() => {
-    if (!toast) return;
-    const timeout = window.setTimeout(() => setToast(null), 3500);
-    return () => window.clearTimeout(timeout);
-  }, [toast]);
 
   const handleSetViewMode = (mode: "today" | "all") => {
     setViewMode(mode);
@@ -198,10 +193,10 @@ function ConsultationPageContent() {
         action: "reporter",
         extra: { nouvelleDate: reportDate, nouvelleHeure: reportTime || undefined },
       });
-      setToast(`Consultation reportée au ${new Date(`${reportDate}T00:00:00`).toLocaleDateString("fr-FR")}.`);
+      showSuccess(`Consultation reportée au ${new Date(`${reportDate}T00:00:00`).toLocaleDateString("fr-FR")}.`);
       setReportTarget(null);
     } catch (error) {
-      setToast(error instanceof Error ? error.message : "Le report n'a pas pu être enregistré.");
+      showError(error instanceof Error ? error.message : "Le report n'a pas pu être enregistré.");
     }
   };
 
@@ -209,9 +204,9 @@ function ConsultationPageContent() {
   const toggleArrival = async (appt: Appointment) => {
     try {
       await markArrivalMutation.mutateAsync({ id: appt.id, arrived: !appt.isArrived });
-      setToast(appt.isArrived ? "Arrivée annulée." : "Patient marqué comme arrivé.");
+      showSuccess(appt.isArrived ? "Arrivée annulée." : "Patient marqué comme arrivé.");
     } catch (error) {
-      setToast(error instanceof Error ? error.message : "L'arrivée n'a pas pu être enregistrée.");
+      showError(error instanceof Error ? error.message : "L'arrivée n'a pas pu être enregistrée.");
     }
   };
 
@@ -219,9 +214,9 @@ function ConsultationPageContent() {
   const archiveConsultation = async (appt: Appointment) => {
     try {
       await archiveMutation.mutateAsync(appt.id);
-      setToast("Consultation archivée.");
+      showSuccess("Consultation archivée.");
     } catch (error) {
-      setToast(error instanceof Error ? error.message : "L'archivage a échoué.");
+      showError(error instanceof Error ? error.message : "L'archivage a échoué.");
     }
   };
 
@@ -234,9 +229,9 @@ function ConsultationPageContent() {
         diagnostic: diagnosticRetenu || diagnosticSuspicion,
         notes: buildObservationNotes(clinicalParameters, observationNotes),
       });
-      setToast("Consultation enregistrée.");
+      showSuccess("Consultation enregistrée.");
     } catch (error) {
-      setToast(error instanceof Error ? error.message : "L'enregistrement a échoué.");
+      showError(error instanceof Error ? error.message : "L'enregistrement a échoué.");
     }
   };
 
@@ -393,7 +388,7 @@ function ConsultationPageContent() {
       setViewMode("all");
       handleOpenPatientInfo(match);
     } else {
-      setToast("Le dossier signalé par la notification n'est pas (ou plus) dans les consultations.");
+      showError("Le dossier signalé par la notification n'est pas (ou plus) dans les consultations.");
     }
   }
 
@@ -1013,12 +1008,6 @@ function ConsultationPageContent() {
               </ActionButton>
             </div>
           </div>
-        </div>
-      )}
-
-      {toast && (
-        <div role="status" className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full bg-slate-900 px-5 py-3 text-sm font-bold text-white shadow-xl">
-          {toast}
         </div>
       )}
     </div>

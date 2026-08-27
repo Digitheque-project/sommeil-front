@@ -133,9 +133,6 @@
 .rx-scope .sep { height: 1px; background: var(--bdr); margin: 12px 0; }
 .rx-scope .info-note { background: var(--navy-lt); border-radius: 10px; padding: 10px 13px; font-size: 12px; color: var(--navy); display: flex; gap: 7px; align-items: flex-start; margin-bottom: 12px; }
 .rx-scope .info-note .ms { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
-.rx-scope .tst { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(18px); background: #1a2235; color: #fff; border-radius: 10px; padding: 10px 16px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 8px; z-index: 300; opacity: 0; transition: all .25s; white-space: nowrap; pointer-events: none; }
-.rx-scope .tst.on { opacity: 1; transform: translateX(-50%) translateY(0); }
-.rx-scope .tst .ms { font-size: 15px; color: #4ade80; }
 
 /* Imagerie-specific */
 .rx-scope .img-tabs { display: grid; grid-template-columns: repeat(5,1fr); gap: 7px; margin-bottom: 14px; }
@@ -164,7 +161,6 @@
   .rx-scope .g3 { grid-template-columns: 1fr 1fr; }
   .rx-scope .card { padding: 12px; border-radius: 10px; }
   .rx-scope .bp { padding: 13px 16px; font-size: 14px; }
-  .rx-scope .tst { bottom: 20px; font-size: 11px; }
   .rx-scope .mbox { padding: 18px; }
 }
 @media (max-width: 480px) {

@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { creerPrescriptionLabo } from '@/lib/prescription-api';
+import { useToast } from '@/components/ToastProvider';
 
 const CATEGORIES = [
   { id: 'hemato', label: '1. Hématologie & NFS', color: '#7c3aed', textColor: '#6d28d9', tube: 'Tube violet', analyses: ['NFS complète','Réticulocytes','VSH','Frottis sanguin','Groupage ABO / Rh','Test d\'Itano (drépanocytose)'] },
@@ -47,9 +48,8 @@ export default function LaboForm({ patient, prescripteur, onAddToCart }: Props) 
   const [selected, setSelected] = useState<string[]>([]);
   const [notes, setNotes] = useState('');
   const [showModal, setShowModal] = useState(false);
-  const [toast, setToast] = useState('');
   const [loading, setLoading] = useState(false);
-  const [apiError, setApiError] = useState('');
+  const { showSuccess, showError } = useToast();
   const [showValidationModal, setShowValidationModal] = useState(false);
   const [validatedPrescription, setValidatedPrescription] = useState<ValidatedPrescription | null>(null);
 
@@ -63,24 +63,22 @@ export default function LaboForm({ patient, prescripteur, onAddToCart }: Props) 
   }[urgence] ?? { border: '#bbf7d0', bg: 'var(--inp)', dot: '#16a34a' };
 
   function toggle(val: string) { setSelected(prev => prev.includes(val) ? prev.filter(x => x !== val) : [...prev, val]); }
-  function showToast(msg: string) { setToast(msg); setTimeout(() => setToast(''), 2800); }
   const isFormValid = selected.length > 0 && renseignements.trim();
 
   async function handleSubmit() {
-    setShowModal(false); setLoading(true); setApiError('');
+    setShowModal(false); setLoading(true);
     try {
       await creerPrescriptionLabo({ patientId: patient.id, prescripteurId: prescripteur.id, chuId: prescripteur.chuId, serviceId: prescripteur.serviceId, urgence, alertes, renseignements, analyses: selected, notes });
       setValidatedPrescription({ urgence, alertes, renseignements, selected, notes, patient: { ...patient, age, sexeLabel }, prescripteur, date: new Date().toLocaleString('fr-FR') });
       setShowValidationModal(true);
-      showToast('Prescription transmise au laboratoire');
+      showSuccess('Prescription transmise au laboratoire');
       setSelected([]); setRenseignements(''); setNotes(''); setUrgence('n'); setAlertes('');
-    } catch { setApiError("Erreur lors de l'envoi. Vérifiez la connexion."); }
+    } catch { showError("Erreur lors de l'envoi. Vérifiez la connexion."); }
     finally { setLoading(false); }
   }
 
   return (
     <div>
-      {apiError && <div style={{ background: "var(--red-lt)", border: "1px solid var(--red-bdr)", borderRadius: 8, padding: "10px 12px", fontSize: 12, color: "var(--red)", marginBottom: 12 }}>{apiError}</div>}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 16, alignItems: 'start' }}>
         <div>
           <div className="card mb12"><label className="lbl">Renseignements cliniques <span className="req">*</span></label><textarea rows={2} placeholder="Motif, antécédents, suspicion diagnostique..." value={renseignements} onChange={e => setRenseignements(e.target.value)} /></div>
@@ -139,7 +137,6 @@ export default function LaboForm({ patient, prescripteur, onAddToCart }: Props) 
           </div>
         </div>
       )}
-      {toast && <div className="tst on"><span className="ms">check_circle</span>{toast}</div>}
     </div>
   );
 }

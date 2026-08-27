@@ -2,6 +2,7 @@
 import { useState, useEffect, Fragment } from "react";
 import { openSummaryWindow } from '@/lib/printPrescription';
 import { creerPrescriptionDialyse, getCreneauxDialyse } from '@/lib/prescription-api';
+import { useToast } from "@/components/ToastProvider";
 
 type Urgence = "n" | "u" | "tu";
 const urgenceClasses: Record<Urgence, string> = { n: "un", u: "uu", tu: "utu" };
@@ -33,9 +34,8 @@ export default function DiaryseForm({ patient, prescripteur, onAddToCart }: Prop
   const [dateError, setDateError] = useState('');
   const [fallbackRdv, setFallbackRdv] = useState('');
   const [showModal, setShowModal] = useState(false);
-  const [toast, setToast] = useState("");
   const [loading, setLoading] = useState(false);
-  const [apiError, setApiError] = useState("");
+  const { showSuccess, showError } = useToast();
   const [showValidationModal, setShowValidationModal] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [validatedPrescription, setValidatedPrescription] = useState<any>(null);
@@ -45,7 +45,6 @@ export default function DiaryseForm({ patient, prescripteur, onAddToCart }: Prop
 
   const isFormValid = !!renseignements.trim() && ((!!selectedMachine && !!selectedHeure) || (!!fallbackRdv && fallbackRdv.trim()));
 
-  function showToast(msg: string) { setToast(msg); setTimeout(() => setToast(""), 2800); }
   function getSlotKey(machine: string, heure: string) { return `${machine}_${heure}`; }
 
   function buildDialyseSummary(): string {
@@ -91,7 +90,7 @@ export default function DiaryseForm({ patient, prescripteur, onAddToCart }: Prop
   }
 
   async function handleSubmit() {
-    setShowModal(false); setLoading(true); setApiError("");
+    setShowModal(false); setLoading(true);
     try {
       const rdvDateTime = selectedMachine && selectedHeure ? `${date}T${selectedHeure}:00` : fallbackRdv || undefined;
       const rdvMachine = selectedMachine || undefined;
@@ -99,9 +98,9 @@ export default function DiaryseForm({ patient, prescripteur, onAddToCart }: Prop
       openSummaryWindow('Dialyse', buildDialyseSummary());
       setValidatedPrescription({ urgence, alertes, renseignements, rdvMachine, rdvDateTime, remarques, patient: { ...patient, age }, prescripteur, date: new Date().toLocaleString('fr-FR') });
       setShowValidationModal(true);
-      showToast("Prescription dialyse transmise");
+      showSuccess("Prescription dialyse transmise");
       setUrgence("n"); setAlertes(""); setRenseign(""); setSelectedMachine(''); setSelectedHeure(''); setFallbackRdv(''); setRemarques("");
-    } catch { setApiError("Erreur lors de l'envoi."); }
+    } catch { showError("Erreur lors de l'envoi."); }
     finally { setLoading(false); }
   }
 
@@ -109,7 +108,6 @@ export default function DiaryseForm({ patient, prescripteur, onAddToCart }: Prop
 
   return (
     <div>
-      {apiError && <div style={{ background: "var(--red-lt)", border: "1px solid var(--red-bdr)", borderRadius: 8, padding: "10px 12px", fontSize: 12, color: "var(--red)", marginBottom: 12 }}>{apiError}</div>}
       <div className="g2-form mb12">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div className="card" style={{ padding: 12 }}>
@@ -190,7 +188,6 @@ export default function DiaryseForm({ patient, prescripteur, onAddToCart }: Prop
         </div>
       )}
 
-      {toast && <div className="tst on"><span className="ms">check_circle</span>{toast}</div>}
     </div>
   );
 }

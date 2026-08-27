@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import TopBar from "@/components/TopBar";
 import ActionButton from "@/components/ActionButton";
 import BarChart from "@/components/charts/BarChart";
@@ -8,6 +8,7 @@ import DonutChart from "@/components/charts/DonutChart";
 import { useStats } from "@/hooks/use-stats";
 import { statsApi, type StatsPeriod } from "@/lib/api/stats";
 import { downloadCsv, printDocument } from "@/lib/download";
+import { useToast } from "@/components/ToastProvider";
 
 const PERIODS: Array<{ key: StatsPeriod; label: string }> = [
   { key: "7j", label: "7 jours" },
@@ -32,15 +33,9 @@ const withColors = (
 export default function RapportsPage() {
   const [period, setPeriod] = useState<StatsPeriod>("30j");
   const [isExporting, setIsExporting] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
+  const { showSuccess, showError } = useToast();
 
   const { data: stats, isLoading, isError, error, refetch, isFetching } = useStats(period);
-
-  useEffect(() => {
-    if (!toast) return;
-    const timeout = window.setTimeout(() => setToast(null), 3500);
-    return () => window.clearTimeout(timeout);
-  }, [toast]);
 
   const periodLabel = PERIODS.find((item) => item.key === period)?.label ?? "";
 
@@ -65,9 +60,9 @@ export default function RapportsPage() {
         ],
         `statistiques-sommeil-${period}.csv`
       );
-      setToast("Statistiques exportées.");
+      showSuccess("Statistiques exportées.");
     } catch (exportError) {
-      setToast(exportError instanceof Error ? exportError.message : "L'export a échoué.");
+      showError(exportError instanceof Error ? exportError.message : "L'export a échoué.");
     } finally {
       setIsExporting(false);
     }
@@ -96,7 +91,7 @@ export default function RapportsPage() {
          </table>`
       );
     } catch (generateError) {
-      setToast(generateError instanceof Error ? generateError.message : "La génération a échoué.");
+      showError(generateError instanceof Error ? generateError.message : "La génération a échoué.");
     }
   };
 
@@ -322,12 +317,6 @@ export default function RapportsPage() {
           </div>
         </div>
       </div>
-
-      {toast && (
-        <div role="status" className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full bg-slate-900 px-5 py-3 text-sm font-bold text-white shadow-xl">
-          {toast}
-        </div>
-      )}
     </>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { creerPrescriptionORL } from '@/lib/prescription-api';
+import { useToast } from "@/components/ToastProvider";
 
 type Urgence = "n" | "u" | "tu";
 const urgenceClasses: Record<Urgence, string> = { n: "un", u: "uu", tu: "utu" };
@@ -22,14 +23,12 @@ export default function ORLForm({ patient, prescripteur, onAddToCart }: Props) {
   const removeItem = (id: number) => setCart(prev => prev.filter(i => i.id !== id));
 
   const [showModal, setShowModal] = useState(false);
-  const [toast, setToast] = useState("");
   const [loading, setLoading] = useState(false);
-  const [apiError, setApiError] = useState("");
+  const { showSuccess, showError } = useToast();
 
   const typeEffectif = typeExamen === "Autre" ? typeAutre.trim() : typeExamen;
   const currentDemandeValid = renseignements.trim() !== "" && typeEffectif !== "";
   const canSubmit = cart.length > 0;
-  function showToast(msg: string) { setToast(msg); setTimeout(() => setToast(""), 2800); }
 
   function addToCart() {
     setCart(prev => [...prev, { id: Date.now(), typeExamen: typeEffectif, renseignements, remarques }]);
@@ -41,18 +40,17 @@ export default function ORLForm({ patient, prescripteur, onAddToCart }: Props) {
   }
 
   async function handleSubmit() {
-    setShowModal(false); setLoading(true); setApiError("");
+    setShowModal(false); setLoading(true);
     try {
       await creerPrescriptionORL({ patientId: patient.id, prescripteurId: prescripteur.id, chuId: prescripteur.chuId, serviceId: prescripteur.serviceId, urgence, alertes, demandes: buildDemandes(cart) });
-      showToast(`${cart.length} examen(s) ORL envoyé(s)`);
+      showSuccess(`${cart.length} examen(s) ORL envoyé(s)`);
       setCart([]); setAlertes(""); setUrgence("n");
-    } catch { setApiError("Erreur lors de l'envoi."); }
+    } catch { showError("Erreur lors de l'envoi."); }
     finally { setLoading(false); }
   }
 
   return (
     <div>
-      {apiError && <div style={{background:"var(--red-lt)",border:"1px solid var(--red-bdr)",borderRadius:8,padding:"10px 12px",fontSize:12,color:"var(--red)",marginBottom:12}}>{apiError}</div>}
       <div className="g2-form mb12">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div className="card" style={{ padding: 12 }}><label className="lbl">Renseignements cliniques <span className="req">*</span></label><textarea rows={3} value={renseignements} onChange={e => setRenseignements(e.target.value)} placeholder="Motif, symptômes..." /></div>
@@ -107,7 +105,6 @@ export default function ORLForm({ patient, prescripteur, onAddToCart }: Props) {
         </div>
       </div>
       {showModal && <div className="mb op" onClick={e => { if (e.target === e.currentTarget) setShowModal(false); }}><div className="mbox"><h3>Confirmer ?</h3><p>{cart.length} examen(s) ORL seront transmis au service concerné.</p><ul style={{ margin: "0 0 16px", padding: "0 0 0 16px", fontSize: 13, color: "var(--txt2)" }}>{cart.map(i => <li key={i.id}>{i.typeExamen}</li>)}</ul><div className="mbtns"><button className="bca" onClick={()=>setShowModal(false)}>Annuler</button><button className="bok" onClick={() => { if (onAddToCart) { const snapCart = [...cart]; const snap = { patientId: patient.id, prescripteurId: prescripteur.id, chuId: prescripteur.chuId, serviceId: prescripteur.serviceId, urgence, alertes, demandes: buildDemandes(snapCart) }; onAddToCart({ label: `ORL — ${snapCart.length} examen${snapCart.length > 1 ? "s" : ""}`, count: snapCart.length, submit: () => creerPrescriptionORL(snap) }); setShowModal(false); setCart([]); } else { handleSubmit(); } }}>Confirmer</button></div></div></div>}
-      {toast && <div className="tst on"><span className="ms">check_circle</span>{toast}</div>}
     </div>
   );
 }

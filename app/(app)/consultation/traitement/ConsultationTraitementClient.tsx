@@ -12,6 +12,7 @@ import type { PharmacieArticle } from "@/lib/prescription-api";
 import { MedicamentAutocomplete } from "@/components/prescription/medicament-autocomplete";
 import { CHU_ID } from "@/lib/config";
 import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/components/ToastProvider";
 
 type ClinicalParameter = { id: number; nom: string; valeur: string; unite: string };
 type Medication = { id: number; nom: string; dosage: string; quantite: number; quantiteType: string; voie: string; frequenceType: string; frequenceValeur: number; dureeJours: number; instructions: string; remarques: string };
@@ -55,7 +56,7 @@ export default function ConsultationTraitementClient({
   const [instructions, setInstructions] = useState<CareInstruction[]>([]);
   const [followUp, setFollowUp] = useState({ motif: "", niveau: "NIVEAU_1", date: "" });
   const [hospitalisation, setHospitalisation] = useState({ motif: "", service: "" });
-  const [toast, setToast] = useState<string | null>(null);
+  const { showSuccess, showError } = useToast();
   const [hospitalisationServices, setHospitalisationServices] = useState<HospitalisationServiceOption[]>([]);
   const [savingFollowUp, setSavingFollowUp] = useState(false);
   const [savingHospitalisation, setSavingHospitalisation] = useState(false);
@@ -139,11 +140,6 @@ export default function ConsultationTraitementClient({
     return () => { cancelled = true; };
   }, []);
 
-  useEffect(() => {
-    if (!toast) return;
-    const timeout = window.setTimeout(() => setToast(null), 3500);
-    return () => window.clearTimeout(timeout);
-  }, [toast]);
 
   const updateParameter = (id: number, field: keyof Omit<ClinicalParameter, "id">, value: string) =>
     setParameters((items) => items.map((item) => item.id === id ? { ...item, [field]: value } : item));
@@ -206,13 +202,13 @@ export default function ConsultationTraitementClient({
           });
           return;
         } catch (prescriptionError) {
-          setToast(`Consultation finalisée, mais l'envoi à la pharmacie a échoué : ${prescriptionError instanceof Error ? prescriptionError.message : "erreur inconnue"}`);
+          showError(`Consultation finalisée, mais l'envoi à la pharmacie a échoué : ${prescriptionError instanceof Error ? prescriptionError.message : "erreur inconnue"}`);
           return;
         }
       }
       await sendNonMedicalAndLeave(generatedFollowUpIdAsString);
     } catch (submitError) {
-      setToast(submitError instanceof Error ? submitError.message : "La consultation n'a pas pu être finalisée.");
+      showError(submitError instanceof Error ? submitError.message : "La consultation n'a pas pu être finalisée.");
     }
   };
 
@@ -227,11 +223,11 @@ export default function ConsultationTraitementClient({
           items: validInstructions.map((item) => ({ type: item.type, typeLabel: item.type, description: item.libelle, dureeJours: item.dureeJours || undefined, frequenceType: item.frequenceType || undefined, frequenceValeur: item.frequenceValeur || undefined, instructions: item.instructions || undefined })),
         });
       } catch (prescriptionError) {
-        setToast(`Consultation finalisée, mais la prescription non médicamenteuse n'a pas été envoyée : ${prescriptionError instanceof Error ? prescriptionError.message : "erreur inconnue"}`);
+        showError(`Consultation finalisée, mais la prescription non médicamenteuse n'a pas été envoyée : ${prescriptionError instanceof Error ? prescriptionError.message : "erreur inconnue"}`);
         return;
       }
     }
-    setToast("Consultation finalisée avec succès.");
+    showSuccess("Consultation finalisée avec succès.");
     const controlId = newFollowUpId ?? followUpConsultationId;
     if (controlId) {
       window.setTimeout(() => router.push(`/consultation/traitement?id=${controlId}&mode=controle${origin ? `&origin=${encodeURIComponent(origin)}` : ""}`), 700);
@@ -259,8 +255,8 @@ export default function ConsultationTraitementClient({
       // redirect de fin : sans son identifiant, l'écran retombait sur la liste.
       const createdId = (result as { followUp?: { id?: string | number } })?.followUp?.id;
       if (createdId != null) setFollowUpConsultationId(String(createdId));
-      setFollowUpSaved(true); setToast("Rendez-vous de contrôle enregistré.");
-    } catch (saveError) { setToast(saveError instanceof Error ? saveError.message : "Le rendez-vous n'a pas pu être enregistré."); }
+      setFollowUpSaved(true); showSuccess("Rendez-vous de contrôle enregistré.");
+    } catch (saveError) { showError(saveError instanceof Error ? saveError.message : "Le rendez-vous n'a pas pu être enregistré."); }
     finally { setSavingFollowUp(false); }
   };
 
@@ -270,8 +266,8 @@ export default function ConsultationTraitementClient({
     try {
       const result = await consultationApi.traiterConsultation(consultationId, "hospitalisation", { hospitalisationMotif: hospitalisation.motif, hospitalisationService: hospitalisation.service || null });
       setHospitalisationStatus((result as { consultation?: { hospitalisationStatus?: "EN_ATTENTE" | "VALIDE" } })?.consultation?.hospitalisationStatus === "EN_ATTENTE" ? "EN_ATTENTE" : "VALIDE");
-      setToast("Demande d'hospitalisation enregistrée.");
-    } catch (saveError) { setToast(saveError instanceof Error ? saveError.message : "La demande n'a pas pu être enregistrée."); }
+      showSuccess("Demande d'hospitalisation enregistrée.");
+    } catch (saveError) { showError(saveError instanceof Error ? saveError.message : "La demande n'a pas pu être enregistrée."); }
     finally { setSavingHospitalisation(false); }
   };
 
@@ -290,7 +286,7 @@ export default function ConsultationTraitementClient({
       try {
         await consultationApi.traiterConsultation(consultationId, "annuler");
       } catch (cancelError) {
-        setToast(cancelError instanceof Error ? cancelError.message : "L'annulation n'a pas pu être enregistrée.");
+        showError(cancelError instanceof Error ? cancelError.message : "L'annulation n'a pas pu être enregistrée.");
         return;
       }
     }
@@ -390,8 +386,7 @@ export default function ConsultationTraitementClient({
         <div className="mt-8 flex flex-wrap items-center justify-end gap-3"><button type="button" onClick={cancelConsultation} className="rounded-full px-5 py-3 text-sm font-bold text-red-600 hover:bg-red-50">Annuler la consultation</button><ActionButton permission="consultation:treat" onClick={submit} pending={finalizeMutation.isPending} pendingLabel={<><span className="material-symbols-outlined text-[19px]">check_circle</span>Finalisation...</>} className="inline-flex items-center gap-2 rounded-full bg-[#006A8C] px-7 py-3 text-sm font-extrabold text-white shadow-lg shadow-[#006A8C]/20 transition hover:bg-[#004D66]"><span className="material-symbols-outlined text-[19px]">check_circle</span>Terminer la consultation</ActionButton></div>
       </div>
     </main>
-    {toast && <div role="status" className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full bg-slate-900 px-5 py-3 text-sm font-bold text-white shadow-xl">{toast}</div>}
     {showNoTreatmentModal && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4"><div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl"><h2 className="text-lg font-black text-slate-900">Aucun traitement prescrit</h2><p className="mt-2 text-sm text-slate-500">Indiquez pourquoi aucun médicament n&apos;est nécessaire avant de terminer la consultation.</p><textarea value={noTreatmentReason} onChange={(e) => setNoTreatmentReason(e.target.value)} className={`${fieldClass} h-28 resize-none`} placeholder="Ex. conseil hygiéno-diététique uniquement..." autoFocus /><div className="mt-5 flex justify-end gap-2"><button type="button" onClick={() => setShowNoTreatmentModal(false)} className="rounded-xl px-4 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-50">Annuler</button><button type="button" disabled={!noTreatmentReason.trim()} onClick={() => { setShowNoTreatmentModal(false); void finishConsultation(); }} className="rounded-xl bg-[#006A8C] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-40">Confirmer et terminer</button></div></div></div>}
-    {pendingOrdonnance && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4"><div className="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl"><h2 className="text-lg font-black text-slate-900">Ordonnance à envoyer à la pharmacie</h2><p className="mt-2 text-sm text-slate-500">Sélectionnez les médicaments à transmettre et ajustez les quantités si besoin.</p><div className="mt-5 divide-y divide-slate-100">{pendingOrdonnance.medicaments.map((medication) => <div key={medication.id} className="flex items-center gap-3 py-3"><input type="checkbox" checked={medication.selected} onChange={() => setPendingOrdonnance((current) => current ? { ...current, medicaments: current.medicaments.map((item) => item.id === medication.id ? { ...item, selected: !item.selected } : item) } : current)} /><div className="min-w-0 flex-1"><p className="text-sm font-bold text-slate-800">{medication.nom} {medication.dosage}</p><p className="text-xs text-slate-500">{medication.frequenceType || "Fréquence non précisée"} · {medication.dureeJours || "—"} jour(s)</p></div><label className="text-xs text-slate-500">Qté <input type="number" min="0" value={medication.ordonnanceQuantite} disabled={!medication.selected} onChange={(e) => setPendingOrdonnance((current) => current ? { ...current, medicaments: current.medicaments.map((item) => item.id === medication.id ? { ...item, ordonnanceQuantite: Number(e.target.value) || 0 } : item) } : current)} className="ml-1 w-16 rounded-lg border border-slate-200 p-1.5 text-center disabled:opacity-40" /></label></div>)}</div><div className="mt-5 flex flex-wrap justify-end gap-2"><button type="button" disabled={ordonnanceLoading} onClick={() => { setPendingOrdonnance(null); void sendNonMedicalAndLeave(); }} className="rounded-xl px-4 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-50">Ne pas faire d&apos;ordonnance</button><ActionButton permission="prescription:sign" disabled={pendingOrdonnance.medicaments.every((item) => !item.selected || item.ordonnanceQuantite <= 0)} pending={ordonnanceLoading} pendingLabel="Envoi..." onClick={async () => { const selected = pendingOrdonnance.medicaments.filter((item) => item.selected && item.ordonnanceQuantite > 0); setOrdonnanceLoading(true); try { await creerOrdonnanceMedicale(pendingOrdonnance.id, selected.map((item) => ({ nom: item.nom, dose: item.dosage, quantite: item.ordonnanceQuantite, quantiteType: item.quantiteType, voie: item.voie || undefined, frequenceType: item.frequenceType || undefined, frequenceValeur: item.frequenceValeur || undefined, dureeJours: item.dureeJours || undefined, instructions: item.instructions || undefined, remarques: item.remarques || undefined }))); setPendingOrdonnance(null); await sendNonMedicalAndLeave(); } catch (ordonnanceError) { setToast(ordonnanceError instanceof Error ? ordonnanceError.message : "L'ordonnance n'a pas pu être envoyée."); } finally { setOrdonnanceLoading(false); } }} className="rounded-xl bg-[#006A8C] px-4 py-2.5 text-sm font-bold text-white">Créer et envoyer l&apos;ordonnance</ActionButton></div></div></div>}
+    {pendingOrdonnance && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4"><div className="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl"><h2 className="text-lg font-black text-slate-900">Ordonnance à envoyer à la pharmacie</h2><p className="mt-2 text-sm text-slate-500">Sélectionnez les médicaments à transmettre et ajustez les quantités si besoin.</p><div className="mt-5 divide-y divide-slate-100">{pendingOrdonnance.medicaments.map((medication) => <div key={medication.id} className="flex items-center gap-3 py-3"><input type="checkbox" checked={medication.selected} onChange={() => setPendingOrdonnance((current) => current ? { ...current, medicaments: current.medicaments.map((item) => item.id === medication.id ? { ...item, selected: !item.selected } : item) } : current)} /><div className="min-w-0 flex-1"><p className="text-sm font-bold text-slate-800">{medication.nom} {medication.dosage}</p><p className="text-xs text-slate-500">{medication.frequenceType || "Fréquence non précisée"} · {medication.dureeJours || "—"} jour(s)</p></div><label className="text-xs text-slate-500">Qté <input type="number" min="0" value={medication.ordonnanceQuantite} disabled={!medication.selected} onChange={(e) => setPendingOrdonnance((current) => current ? { ...current, medicaments: current.medicaments.map((item) => item.id === medication.id ? { ...item, ordonnanceQuantite: Number(e.target.value) || 0 } : item) } : current)} className="ml-1 w-16 rounded-lg border border-slate-200 p-1.5 text-center disabled:opacity-40" /></label></div>)}</div><div className="mt-5 flex flex-wrap justify-end gap-2"><button type="button" disabled={ordonnanceLoading} onClick={() => { setPendingOrdonnance(null); void sendNonMedicalAndLeave(); }} className="rounded-xl px-4 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-50">Ne pas faire d&apos;ordonnance</button><ActionButton permission="prescription:sign" disabled={pendingOrdonnance.medicaments.every((item) => !item.selected || item.ordonnanceQuantite <= 0)} pending={ordonnanceLoading} pendingLabel="Envoi..." onClick={async () => { const selected = pendingOrdonnance.medicaments.filter((item) => item.selected && item.ordonnanceQuantite > 0); setOrdonnanceLoading(true); try { await creerOrdonnanceMedicale(pendingOrdonnance.id, selected.map((item) => ({ nom: item.nom, dose: item.dosage, quantite: item.ordonnanceQuantite, quantiteType: item.quantiteType, voie: item.voie || undefined, frequenceType: item.frequenceType || undefined, frequenceValeur: item.frequenceValeur || undefined, dureeJours: item.dureeJours || undefined, instructions: item.instructions || undefined, remarques: item.remarques || undefined }))); setPendingOrdonnance(null); await sendNonMedicalAndLeave(); } catch (ordonnanceError) { showError(ordonnanceError instanceof Error ? ordonnanceError.message : "L'ordonnance n'a pas pu être envoyée."); } finally { setOrdonnanceLoading(false); } }} className="rounded-xl bg-[#006A8C] px-4 py-2.5 text-sm font-bold text-white">Créer et envoyer l&apos;ordonnance</ActionButton></div></div></div>}
   </>;
 }

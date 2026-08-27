@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import PlanningToolbar from "@/components/planning/PlanningToolbar";
 import CalendrierSemaine from "@/components/planning/CalendrierSemaine";
@@ -16,6 +16,7 @@ import {
 } from "@/hooks/use-planning";
 import { dateISODansFuseauHopital, lundiDeLaSemaineHopital } from "@/lib/planning-dates";
 import type { CreerRdvInput, RendezVousPlanning } from "@/lib/api/planning";
+import { useToast } from "@/components/ToastProvider";
 
 export default function PlanningPage() {
   const router = useRouter();
@@ -24,7 +25,7 @@ export default function PlanningPage() {
   const [formulaireOuvert, setFormulaireOuvert] = useState(false);
   const [rdvAModifier, setRdvAModifier] = useState<RendezVousPlanning | null>(null);
   const [creneauInitial, setCreneauInitial] = useState<{ dateRdv: string; heureDebut: string } | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const { showSuccess } = useToast();
 
   const dateFin = (() => {
     const d = new Date(dateDebut);
@@ -44,12 +45,6 @@ export default function PlanningPage() {
   const annulerRdv = useAnnulerRdv();
   const marquerNonRealise = useMarquerNonRealise();
   const marquerRealise = useMarquerRealise();
-
-  useEffect(() => {
-    if (!toast) return;
-    const timer = setTimeout(() => setToast(null), 4000);
-    return () => clearTimeout(timer);
-  }, [toast]);
 
   const semainePrecedente = () => {
     setDateDebut((d) => {
@@ -96,11 +91,11 @@ export default function PlanningPage() {
   const handleConfirmerFormulaire = async (data: CreerRdvInput) => {
     if (rdvAModifier) {
       await modifierRdv.mutateAsync({ id: rdvAModifier.id, data });
-      setToast("RDV modifié avec succès");
+      showSuccess("RDV modifié avec succès");
       setRdvSelectionne(null);
     } else {
       await creerRdv.mutateAsync(data);
-      setToast("RDV planifié avec succès");
+      showSuccess("RDV planifié avec succès");
     }
     fermerFormulaire();
   };
@@ -136,12 +131,12 @@ export default function PlanningPage() {
           onModifier={ouvrirModification}
           onAnnuler={async () => {
             await annulerRdv.mutateAsync(rdvSelectionne.id);
-            setToast("RDV annulé");
+            showSuccess("RDV annulé");
             setRdvSelectionne(null);
           }}
           onMarquerNonRealise={async () => {
             await marquerNonRealise.mutateAsync(rdvSelectionne.id);
-            setToast("RDV marqué non réalisé");
+            showSuccess("RDV marqué non réalisé");
             setRdvSelectionne(null);
           }}
           onRecevoirPatient={async () => {
@@ -177,15 +172,6 @@ export default function PlanningPage() {
           onClose={fermerFormulaire}
           onConfirm={handleConfirmerFormulaire}
         />
-      )}
-
-      {toast && (
-        <div
-          role="status"
-          className="fixed bottom-6 left-1/2 z-[60] -translate-x-1/2 rounded-full bg-slate-900 px-5 py-3 text-sm font-bold text-white shadow-xl"
-        >
-          {toast}
-        </div>
       )}
     </div>
   );

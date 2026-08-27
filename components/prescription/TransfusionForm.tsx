@@ -1,6 +1,7 @@
 "use client";
 import { useState } from 'react';
 import { creerPrescriptionTransfusion } from '@/lib/prescription-api';
+import { useToast } from '@/components/ToastProvider';
 
 type Urgence = "n" | "u" | "tu";
 type ProduitSanguin = "sang-total" | "cgr" | "pfc" | "prp";
@@ -38,9 +39,8 @@ export default function TransfusionForm({ patient, prescripteur, onAddToCart }: 
   const [datePrevue, setDatePrevue] = useState('');
   const [notes, setNotes] = useState('');
   const [showModal, setShowModal] = useState(false);
-  const [toast, setToast] = useState('');
   const [loading, setLoading] = useState(false);
-  const [apiError, setApiError] = useState('');
+  const { showSuccess, showError } = useToast();
   const [showValidationModal, setShowValidationModal] = useState(false);
   const [validatedPrescription, setValidatedPrescription] = useState<ValidatedPrescription | null>(null);
 
@@ -48,25 +48,22 @@ export default function TransfusionForm({ patient, prescripteur, onAddToCart }: 
   const sexeLabel = patient?.sexe === 'M' ? 'Masculin' : patient?.sexe === 'F' ? 'Féminin' : patient?.sexe;
 
   const isFormValid = !!(renseignements.trim() && groupage && produit && quantite.trim());
-  function showToast(msg: string) { setToast(msg); setTimeout(() => setToast(''), 2800); }
 
   async function handleSubmit() {
-    setShowModal(false); setLoading(true); setApiError('');
+    setShowModal(false); setLoading(true);
     try {
       await creerPrescriptionTransfusion({ patientId: patient.id, prescripteurId: prescripteur.id, chuId: prescripteur.chuId, serviceId: prescripteur.serviceId, urgence, alertes, renseignements, atcdTransfusion: atcd, incident, groupage, hb: hb ? parseFloat(hb) : undefined, produit, plaquettes: produit === 'prp' ? plaquettes : undefined, quantite, datePrevue: datePrevue || undefined, notes });
       setValidatedPrescription({ urgence, alertes, renseignements, atcd, incident, groupage, hb, produit, plaquettes, quantite, datePrevue, notes, patient: { ...patient, age, sexeLabel }, prescripteur, date: new Date().toLocaleString('fr-FR') });
       setShowValidationModal(true);
-      showToast('Prescription transfusion envoyée au dépôt de sang');
+      showSuccess('Prescription transfusion envoyée au dépôt de sang');
       setUrgence("n"); setAlertes(''); setRenseignements(''); setAtcd(false); setIncident('');
       setGroupage(''); setHb(''); setProduit('cgr'); setPlaquettes(''); setQuantite(''); setDatePrevue(''); setNotes('');
-    } catch { setApiError("Erreur lors de l'envoi de la prescription transfusion."); }
+    } catch { showError("Erreur lors de l'envoi de la prescription transfusion."); }
     finally { setLoading(false); }
   }
 
   return (
     <div>
-      {apiError && <div style={{ background: "var(--red-lt)", border: "1px solid var(--red-bdr)", borderRadius: 8, padding: "10px 12px", fontSize: 12, color: "var(--red)", marginBottom: 12 }}>{apiError}</div>}
-
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 16, alignItems: 'start' }}>
         <div className="card" style={{ padding: 12 }}>
           <div className="mb12"><label className="lbl">Renseignements cliniques <span className="req">*</span></label><textarea rows={3} placeholder="Pathologie, contexte, motif de la transfusion..." value={renseignements} onChange={e => setRenseignements(e.target.value)} /></div>
@@ -126,7 +123,6 @@ export default function TransfusionForm({ patient, prescripteur, onAddToCart }: 
         </div>
       )}
 
-      {toast && <div className="tst on"><span className="ms">check_circle</span>{toast}</div>}
     </div>
   );
 }

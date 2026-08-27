@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import TopBar from "@/components/TopBar";
 import ActionButton from "@/components/ActionButton";
-import { useArchives, useDeleteArchive, useRestoreArchive } from "@/hooks/use-archives";
+import { useArchives } from "@/hooks/use-archives";
 import { archiveApi, type Archive } from "@/lib/api/archives";
-import { useAuth } from "@/context/AuthContext";
 import { downloadCsv, printDocument } from "@/lib/download";
+import { useToast } from "@/components/ToastProvider";
 
 type RecordStatus = "Tous" | "Actifs" | "Restaurés";
 
@@ -42,7 +42,6 @@ const CSV_COLUMNS = [
 ];
 
 export default function ArchivesPage() {
-  const { user } = useAuth();
   const [statusFilter, setStatusFilter] = useState<RecordStatus>("Tous");
   const [searchQuery, setSearchQuery] = useState("");
   const [dateFrom, setDateFrom] = useState("");
@@ -50,22 +49,12 @@ export default function ArchivesPage() {
   const [typeFilter, setTypeFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [selectedRecord, setSelectedRecord] = useState<Archive | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const { showSuccess, showError } = useToast();
   const pageSize = 8;
 
   // `includeRestored` : le registre montre l'historique complet, le filtre
   // « Actifs / Restaurés » se fait ensuite côté interface.
   const { data: archives = [], isLoading } = useArchives({ includeRestored: true });
-  const restoreMutation = useRestoreArchive();
-  const deleteMutation = useDeleteArchive();
-
-  const actor = user ? `${user.firstName} ${user.lastName}`.trim() : undefined;
-
-  useEffect(() => {
-    if (!toast) return;
-    const timeout = window.setTimeout(() => setToast(null), 3500);
-    return () => window.clearTimeout(timeout);
-  }, [toast]);
 
   const types = useMemo(
     () => [...new Set((archives as Archive[]).map((archive) => archive.type))],
@@ -130,7 +119,7 @@ export default function ArchivesPage() {
       CSV_COLUMNS,
       "archives-sommeil.csv"
     );
-    setToast(`${filteredRecords.length} dossier(s) exporté(s).`);
+    showSuccess(`${filteredRecords.length} dossier(s) exporté(s).`);
   };
 
   /** `archive:export` — export d'un dossier isolé. */
@@ -150,32 +139,7 @@ export default function ArchivesPage() {
          <div class="content">${JSON.stringify(data.donnees, null, 2).replaceAll("<", "&lt;")}</div>`
       );
     } catch (error) {
-      setToast(error instanceof Error ? error.message : "L'export a échoué.");
-    }
-  };
-
-  /** `archive:restore` — réactive le dossier sans le détruire. */
-  const restore = async (archive: Archive) => {
-    if (!window.confirm(`Restaurer le dossier « ${archive.titre} » ?`)) return;
-    try {
-      await restoreMutation.mutateAsync({ id: archive.id, restoredBy: actor });
-      setToast("Dossier restauré.");
-      setSelectedRecord(null);
-    } catch (error) {
-      setToast(error instanceof Error ? error.message : "La restauration a échoué.");
-    }
-  };
-
-  /** `archive:delete` — suppression définitive. */
-  const remove = async (archive: Archive) => {
-    if (!window.confirm(`Supprimer DÉFINITIVEMENT le dossier « ${archive.titre} » ? Cette action est irréversible.`))
-      return;
-    try {
-      await deleteMutation.mutateAsync(archive.id);
-      setToast("Dossier supprimé définitivement.");
-      setSelectedRecord(null);
-    } catch (error) {
-      setToast(error instanceof Error ? error.message : "La suppression a échoué.");
+      showError(error instanceof Error ? error.message : "L'export a échoué.");
     }
   };
 
@@ -270,8 +234,6 @@ export default function ArchivesPage() {
                       <div className="flex justify-end gap-2">
                         <ActionButton permission="archive:read" onClick={() => setSelectedRecord(record)} title="Voir le détail" className="p-2 text-[#94A3B8] hover:text-[#2563EB] hover:bg-white rounded-lg shadow-sm border border-transparent hover:border-slate-100"><span className="material-symbols-outlined text-xl">visibility</span></ActionButton>
                         <ActionButton permission="archive:export" onClick={() => exportOne(record)} title="Exporter / imprimer" className="p-2 text-[#94A3B8] hover:text-[#2563EB] hover:bg-white rounded-lg shadow-sm border border-transparent hover:border-slate-100"><span className="material-symbols-outlined text-xl">print</span></ActionButton>
-                        <ActionButton permission="archive:restore" onClick={() => restore(record)} disabled={record.restored} pending={restoreMutation.isPending} title="Restaurer le dossier" className="p-2 text-[#94A3B8] hover:text-[#15803D] hover:bg-white rounded-lg shadow-sm border border-transparent hover:border-slate-100"><span className="material-symbols-outlined text-xl">restore</span></ActionButton>
-                        <ActionButton permission="archive:delete" hideWhenDenied onClick={() => remove(record)} pending={deleteMutation.isPending} title="Supprimer définitivement" className="p-2 text-[#94A3B8] hover:text-[#DC2626] hover:bg-white rounded-lg shadow-sm border border-transparent hover:border-slate-100"><span className="material-symbols-outlined text-xl">delete_forever</span></ActionButton>
                       </div>
                     </td>
                   </tr>
@@ -318,16 +280,11 @@ export default function ArchivesPage() {
               </div>
               <div className="px-8 py-5 border-t border-slate-100 bg-[#F8FAFC] flex justify-end gap-3">
                 <button type="button" onClick={() => setSelectedRecord(null)} className="px-5 py-2.5 rounded-xl text-sm font-bold text-[#64748B] hover:bg-white">Fermer</button>
-                <ActionButton permission="archive:restore" onClick={() => restore(selectedRecord)} disabled={selectedRecord.restored} pending={restoreMutation.isPending} className="flex items-center gap-2 px-5 py-2.5 rounded-xl action-warning text-sm font-bold"><span className="material-symbols-outlined text-lg">restore</span>Restaurer</ActionButton>
                 <ActionButton permission="archive:export" onClick={() => exportOne(selectedRecord)} className="flex items-center gap-2 px-5 py-2.5 rounded-xl action-primary text-sm font-bold"><span className="material-symbols-outlined text-lg">print</span>Imprimer</ActionButton>
               </div>
             </div>
           </div>
         </>
-      )}
-
-      {toast && (
-        <div role="status" className="fixed bottom-6 left-1/2 z-[60] -translate-x-1/2 rounded-full bg-slate-900 px-5 py-3 text-sm font-bold text-white shadow-xl">{toast}</div>
       )}
     </>
   );

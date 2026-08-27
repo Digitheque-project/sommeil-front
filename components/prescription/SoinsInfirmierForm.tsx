@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { creerPrescriptionSoinsInfirmier, fetchServicesList } from '@/lib/prescription-api';
+import { useToast } from "@/components/ToastProvider";
 
 type Urgence = "n" | "u" | "tu";
 const urgenceClasses: Record<Urgence, string> = { n: "un", u: "uu", tu: "utu" };
@@ -44,15 +45,13 @@ export default function SoinsInfirmierForm({ patient, prescripteur, onAddToCart 
   const removeItem = (id: number) => setCart(prev => prev.filter(i => i.id !== id));
 
   const [showModal, setShowModal] = useState(false);
-  const [toast, setToast] = useState("");
   const [loading, setLoading] = useState(false);
-  const [apiError, setApiError] = useState("");
+  const { showSuccess, showError } = useToast();
 
   const showFrequence = !TYPES_WITHOUT_FREQUENCE.includes(type);
   const currentItemValid = !!type && description.trim() !== "";
   const notifError = !serviceNotifId ? 'Sélectionnez un service à notifier' : '';
   const canSubmit = cart.length > 0 && !notifError;
-  function showToast(msg: string) { setToast(msg); setTimeout(() => setToast(""), 2800); }
 
   function addToCart() {
     const typeLabel = TYPE_OPTIONS.find(o => o.value === type)?.label || type;
@@ -65,18 +64,17 @@ export default function SoinsInfirmierForm({ patient, prescripteur, onAddToCart 
   }
 
   async function handleSubmit() {
-    setShowModal(false); setLoading(true); setApiError("");
+    setShowModal(false); setLoading(true);
     try {
       await creerPrescriptionSoinsInfirmier({ patientId: patient.id, prescripteurId: prescripteur.id, chuId: prescripteur.chuId, serviceId: prescripteur.serviceId, urgence, notifierInfirmier: true, serviceNotifId, items: buildItems(cart) });
-      showToast(`${cart.length} acte(s) de soins infirmiers envoyé(s)`);
+      showSuccess(`${cart.length} acte(s) de soins infirmiers envoyé(s)`);
       setCart([]); setUrgence("n");
-    } catch { setApiError("Erreur lors de l'envoi."); }
+    } catch { showError("Erreur lors de l'envoi."); }
     finally { setLoading(false); }
   }
 
   return (
     <div>
-      {apiError && <div style={{background:"var(--red-lt)",border:"1px solid var(--red-bdr)",borderRadius:8,padding:"10px 12px",fontSize:12,color:"var(--red)",marginBottom:12}}>{apiError}</div>}
       <div className="g2-form mb12">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ marginBottom: 4, padding: '12px 16px', background: 'var(--green-lt, #dcfce7)', border: '1px solid var(--green-bdr, #86efac)', borderRadius: 10 }}>
@@ -168,7 +166,6 @@ export default function SoinsInfirmierForm({ patient, prescripteur, onAddToCart 
         </div>
       </div>
       {showModal && <div className="mb op" onClick={e => { if (e.target === e.currentTarget) setShowModal(false); }}><div className="mbox"><h3>Confirmer ?</h3><p>{cart.length} acte(s) de soins infirmiers seront transmis.</p><ul style={{ margin: "0 0 16px", padding: "0 0 0 16px", fontSize: 13, color: "var(--txt2)" }}>{cart.map(i => <li key={i.id}>{i.typeLabel} — {i.description}</li>)}</ul><div className="mbtns"><button className="bca" onClick={()=>setShowModal(false)}>Annuler</button><button className="bok" onClick={() => { if (onAddToCart) { const snapCart = [...cart]; const snap = { patientId: patient.id, prescripteurId: prescripteur.id, chuId: prescripteur.chuId, serviceId: prescripteur.serviceId, urgence, notifierInfirmier: true, serviceNotifId, items: buildItems(snapCart) }; onAddToCart({ label: `Soins infirmier — ${snapCart.length} acte${snapCart.length > 1 ? "s" : ""}`, count: snapCart.length, submit: () => creerPrescriptionSoinsInfirmier(snap) }); setShowModal(false); setCart([]); } else { handleSubmit(); } }}>Confirmer</button></div></div></div>}
-      {toast && <div className="tst on"><span className="ms">check_circle</span>{toast}</div>}
     </div>
   );
 }

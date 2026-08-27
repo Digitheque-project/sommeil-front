@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { creerPrescriptionBloc } from "@/lib/prescription-api";
+import { useToast } from "@/components/ToastProvider";
 
 type Urgence = "n" | "u" | "tu";
 const urgenceClasses: Record<Urgence, string> = { n: "un", u: "uu", tu: "utu" };
@@ -34,9 +35,8 @@ export default function BlocForm({ patient, prescripteur, onAddToCart }: Props) 
   const [consignes, setConsignes]   = useState("");
   const [chirurgien, setChirurgien] = useState(prescripteur.nom ? `Dr. ${prescripteur.nom} ${prescripteur.prenom || ''}` : "");
   const [showModal, setShowModal]   = useState(false);
-  const [toast, setToast]           = useState("");
   const [loading, setLoading]       = useState(false);
-  const [apiError, setApiError]     = useState("");
+  const { showSuccess, showError }  = useToast();
   const [showValidationModal, setShowValidationModal] = useState(false);
   const [validatedPrescription, setValidatedPrescription] = useState<ValidatedPrescription | null>(null);
 
@@ -44,25 +44,22 @@ export default function BlocForm({ patient, prescripteur, onAddToCart }: Props) 
   const sexeLabel = patient?.sexe === 'M' ? 'Masculin' : patient?.sexe === 'F' ? 'Féminin' : patient?.sexe;
 
   const isFormValid = libelle.trim() !== "" && renseignements.trim() !== "";
-  function showToast(msg: string) { setToast(msg); setTimeout(() => setToast(""), 2800); }
 
   async function handleSubmit() {
-    setShowModal(false); setLoading(true); setApiError("");
+    setShowModal(false); setLoading(true);
     try {
       await creerPrescriptionBloc({ patientId: patient.id, prescripteurId: prescripteur.id, chuId: prescripteur.chuId, serviceId: prescripteur.serviceId, urgence, alertes, renseignements, libelle, typeChirurgie: typeChir || undefined, dateIntervention: dateIntervention || undefined, risqueHemorragique: risqueHemo || undefined, chirurgien, consignes });
       setValidatedPrescription({ urgence, alertes, renseignements, libelle, dateIntervention, risqueHemo, typeChir, chirurgien, consignes, patient: { ...patient, age, sexeLabel }, prescripteur, date: new Date().toLocaleString('fr-FR') });
       setShowValidationModal(true);
-      showToast("Prescription bloc envoyée — Demande de CPA transmise");
+      showSuccess("Prescription bloc envoyée — Demande de CPA transmise");
       setUrgence("n"); setAlertes(""); setRenseignements(""); setLibelle(""); setDateIntervention(""); setRisqueHemo(""); setTypeChir(""); setConsignes("");
       setChirurgien(prescripteur.nom ? `Dr. ${prescripteur.nom} ${prescripteur.prenom || ''}` : "");
-    } catch { setApiError("Erreur lors de l'envoi. Vérifiez la connexion."); }
+    } catch { showError("Erreur lors de l'envoi. Vérifiez la connexion."); }
     finally { setLoading(false); }
   }
 
   return (
     <div>
-      {apiError && <div style={{ background: "var(--red-lt)", border: "1px solid var(--red-bdr)", borderRadius: 8, padding: "10px 12px", fontSize: 12, color: "var(--red)", marginBottom: 12 }}>{apiError}</div>}
-
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 16, alignItems: 'start' }}>
         <div className="card" style={{ padding: 12 }}>
           <div className="mb12"><label className="lbl">Renseignements cliniques <span className="req">*</span></label><textarea rows={3} placeholder="Contexte clinique, motif de l'intervention..." value={renseignements} onChange={e => setRenseignements(e.target.value)} /></div>
@@ -120,7 +117,6 @@ export default function BlocForm({ patient, prescripteur, onAddToCart }: Props) 
         </div>
       )}
 
-      {toast && <div className="tst on"><span className="ms">check_circle</span>{toast}</div>}
     </div>
   );
 }

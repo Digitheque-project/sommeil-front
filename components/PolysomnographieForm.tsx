@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useToast } from "@/components/ToastProvider";
 
 type Urgence = "NORMAL" | "URGENT" | "TRES_URGENT";
 
@@ -33,6 +34,7 @@ export default function PolysomnographieForm({ patient, prescripteur }: Props) {
   const [renseignements, setRenseignements] = useState("");
   const [remarques, setRemarques] = useState("");
   const [loading, setLoading] = useState(false);
+  const { showSuccess, showError } = useToast();
 
   const calcAge = (dateNaissance?: string) => {
     if (!dateNaissance) return null;
@@ -70,14 +72,14 @@ export default function PolysomnographieForm({ patient, prescripteur }: Props) {
 
       console.log("Prescription Polysomnographie:", prescriptionData);
       // TODO: Send to API
-      alert("Prescription envoyée avec succès");
+      showSuccess("Prescription envoyée avec succès");
       setUrgence("NORMAL");
       setAlertes("");
       setRenseignements("");
       setRemarques("");
     } catch (error) {
       console.error("Erreur lors de l'envoi:", error);
-      alert("Erreur lors de l'envoi de la prescription");
+      showError("Erreur lors de l'envoi de la prescription");
     } finally {
       setLoading(false);
     }

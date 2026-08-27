@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { creerPrescriptionSurveillance } from '@/lib/prescription-api';
+import { useToast } from "@/components/ToastProvider";
 
 type Urgence = "n" | "u" | "tu";
 const urgenceClasses: Record<Urgence, string> = { n: "un", u: "uu", tu: "utu" };
@@ -33,15 +34,13 @@ export default function SurveillanceForm({ patient, prescripteur, onAddToCart }:
   const removeItem = (id: number) => setCart(prev => prev.filter(i => i.id !== id));
 
   const [showModal, setShowModal] = useState(false);
-  const [toast, setToast] = useState("");
   const [loading, setLoading] = useState(false);
-  const [apiError, setApiError] = useState("");
+  const { showSuccess, showError } = useToast();
 
   const parametreEffectif = parametre === "Autre" ? parametreAutre.trim() : parametre;
   const currentDemandeValid = !!parametreEffectif && !!frequenceType && dureeJours > 0
     && (frequenceType === "SOS" || frequenceType === "CONTINU" || frequenceValeur > 0);
   const canSubmit = cart.length > 0;
-  function showToast(msg: string) { setToast(msg); setTimeout(() => setToast(""), 2800); }
 
   function addToCart() {
     setCart(prev => [...prev, { id: Date.now(), parametre: parametreEffectif, frequenceType, frequenceValeur, dureeJours, seuil }]);
@@ -53,18 +52,17 @@ export default function SurveillanceForm({ patient, prescripteur, onAddToCart }:
   }
 
   async function handleSubmit() {
-    setShowModal(false); setLoading(true); setApiError("");
+    setShowModal(false); setLoading(true);
     try {
       await creerPrescriptionSurveillance({ patientId: patient.id, prescripteurId: prescripteur.id, chuId: prescripteur.chuId, serviceId: prescripteur.serviceId, urgence, alertes, parametres: buildParametres(cart) });
-      showToast(`${cart.length} paramètre(s) de surveillance envoyé(s)`);
+      showSuccess(`${cart.length} paramètre(s) de surveillance envoyé(s)`);
       setCart([]); setAlertes(""); setUrgence("n");
-    } catch { setApiError("Erreur lors de l'envoi."); }
+    } catch { showError("Erreur lors de l'envoi."); }
     finally { setLoading(false); }
   }
 
   return (
     <div>
-      {apiError && <div style={{background:"var(--red-lt)",border:"1px solid var(--red-bdr)",borderRadius:8,padding:"10px 12px",fontSize:12,color:"var(--red)",marginBottom:12}}>{apiError}</div>}
       <div className="g2-form mb12">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div className="card" style={{ padding: 12 }}>
@@ -143,7 +141,6 @@ export default function SurveillanceForm({ patient, prescripteur, onAddToCart }:
         </div>
       </div>
       {showModal && <div className="mb op" onClick={e => { if (e.target === e.currentTarget) setShowModal(false); }}><div className="mbox"><h3>Confirmer ?</h3><p>{cart.length} paramètre(s) de surveillance seront transmis.</p><ul style={{ margin: "0 0 16px", padding: "0 0 0 16px", fontSize: 13, color: "var(--txt2)" }}>{cart.map(i => <li key={i.id}>{i.parametre}</li>)}</ul><div className="mbtns"><button className="bca" onClick={()=>setShowModal(false)}>Annuler</button><button className="bok" onClick={() => { if (onAddToCart) { const snapCart = [...cart]; const snap = { patientId: patient.id, prescripteurId: prescripteur.id, chuId: prescripteur.chuId, serviceId: prescripteur.serviceId, urgence, alertes, parametres: buildParametres(snapCart) }; onAddToCart({ label: `Surveillance — ${snapCart.length} paramètre${snapCart.length > 1 ? "s" : ""}`, count: snapCart.length, submit: () => creerPrescriptionSurveillance(snap) }); setShowModal(false); setCart([]); } else { handleSubmit(); } }}>Confirmer</button></div></div></div>}
-      {toast && <div className="tst on"><span className="ms">check_circle</span>{toast}</div>}
     </div>
   );
 }

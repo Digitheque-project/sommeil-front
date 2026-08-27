@@ -16,6 +16,7 @@ import { useUploadPhoto } from "@/hooks/use-uploads";
 import type { CompteRendu } from "@/lib/api/comptes-rendus";
 import { useAuth } from "@/context/AuthContext";
 import type { PsgExam } from "@/lib/api/psg";
+import { useToast } from "@/components/ToastProvider";
 
 const formatDateTime = (value?: string | null) => {
   if (!value) return "Jamais";
@@ -144,7 +145,7 @@ export default function CompteRenduPage() {
   const [title, setTitle] = useState("");
   const [conclusion, setConclusion] = useState("");
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const { showSuccess, showError } = useToast();
   const [filters, setFilters] = useState({ nom: "", motif: "", statut: "" as "" | ReportWorkStatus });
   const photoInputRef = useRef<HTMLInputElement>(null);
 
@@ -246,12 +247,6 @@ export default function CompteRenduPage() {
     setPhotoUrl(selectedReport?.photoUrl ?? null);
   }, [selectedReport]);
 
-  useEffect(() => {
-    if (!toast) return;
-    const timeout = window.setTimeout(() => setToast(null), 3500);
-    return () => window.clearTimeout(timeout);
-  }, [toast]);
-
   const resetForm = () => {
     setDraft("");
     setTitle("");
@@ -274,14 +269,14 @@ export default function CompteRenduPage() {
     event.target.value = "";
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      setToast("Le fichier doit être une image.");
+      showError("Le fichier doit être une image.");
       return;
     }
     try {
       const { url } = await uploadPhotoMutation.mutateAsync(file);
       setPhotoUrl(url);
     } catch (error) {
-      setToast(error instanceof Error ? error.message : "L'import de la photo a échoué.");
+      showError(error instanceof Error ? error.message : "L'import de la photo a échoué.");
     }
   };
 
@@ -325,13 +320,13 @@ export default function CompteRenduPage() {
       // La signature est acquise même si la transmission échoue : le message
       // doit dire lequel des deux a réellement eu lieu, sans quoi le praticien
       // croirait le prescripteur informé alors qu'il ne l'est pas.
-      setToast(
-        validated.prescripteurNotifie
-          ? "Compte rendu validé et envoyé au prescripteur."
-          : "Compte rendu validé, mais l'envoi au prescripteur a échoué : il sera à relancer."
-      );
+      if (validated.prescripteurNotifie) {
+        showSuccess("Compte rendu validé et envoyé au prescripteur.");
+      } else {
+        showError("Compte rendu validé, mais l'envoi au prescripteur a échoué : il sera à relancer.");
+      }
     } catch (error) {
-      setToast(error instanceof Error ? error.message : "La validation a échoué.");
+      showError(error instanceof Error ? error.message : "La validation a échoué.");
     }
   };
 
@@ -355,7 +350,7 @@ export default function CompteRenduPage() {
       try {
         await deleteMutation.mutateAsync(draftToDelete.id);
       } catch (error) {
-        setToast(error instanceof Error ? error.message : "La suppression du brouillon a échoué.");
+        showError(error instanceof Error ? error.message : "La suppression du brouillon a échoué.");
         return;
       }
     }
@@ -363,7 +358,7 @@ export default function CompteRenduPage() {
     setSelectedExamId(null);
     setSelectedReportId(null);
     resetForm();
-    setToast(draftToDelete ? "Saisie annulée, brouillon supprimé." : "Saisie annulée.");
+    showSuccess(draftToDelete ? "Saisie annulée, brouillon supprimé." : "Saisie annulée.");
   };
 
   const statusMeta = STATUS_META[currentStatus];
@@ -865,16 +860,6 @@ export default function CompteRenduPage() {
           </div>
         </main>
       </div>
-
-      {toast && (
-        <div
-          role="status"
-          className="animate-slideUp fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full bg-[#0F172A] px-5 py-3 text-sm font-bold text-white shadow-xl"
-        >
-          <span className="material-symbols-outlined text-[18px]">notifications</span>
-          {toast}
-        </div>
-      )}
     </>
   );
 }

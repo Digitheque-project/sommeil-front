@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { creerPrescriptionAnapath } from "@/lib/prescription-api";
+import { useToast } from "@/components/ToastProvider";
 
 type Urgence = "n" | "u" | "tu";
 type AnaTab = "fcv" | "cyto" | "liq" | "bio" | "pos" | "poc" | "ext";
@@ -44,9 +45,8 @@ export default function AnapathForm({ patient, prescripteur, onAddToCart }: Prop
   const [renseign, setRenseign]   = useState("");
   const [tab, setTab]             = useState<AnaTab>("fcv");
   const [showModal, setShowModal] = useState(false);
-  const [toast, setToast]         = useState("");
   const [loading, setLoading]     = useState(false);
-  const [apiError, setApiError]   = useState("");
+  const { showSuccess, showError } = useToast();
   const [showValidationModal, setShowValidationModal] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [validatedPrescription, setValidatedPrescription] = useState<any>(null);
@@ -147,8 +147,6 @@ export default function AnapathForm({ patient, prescripteur, onAddToCart }: Prop
     return false;
   })();
 
-  function showToast(msg: string) { setToast(msg); setTimeout(() => setToast(""), 2800); }
-
   function buildData() {
     if (tab === "fcv")  return { renseign, etat_col: fcvEtatCol, service: fcvService, gpa: fcvGPA, ddr: fcvDDR, menopause: fcvMeno, menarche: fcvMenarche, rapport: fcvRapport, contraception: fcvContra, traitement: fcvTtt, papLieu: fcvPapLieu, papNb: fcvPapNb, papDate: fcvPapDate, papRes: fcvPapRes, atcd: fcvAtcd, methode: fcvMeth, note: fcvNote };
     if (tab === "cyto") return { renseign, service: cytoService, siege: cytoSiege, organe: cytoOrgane, fixateur: cytoFix, fixateurAutre: cytoFixAutre, note: cytoNotes };
@@ -177,15 +175,15 @@ export default function AnapathForm({ patient, prescripteur, onAddToCart }: Prop
   }
 
   async function handleSubmit() {
-    setShowModal(false); setLoading(true); setApiError("");
+    setShowModal(false); setLoading(true);
     try {
       await creerPrescriptionAnapath({ patientId: patient.id, prescripteurId: prescripteur.id, chuId: prescripteur.chuId, serviceId: prescripteur.serviceId, urgence, alertes, demandes: buildDemandes(cart) });
       if (cart.some(i => i.tab === "ext")) setTimerActive(true);
       setValidatedPrescription({ urgence, alertes, cart: [...cart], patient: { ...patient, age, sexeLabel }, prescripteur, date: new Date().toLocaleString('fr-FR') });
       setShowValidationModal(true);
-      showToast(`${cart.length} demande(s) Anapath transmise(s)`);
+      showSuccess(`${cart.length} demande(s) Anapath transmise(s)`);
       setCart([]); setAlertes(""); setUrgence("n");
-    } catch { setApiError("Erreur lors de l'envoi. Vérifiez la connexion."); }
+    } catch { showError("Erreur lors de l'envoi. Vérifiez la connexion."); }
     finally { setLoading(false); }
   }
 
@@ -367,7 +365,6 @@ export default function AnapathForm({ patient, prescripteur, onAddToCart }: Prop
             </div>
           )}
         </div>
-        {apiError && <div style={{background:"var(--red-lt)",border:"1px solid var(--red-bdr)",borderRadius:8,padding:"10px 12px",fontSize:12,color:"var(--red)",marginBottom:12}}>{apiError}</div>}
         <button className="bp" onClick={() => setShowModal(true)} disabled={cart.length === 0 || loading} style={{ opacity: cart.length > 0 && !loading ? 1 : 0.5, width: '100%' }}><span className="ms">check_circle</span>{loading ? "Envoi..." : `Valider la prescription (${cart.length})`}</button>
       </div>
 
@@ -390,7 +387,6 @@ export default function AnapathForm({ patient, prescripteur, onAddToCart }: Prop
         </div>
       )}
 
-      {toast && <div className="tst on"><span className="ms">check_circle</span>{toast}</div>}
     </div>
   );
 }
