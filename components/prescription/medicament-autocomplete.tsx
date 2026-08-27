@@ -31,20 +31,41 @@ const formatPrix = (value: number) => `${value.toLocaleString('fr-FR')} Ar`;
 export function MedicamentAutocomplete({ value, onChangeText, onSelectArticle, chuId, placeholder, className }: Props) {
   const [allArticles, setAllArticles] = useState<PharmacieArticle[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [open, setOpen] = useState(false);
+  const [retryToken, setRetryToken] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Le backend pharmacie (Render, offre gratuite) peut mettre jusqu'à 45s à
+  // se réveiller : un premier échec ne veut pas dire que le catalogue est
+  // vide, donc on retente une fois automatiquement avant d'afficher une
+  // erreur, plutôt que de laisser croire qu'il n'y a aucun article.
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    fetchAllPharmacieArticles(chuId).then((articles) => {
-      if (!cancelled) {
+    setError(false);
+    fetchAllPharmacieArticles(chuId)
+      .then((articles) => {
+        if (cancelled) return;
         setAllArticles(articles);
         setLoading(false);
-      }
-    });
+      })
+      .catch(() => {
+        if (cancelled) return;
+        fetchAllPharmacieArticles(chuId)
+          .then((articles) => {
+            if (cancelled) return;
+            setAllArticles(articles);
+            setLoading(false);
+          })
+          .catch(() => {
+            if (cancelled) return;
+            setError(true);
+            setLoading(false);
+          });
+      });
     return () => { cancelled = true; };
-  }, [chuId]);
+  }, [chuId, retryToken]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -76,6 +97,17 @@ export function MedicamentAutocomplete({ value, onChangeText, onSelectArticle, c
         <div className="absolute z-20 mt-1 w-max min-w-full max-w-[26rem] max-h-64 overflow-y-auto rounded-xl border border-gray-100 bg-white shadow-lg">
           {loading ? (
             <div className="px-4 py-3 text-[12px] text-gray-400">Chargement du catalogue…</div>
+          ) : error ? (
+            <div className="flex items-center justify-between gap-3 px-4 py-3 text-[12px] text-red-500">
+              Le catalogue pharmacie n&apos;a pas pu être chargé.
+              <button
+                type="button"
+                onClick={() => setRetryToken((token) => token + 1)}
+                className="shrink-0 rounded-lg border border-red-200 px-2 py-1 font-bold text-red-600 hover:bg-red-50"
+              >
+                Réessayer
+              </button>
+            </div>
           ) : results.length === 0 ? (
             <div className="px-4 py-3 text-[12px] text-gray-400">Aucun article trouvé dans la pharmacie.</div>
           ) : (

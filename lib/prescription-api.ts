@@ -181,19 +181,25 @@ export function getStockLevel(article: Pick<PharmacieArticle, 'stock_total' | 's
   return 'ok';
 }
 
+/**
+ * Le backend pharmacie tourne sur Render en offre gratuite : après une
+ * période d'inactivité, l'instance se met en veille et son réveil ("cold
+ * start") peut prendre 30 à 50 secondes. Un timeout trop court fait échouer
+ * la requête pendant ce réveil — d'où des catalogues qui semblaient "vides"
+ * de façon intermittente. On laisse ici largement le temps au service de
+ * redémarrer plutôt que d'avaler l'erreur en retournant [].
+ */
 export async function fetchAllPharmacieArticles(chuId?: string): Promise<PharmacieArticle[]> {
   const params = new URLSearchParams({ level: 'DETAIL' });
   if (chuId) params.set('chuId', chuId);
-  try {
-    const res = await fetch(`${PHARMACIE_URL}/articles/stock-sale-prices?${params.toString()}`, {
-      headers: authHeaders(),
-      signal: AbortSignal.timeout(15000),
-    });
-    if (!res.ok) return [];
-    return res.json();
-  } catch {
-    return [];
+  const res = await fetch(`${PHARMACIE_URL}/articles/stock-sale-prices?${params.toString()}`, {
+    headers: authHeaders(),
+    signal: AbortSignal.timeout(45000),
+  });
+  if (!res.ok) {
+    throw new Error(`Le catalogue pharmacie n'a pas pu être chargé (HTTP ${res.status}).`);
   }
+  return res.json();
 }
 
 export async function creerPrescriptionMedicale(data: Record<string, unknown>) {
