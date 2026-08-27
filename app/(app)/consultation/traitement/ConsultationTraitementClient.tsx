@@ -366,11 +366,11 @@ export default function ConsultationTraitementClient({
         </div>
 
         <section className="mt-7 overflow-hidden rounded-[30px] border border-slate-100 bg-white shadow-[0_4px_20px_rgba(17,17,26,.05)]">
-          <div className="flex overflow-x-auto border-b border-slate-100 px-6">
-            {[["medicament", "Médicaments", "medication"], ["non-medicament", "Prescriptions non médicamenteuses", "assignment"]].map(([key, label, icon]) => <button key={key} type="button" onClick={() => setActiveSection(key as typeof activeSection)} className={`relative flex shrink-0 items-center gap-2 px-4 py-5 text-[12px] font-extrabold uppercase tracking-wide transition ${activeSection === key ? "text-[#006A8C]" : "text-slate-400 hover:text-slate-700"}`}><span className="material-symbols-outlined text-[18px]">{icon}</span>{label}{activeSection === key && <span className="absolute inset-x-4 bottom-0 h-1 rounded-t-full bg-[#006A8C]" />}</button>)}
-          </div>
-          <div className="border-b border-slate-100 px-6 py-3">
-            <ActionButton permission="prescription:create" onClick={goToParacliniques} className="flex w-full items-center gap-2 rounded-xl bg-[#EAF3FA] px-4 py-2.5 text-[12px] font-bold text-[#006A8C] hover:bg-[#D1E5F5] sm:w-fit"><span className="material-symbols-outlined text-[18px]">biotech</span> Examens para-cliniques <span className="material-symbols-outlined text-[16px]">arrow_forward</span></ActionButton>
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-6">
+            <div className="flex overflow-x-auto">
+              {[["medicament", "Médicaments", "medication"], ["non-medicament", "Prescriptions non médicamenteuses", "assignment"]].map(([key, label, icon]) => <button key={key} type="button" onClick={() => setActiveSection(key as typeof activeSection)} className={`relative flex shrink-0 items-center gap-2 px-4 py-5 text-[12px] font-extrabold uppercase tracking-wide transition ${activeSection === key ? "text-[#006A8C]" : "text-slate-400 hover:text-slate-700"}`}><span className="material-symbols-outlined text-[18px]">{icon}</span>{label}{activeSection === key && <span className="absolute inset-x-4 bottom-0 h-1 rounded-t-full bg-[#006A8C]" />}</button>)}
+            </div>
+            <ActionButton permission="prescription:create" onClick={goToParacliniques} className="flex shrink-0 items-center gap-2 rounded-xl bg-[#EAF3FA] px-4 py-2.5 text-[12px] font-bold text-[#006A8C] hover:bg-[#D1E5F5]"><span className="material-symbols-outlined text-[18px]">biotech</span> Examens para-cliniques <span className="material-symbols-outlined text-[16px]">arrow_forward</span></ActionButton>
           </div>
           <div className="p-6 sm:p-8">
             {activeSection === "medicament" ? <>
