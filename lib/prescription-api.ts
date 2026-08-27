@@ -7,7 +7,6 @@ import { redirectToLogin } from '@/lib/auth';
 // Repli sur les mêmes URLs de production que sommeil-back (PRESCRIPTIONS_URL)
 // et prescription_back (PHARMACY_API_URL) plutôt que sur localhost.
 const PRESCRIPTION_URL = process.env.NEXT_PUBLIC_PRESCRIPTION_URL || 'https://prescriptionback-production.up.railway.app';
-const PHARMACIE_URL = process.env.NEXT_PUBLIC_PHARMACIE_URL || 'https://pharmacie-back-1.onrender.com';
 // Registre des services du CHU : routes servies à la racine (/services),
 // le swagger étant monté à part sous /services/api/docs.
 const SERVICE_REGISTRY_URL = API_BASE_URLS.services;
@@ -182,17 +181,20 @@ export function getStockLevel(article: Pick<PharmacieArticle, 'stock_total' | 's
 }
 
 /**
- * Le backend pharmacie tourne sur Render en offre gratuite : après une
- * période d'inactivité, l'instance se met en veille et son réveil ("cold
- * start") peut prendre 30 à 50 secondes. Un timeout trop court fait échouer
- * la requête pendant ce réveil — d'où des catalogues qui semblaient "vides"
- * de façon intermittente. On laisse ici largement le temps au service de
- * redémarrer plutôt que d'avaler l'erreur en retournant [].
+ * Le backend pharmacie (Render, offre gratuite) ne renvoie pas d'en-tête
+ * Access-Control-Allow-Origin pour sommeil-front.onrender.com : le
+ * navigateur bloque la requête au stade du préflight CORS, ce qui donnait
+ * l'impression d'un catalogue "pas toujours synchronisé". CORS ne
+ * s'applique qu'aux appels initiés par le navigateur — on passe donc par la
+ * route serveur /api/pharmacie/articles de cette appli, qui relaie l'appel
+ * côté serveur (non soumis à CORS) plutôt que d'appeler PHARMACIE_URL
+ * directement depuis le client. Elle garde aussi une marge de 45s pour le
+ * réveil ("cold start") de l'instance Render après une période d'inactivité.
  */
 export async function fetchAllPharmacieArticles(chuId?: string): Promise<PharmacieArticle[]> {
   const params = new URLSearchParams({ level: 'DETAIL' });
   if (chuId) params.set('chuId', chuId);
-  const res = await fetch(`${PHARMACIE_URL}/articles/stock-sale-prices?${params.toString()}`, {
+  const res = await fetch(`/api/pharmacie/articles?${params.toString()}`, {
     headers: authHeaders(),
     signal: AbortSignal.timeout(45000),
   });
