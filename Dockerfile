@@ -7,9 +7,8 @@
 # build, PAS au runtime — à passer en --build-arg avec les vraies URLs) :
 #
 #   docker build \
-#     --build-arg NEXT_PUBLIC_SOMMEIL_API_URL=https://sommeil-back.onrender.com \
+#     --build-arg NEXT_PUBLIC_API_GATEWAY_URL=https://gateway-5pqs.onrender.com \
 #     --build-arg NEXT_PUBLIC_AUTH_LOGIN_URL=https://authentification-front.vercel.app/login \
-#     --build-arg NEXT_PUBLIC_API_GATEWAY_URL=https://gateway-3g6c.onrender.com \
 #     -t sommeil-front .
 #
 # Voir .env.example pour le détail et le rôle de chaque variable.

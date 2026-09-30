@@ -15,42 +15,44 @@
 
 const stripTrailingSlash = (url: string) => url.replace(/\/+$/, "");
 
-/** Base URLs (origine seule) des services de la plateforme CHU. */
+// Une variable vide (`FOO=` dans un .env) doit retomber sur la valeur par
+// défaut, d'où `||` et non `??`.
+const originOr = (value: string | undefined, fallback: string) =>
+  stripTrailingSlash(value || fallback);
+
+/**
+ * Passerelle API du CHU : point d'entrée unique des microservices. Elle
+ * relaie chaque chemin tel quel vers le service concerné (`/accueil/...`,
+ * `/services`, `/notifications`, `/sommeil/api/...`) et vérifie elle-même le
+ * jeton porteur — tout appel qui la traverse doit donc envoyer
+ * `Authorization: Bearer …`, sinon 401 « Token manquant ».
+ */
+export const API_GATEWAY_URL = originOr(
+  process.env.NEXT_PUBLIC_API_GATEWAY_URL,
+  "https://gateway-5pqs.onrender.com",
+);
+
+/**
+ * Base URLs (origine seule) des services de la plateforme CHU. Par défaut,
+ * tout passe par la passerelle ; une variable propre au service permet de
+ * la contourner (appel direct) au cas par cas.
+ */
 export const SERVICE_ORIGINS = {
-  auth: stripTrailingSlash(
-    process.env.NEXT_PUBLIC_AUTH_SERVICE_URL ?? "https://auth-service-4q6g.onrender.com",
-  ),
-  users: stripTrailingSlash(
-    process.env.NEXT_PUBLIC_USER_SERVICE_URL ?? "https://user-services-w0h3.onrender.com",
-  ),
-  chu: stripTrailingSlash(
-    process.env.NEXT_PUBLIC_CHU_SERVICE_URL ?? "https://chu-service-fec1.onrender.com",
-  ),
-  services: stripTrailingSlash(
-    process.env.NEXT_PUBLIC_SERVICE_REGISTRY_URL ?? "https://service-service-8cgb.onrender.com",
-  ),
-  dossierPatient: stripTrailingSlash(
-    process.env.NEXT_PUBLIC_DOSSIER_PATIENT_URL ?? "https://dossier-patient-back-ri3e.onrender.com",
-  ),
-  notificationHub: stripTrailingSlash(
-    process.env.NEXT_PUBLIC_NOTIFICATION_HUB_URL ??
-      "https://service-notificqtion-v2-production.up.railway.app",
-  ),
-  accueil: stripTrailingSlash(
-    process.env.NEXT_PUBLIC_ACCUEIL_URL ?? "https://acceuil-back.onrender.com",
-  ),
-  consultation: stripTrailingSlash(
-    process.env.NEXT_PUBLIC_CONSULTATION_URL ?? "https://consultation-back.onrender.com",
-  ),
-  prescriptions: stripTrailingSlash(
-    process.env.NEXT_PUBLIC_PRESCRIPTIONS_URL ??
-      "https://prescriptionback-production.up.railway.app",
+  auth: originOr(process.env.NEXT_PUBLIC_AUTH_SERVICE_URL, API_GATEWAY_URL),
+  users: originOr(process.env.NEXT_PUBLIC_USER_SERVICE_URL, API_GATEWAY_URL),
+  chu: originOr(process.env.NEXT_PUBLIC_CHU_SERVICE_URL, API_GATEWAY_URL),
+  services: originOr(process.env.NEXT_PUBLIC_SERVICE_REGISTRY_URL, API_GATEWAY_URL),
+  dossierPatient: originOr(process.env.NEXT_PUBLIC_DOSSIER_PATIENT_URL, API_GATEWAY_URL),
+  notificationHub: originOr(process.env.NEXT_PUBLIC_NOTIFICATION_HUB_URL, API_GATEWAY_URL),
+  accueil: originOr(process.env.NEXT_PUBLIC_ACCUEIL_URL, API_GATEWAY_URL),
+  consultation: originOr(process.env.NEXT_PUBLIC_CONSULTATION_URL, API_GATEWAY_URL),
+  // Le service prescriptions n'est PAS exposé par la passerelle
+  // (`/prescriptions/...` y répond 404) : appel direct.
+  prescriptions: originOr(
+    process.env.NEXT_PUBLIC_PRESCRIPTIONS_URL,
+    "https://prescriptionback-production.up.railway.app",
   ),
 };
-
-export const API_GATEWAY_URL = stripTrailingSlash(
-  process.env.NEXT_PUBLIC_API_GATEWAY_URL ?? "https://gateway-3g6c.onrender.com",
-);
 export const AUTH_LOGIN_URL =
   process.env.NEXT_PUBLIC_AUTH_LOGIN_URL ?? "https://authentification-front.vercel.app/login";
 
@@ -63,8 +65,9 @@ export const API_ROUTES = {
   dossierPatientDocs: `${SERVICE_ORIGINS.dossierPatient}/dossier-patient/api/docs`,
   notificationDocs: `${SERVICE_ORIGINS.notificationHub}/notification/api/docs`,
   accueilDocs: `${API_GATEWAY_URL}/accueil/api/docs`,
-  prescriptionsDocs: `${API_GATEWAY_URL}/prescriptions/api/docs`,
+  prescriptionsDocs: `${SERVICE_ORIGINS.prescriptions}/prescriptions/api/docs`,
   consultationDocs: `${API_GATEWAY_URL}/consultation/api/docs`,
+  sommeilDocs: `${API_GATEWAY_URL}/sommeil/api/docs`,
 };
 
 /**

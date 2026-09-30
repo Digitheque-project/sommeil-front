@@ -24,14 +24,24 @@ const getNotificationHubUrl = () => API_BASE_URLS.notificationHub;
 // l'utilisateur pseudo "broadcast:service:{serviceId}".
 const getBroadcastUserId = () => `broadcast:service:${SLEEP_SERVICE_ID}`;
 
-function getCurrentUserId(): string | null {
+function getToken(): string | null {
   if (typeof window === 'undefined') return null;
-  const token =
+  return (
     localStorage.getItem('access_token') ||
     localStorage.getItem('auth_token') ||
-    localStorage.getItem('token');
-  return getSleepUserFromToken(token)?.userId ?? null;
+    localStorage.getItem('token')
+  );
 }
+
+function getCurrentUserId(): string | null {
+  return getSleepUserFromToken(getToken())?.userId ?? null;
+}
+
+// Le hub est joint via la passerelle API, qui refuse tout appel sans jeton.
+const authHeaders = (): Record<string, string> => {
+  const token = getToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
 
 const handleResponse = async (res: Response) => {
   if (!res.ok) {
@@ -87,6 +97,7 @@ export const notificationApi = {
   // moins celles émises par l'utilisateur courant lui-même.
   async getNotifications(): Promise<NotificationItem[]> {
     const res = await fetch(`${getNotificationHubUrl()}/notifications/user/${encodeURIComponent(getBroadcastUserId())}`, {
+      headers: authHeaders(),
       cache: 'no-store',
     });
     const items = (await handleResponse(res)) as NotificationItem[];
@@ -103,7 +114,7 @@ export const notificationApi = {
   async markNotificationsRead(ids: string[]): Promise<{ updated: number; ignored: number }> {
     const res = await fetch(`${getNotificationHubUrl()}/notifications/read`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({ ids, userId: getBroadcastUserId() }),
     });
     return handleResponse(res);

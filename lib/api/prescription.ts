@@ -1,20 +1,9 @@
 import { redirectToLogin } from '@/lib/auth';
+import { getSommeilApiUrl } from './consultation-config';
 
-// Base URL du backend sommeil-back (sans préfixe ni suffixe). Le préfixe global
-// de l'API (par défaut "sommeil/api") est ajouté ici.
-const DEFAULT_SOMMEIL_BASE_URL = 'http://localhost:8888';
-const DEFAULT_API_PREFIX = 'sommeil/api';
-
-const getPrescriptionBaseUrl = () => {
-  const configuredUrl = (
-    process.env.NEXT_PUBLIC_SOMMEIL_API_URL ||
-    process.env.NEXT_PUBLIC_PRESCRIPTION_URL ||
-    DEFAULT_SOMMEIL_BASE_URL
-  );
-  const baseUrl = configuredUrl.replace(/\/+$/, '');
-  const apiPrefix = process.env.NEXT_PUBLIC_SOMMEIL_API_PREFIX || DEFAULT_API_PREFIX;
-  return `${baseUrl}/${apiPrefix}`;
-};
+// Routes /prescriptions/... de sommeil-back (base URL + préfixe "sommeil/api",
+// via la passerelle API par défaut).
+const getPrescriptionBaseUrl = () => getSommeilApiUrl('').replace(/\/+$/, '');
 
 const authHeaders = (): Record<string, string> => {
   // Mêmes clés que celles posées par AuthContext : `token` seul laissait
