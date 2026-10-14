@@ -33,6 +33,13 @@ module.exports = {
         'secondary-container': '#CFE9EF',
         'on-secondary-container': '#004A66',
         'outline-variant': '#E0E4E8',
+        // Plusieurs écrans utilisent encore les classes Tailwind blue-* par
+        // défaut : retintées en teal pour suivre la charte CHU.
+        blue: {
+          50: '#eaf6f9', 100: '#d6eef3', 200: '#aedce6', 300: '#7fc3d3',
+          400: '#4aa8be', 500: '#0a7ea4', 600: '#006a8c', 700: '#004a66',
+          800: '#003847', 900: '#012430',
+        },
       },
       fontFamily: {
         sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
