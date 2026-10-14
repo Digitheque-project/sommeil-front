@@ -52,7 +52,7 @@ export default function DashboardPage() {
       id: item.id,
       icon: item.termine ? "verified" : "edit_calendar",
       iconBg: item.termine ? "bg-[#D1FAE5]" : item.urgence ? "bg-[#FEE2E2]" : "bg-[#E2E8F0]",
-      iconColor: item.termine ? "text-[#059669]" : item.urgence ? "text-[#DC2626]" : "text-[#2563EB]",
+      iconColor: item.termine ? "text-[#059669]" : item.urgence ? "text-[#DC2626]" : "text-[#006A8C]",
       title: item.termine ? "Consultation terminée" : "Consultation planifiée",
       subtitle: `Patient : ${item.patient?.displayName ?? "Patient inconnu"} · ${item.heure ?? "Heure non renseignée"}`,
       time: new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(item.createdAt ?? item.date)),
@@ -79,7 +79,7 @@ export default function DashboardPage() {
           {/* Examens Aujourd'hui */}
           <Link
             href="/consultation"
-            className="bg-[#1E3A8A] p-6 rounded-[24px] relative overflow-hidden flex flex-col justify-between h-[220px] cursor-pointer shadow-sm transition hover:brightness-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            className="bg-[#004A66] p-6 rounded-[24px] relative overflow-hidden flex flex-col justify-between h-[220px] cursor-pointer shadow-sm transition hover:brightness-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
           >
             <div className="flex justify-between items-start">
               <div className="flex items-center gap-1 text-[#4FC3F7]">
@@ -102,13 +102,13 @@ export default function DashboardPage() {
           {/* Comptes-rendus en attente */}
           <Link
             href="/comptes-rendus"
-            className="bg-white p-6 rounded-[24px] relative overflow-hidden cursor-pointer flex flex-col justify-between h-[220px] shadow-sm border border-[#E0E4E8] transition hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB]"
+            className="bg-white p-6 rounded-[24px] relative overflow-hidden cursor-pointer flex flex-col justify-between h-[220px] shadow-sm border border-[#E0E4E8] transition hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#006A8C]"
           >
             <div className="flex justify-between items-start">
-              <span className="material-symbols-outlined text-[#2563EB] text-[32px]" style={{ fontVariationSettings: '"FILL" 1' }}>
+              <span className="material-symbols-outlined text-[#006A8C] text-[32px]" style={{ fontVariationSettings: '"FILL" 1' }}>
                 pending_actions
               </span>
-              <span className="bg-[#2563EB] text-white font-bold text-[10px] px-4 py-1.5 rounded-full uppercase tracking-wider">
+              <span className="bg-[#006A8C] text-white font-bold text-[10px] px-4 py-1.5 rounded-full uppercase tracking-wider">
                 EN ATTENTE
               </span>
             </div>
@@ -162,7 +162,7 @@ export default function DashboardPage() {
                 </h3>
                 <Link
                   href="/comptes-rendus"
-                  className="text-[#2563EB] font-bold text-sm hover:underline flex items-center gap-1"
+                  className="text-[#006A8C] font-bold text-sm hover:underline flex items-center gap-1"
                 >
                   Voir tout <span className="material-symbols-outlined text-sm">arrow_forward</span>
                 </Link>
@@ -214,7 +214,7 @@ export default function DashboardPage() {
           {/* Right Column */}
           <div className="space-y-8">
             {/* Prochain RDV */}
-            <div className="bg-gradient-to-br from-[#2563EB] to-[#1E3A8A] rounded-[24px] p-6 shadow-sm text-white overflow-hidden relative">
+            <div className="bg-gradient-to-br from-[#006A8C] to-[#004A66] rounded-[24px] p-6 shadow-sm text-white overflow-hidden relative">
               <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/5 rounded-full" />
               <div className="relative z-10">
                 <p className="text-xs font-bold uppercase tracking-wider text-[#94A3B8] mb-2">
@@ -229,7 +229,7 @@ export default function DashboardPage() {
                     <p className="text-sm text-[#94A3B8]">{nextAppointment.detail}</p>
                     <Link
                       href={nextAppointment.href}
-                      className="mt-4 inline-flex items-center gap-2 bg-white text-[#2563EB] px-4 py-2 rounded-lg font-semibold text-sm hover:bg-[#F1F5F9] transition-colors"
+                      className="mt-4 inline-flex items-center gap-2 bg-white text-[#006A8C] px-4 py-2 rounded-lg font-semibold text-sm hover:bg-[#F1F5F9] transition-colors"
                     >
                       Accéder
                       <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
@@ -243,7 +243,7 @@ export default function DashboardPage() {
                     </p>
                     <Link
                       href="/polysomnographie"
-                      className="mt-4 inline-flex items-center gap-2 bg-white text-[#2563EB] px-4 py-2 rounded-lg font-semibold text-sm hover:bg-[#F1F5F9] transition-colors"
+                      className="mt-4 inline-flex items-center gap-2 bg-white text-[#006A8C] px-4 py-2 rounded-lg font-semibold text-sm hover:bg-[#F1F5F9] transition-colors"
                     >
                       Voir le planning
                       <span className="material-symbols-outlined text-[16px]">arrow_forward</span>

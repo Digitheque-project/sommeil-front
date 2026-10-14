@@ -152,7 +152,7 @@ export default function ArchivesPage() {
             <h1 className="text-[32px] font-extrabold text-[#0F172A] tracking-tight leading-tight">Registre des Archives</h1>
             <p className="text-[#64748B] text-sm">Consultation et traçabilité des dossiers médicaux du centre du sommeil.</p>
           </div>
-          <div className="bg-[#EBF5FF] border border-[#BFDBFE] p-4 rounded-xl flex items-start gap-3 max-w-md">
+          <div className="bg-[#EBF5FF] border border-[#0A7EA4] p-4 rounded-xl flex items-start gap-3 max-w-md">
             <span className="material-symbols-outlined text-[#3B82F6] text-xl mt-0.5">info</span>
             <p className="text-xs text-[#1E40AF] font-medium leading-relaxed">Les dossiers archivés sont scellés et conservés conformément aux règles hospitalières et au RGPD médical.</p>
           </div>
@@ -162,8 +162,8 @@ export default function ArchivesPage() {
           <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-3">
             <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.08em] text-[#64748B]"><span className="material-symbols-outlined text-sm">calendar_month</span>PÉRIODE D&apos;ARCHIVAGE</div>
             <div className="space-y-2">
-              <label className="flex items-center gap-2"><span className="text-[9px] font-bold text-[#94A3B8] w-4">DU</span><input type="date" value={dateFrom} onChange={(e) => setFilterPage(() => setDateFrom(e.target.value))} className="flex-1 bg-[#F8FAFC] border border-slate-200 rounded-lg py-1.5 px-2 text-[11px] outline-none focus:ring-1 focus:ring-[#2563EB]/20" /></label>
-              <label className="flex items-center gap-2"><span className="text-[9px] font-bold text-[#94A3B8] w-4">AU</span><input type="date" value={dateTo} onChange={(e) => setFilterPage(() => setDateTo(e.target.value))} className="flex-1 bg-[#F8FAFC] border border-slate-200 rounded-lg py-1.5 px-2 text-[11px] outline-none focus:ring-1 focus:ring-[#2563EB]/20" /></label>
+              <label className="flex items-center gap-2"><span className="text-[9px] font-bold text-[#94A3B8] w-4">DU</span><input type="date" value={dateFrom} onChange={(e) => setFilterPage(() => setDateFrom(e.target.value))} className="flex-1 bg-[#F8FAFC] border border-slate-200 rounded-lg py-1.5 px-2 text-[11px] outline-none focus:ring-1 focus:ring-[#006A8C]/20" /></label>
+              <label className="flex items-center gap-2"><span className="text-[9px] font-bold text-[#94A3B8] w-4">AU</span><input type="date" value={dateTo} onChange={(e) => setFilterPage(() => setDateTo(e.target.value))} className="flex-1 bg-[#F8FAFC] border border-slate-200 rounded-lg py-1.5 px-2 text-[11px] outline-none focus:ring-1 focus:ring-[#006A8C]/20" /></label>
             </div>
           </div>
           <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
@@ -177,7 +177,7 @@ export default function ArchivesPage() {
           <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
             <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.08em] text-[#64748B]"><span className="material-symbols-outlined text-sm">filter_alt</span>FILTRES RAPIDES</div>
             <p className="text-xs font-semibold text-[#475569]">{filteredRecords.length} dossier(s) affiché(s)</p>
-            <button type="button" onClick={resetFilters} className="text-[11px] font-bold text-[#2563EB] hover:underline">Réinitialiser les filtres</button>
+            <button type="button" onClick={resetFilters} className="text-[11px] font-bold text-[#006A8C] hover:underline">Réinitialiser les filtres</button>
           </div>
         </div>
 
@@ -185,9 +185,9 @@ export default function ArchivesPage() {
           <div className="px-8 py-6 flex flex-col sm:flex-row justify-between items-center border-b border-slate-100 gap-4">
             <div>
               <h2 className="text-[#0F172A] font-extrabold text-lg flex items-center gap-3">Résultats de la recherche <span className="bg-[#F1F5F9] text-[#64748B] text-[11px] font-bold px-2.5 py-1 rounded-full border border-slate-200">{filteredRecords.length} Documents</span></h2>
-              <div className="relative mt-3 max-w-md"><span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#94A3B8] text-lg">search</span><input value={searchQuery} onChange={(e) => setFilterPage(() => setSearchQuery(e.target.value))} placeholder="Dossier, référence ou type..." className="w-full bg-[#F8FAFC] border border-slate-200 rounded-lg py-2 pl-9 pr-3 text-xs outline-none focus:ring-1 focus:ring-[#2563EB]/20" /></div>
+              <div className="relative mt-3 max-w-md"><span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#94A3B8] text-lg">search</span><input value={searchQuery} onChange={(e) => setFilterPage(() => setSearchQuery(e.target.value))} placeholder="Dossier, référence ou type..." className="w-full bg-[#F8FAFC] border border-slate-200 rounded-lg py-2 pl-9 pr-3 text-xs outline-none focus:ring-1 focus:ring-[#006A8C]/20" /></div>
             </div>
-            <ActionButton permission="archive:export" onClick={exportRegister} disabled={filteredRecords.length === 0} className="flex items-center gap-2 text-[#2563EB] text-xs font-extrabold uppercase tracking-widest hover:bg-[#F1F5F9] px-4 py-2 rounded-xl transition-all">
+            <ActionButton permission="archive:export" onClick={exportRegister} disabled={filteredRecords.length === 0} className="flex items-center gap-2 text-[#006A8C] text-xs font-extrabold uppercase tracking-widest hover:bg-[#F1F5F9] px-4 py-2 rounded-xl transition-all">
               <span className="material-symbols-outlined text-lg">download</span>EXPORTER LE REGISTRE (CSV)
             </ActionButton>
           </div>
@@ -214,7 +214,7 @@ export default function ArchivesPage() {
                   <tr key={record.id} className="hover:bg-[#F1F5F9]/30 transition-colors group">
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-[#DBEAFE] flex items-center justify-center text-[#1D4ED8] font-bold text-sm">{initialsOf(record.titre)}</div>
+                        <div className="w-10 h-10 rounded-xl bg-[#CFE9EF] flex items-center justify-center text-[#1D4ED8] font-bold text-sm">{initialsOf(record.titre)}</div>
                         <div>
                           <span className="text-sm font-bold text-[#1E293B] block leading-tight">{record.titre}</span>
                           <span className="text-[11px] font-medium text-[#94A3B8]">{record.referenceId}</span>
@@ -232,8 +232,8 @@ export default function ArchivesPage() {
                     </td>
                     <td className="px-8 py-5 text-right">
                       <div className="flex justify-end gap-2">
-                        <ActionButton permission="archive:read" onClick={() => setSelectedRecord(record)} title="Voir le détail" className="p-2 text-[#94A3B8] hover:text-[#2563EB] hover:bg-white rounded-lg shadow-sm border border-transparent hover:border-slate-100"><span className="material-symbols-outlined text-xl">visibility</span></ActionButton>
-                        <ActionButton permission="archive:export" onClick={() => exportOne(record)} title="Exporter / imprimer" className="p-2 text-[#94A3B8] hover:text-[#2563EB] hover:bg-white rounded-lg shadow-sm border border-transparent hover:border-slate-100"><span className="material-symbols-outlined text-xl">print</span></ActionButton>
+                        <ActionButton permission="archive:read" onClick={() => setSelectedRecord(record)} title="Voir le détail" className="p-2 text-[#94A3B8] hover:text-[#006A8C] hover:bg-white rounded-lg shadow-sm border border-transparent hover:border-slate-100"><span className="material-symbols-outlined text-xl">visibility</span></ActionButton>
+                        <ActionButton permission="archive:export" onClick={() => exportOne(record)} title="Exporter / imprimer" className="p-2 text-[#94A3B8] hover:text-[#006A8C] hover:bg-white rounded-lg shadow-sm border border-transparent hover:border-slate-100"><span className="material-symbols-outlined text-xl">print</span></ActionButton>
                       </div>
                     </td>
                   </tr>
@@ -246,14 +246,14 @@ export default function ArchivesPage() {
             <span className="text-xs font-semibold text-[#64748B]">Affichage de {filteredRecords.length ? (page - 1) * pageSize + 1 : 0} à {Math.min(page * pageSize, filteredRecords.length)} sur {filteredRecords.length} documents</span>
             <div className="flex gap-1.5">
               <button type="button" disabled={page === 1} onClick={() => setPage((current) => current - 1)} className="w-8 h-8 rounded-lg flex items-center justify-center text-[#94A3B8] hover:bg-white border border-transparent hover:border-slate-200 disabled:opacity-40"><span className="material-symbols-outlined text-base">chevron_left</span></button>
-              <span className="w-8 h-8 rounded-lg flex items-center justify-center bg-[#2563EB] text-white font-extrabold text-xs shadow-md">{page}</span>
+              <span className="w-8 h-8 rounded-lg flex items-center justify-center bg-[#006A8C] text-white font-extrabold text-xs shadow-md">{page}</span>
               <button type="button" disabled={page >= totalPages} onClick={() => setPage((current) => current + 1)} className="w-8 h-8 rounded-lg flex items-center justify-center text-[#94A3B8] hover:bg-white border border-transparent hover:border-slate-200 disabled:opacity-40"><span className="material-symbols-outlined text-base">chevron_right</span></button>
             </div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white p-7 rounded-[28px] relative overflow-hidden border border-slate-100 shadow-sm min-h-[160px]"><div className="absolute top-0 left-0 w-1.5 h-full bg-[#2563EB]" /><div className="flex justify-between items-start"><p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#64748B]">DOSSIERS ARCHIVÉS</p><span className="material-symbols-outlined text-[#2563EB] text-2xl">folder_copy</span></div><p className="text-3xl font-black text-[#0F172A] tracking-tight mt-8">{archives.length.toLocaleString("fr-FR")}</p><p className="text-[11px] text-[#94A3B8] font-medium mt-1 uppercase tracking-wider">Historique complet</p></div>
+          <div className="bg-white p-7 rounded-[28px] relative overflow-hidden border border-slate-100 shadow-sm min-h-[160px]"><div className="absolute top-0 left-0 w-1.5 h-full bg-[#006A8C]" /><div className="flex justify-between items-start"><p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#64748B]">DOSSIERS ARCHIVÉS</p><span className="material-symbols-outlined text-[#006A8C] text-2xl">folder_copy</span></div><p className="text-3xl font-black text-[#0F172A] tracking-tight mt-8">{archives.length.toLocaleString("fr-FR")}</p><p className="text-[11px] text-[#94A3B8] font-medium mt-1 uppercase tracking-wider">Historique complet</p></div>
           <div className="bg-white p-7 rounded-[28px] relative overflow-hidden border border-slate-100 shadow-sm min-h-[160px]"><div className="absolute top-0 left-0 w-1.5 h-full bg-[#10B981]" /><div className="flex justify-between items-start"><p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#64748B]">DOSSIERS SCELLÉS</p><span className="material-symbols-outlined text-[#10B981] text-2xl">verified</span></div><p className="text-3xl font-black text-[#0F172A] tracking-tight mt-8">{archives.length ? Math.round(((archives.length - restoredCount) / archives.length) * 100) : 0}%</p><p className="text-[11px] text-[#94A3B8] font-medium mt-1 uppercase tracking-wider">{archives.length - restoredCount}/{archives.length} dossiers scellés</p></div>
           <div className="bg-white p-7 rounded-[28px] relative overflow-hidden border border-slate-100 shadow-sm min-h-[160px]"><div className="absolute top-0 left-0 w-1.5 h-full bg-[#F59E0B]" /><div className="flex justify-between items-start"><p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#64748B]">DERNIER ARCHIVAGE</p><span className="material-symbols-outlined text-[#F59E0B] text-2xl">schedule</span></div><p className="text-xl font-black text-[#0F172A] tracking-tight mt-8">{latestRecord ? formatDate(latestRecord.archivedAt) : "—"}</p><p className="text-[11px] text-[#94A3B8] font-medium mt-1 uppercase tracking-wider">{latestRecord ? `${latestRecord.titre} (${latestRecord.referenceId})` : "Aucun dossier"}</p></div>
         </div>
@@ -266,7 +266,7 @@ export default function ArchivesPage() {
             <div role="dialog" aria-modal="true" aria-label="Détail de l'archive" className="w-full max-w-xl bg-white rounded-[24px] shadow-2xl overflow-hidden">
               <div className="px-8 py-6 border-b border-slate-100 flex items-start justify-between gap-4 bg-[#F8FAFC]">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-[#DBEAFE] flex items-center justify-center text-[#1D4ED8] font-bold">{initialsOf(selectedRecord.titre)}</div>
+                  <div className="w-12 h-12 rounded-2xl bg-[#CFE9EF] flex items-center justify-center text-[#1D4ED8] font-bold">{initialsOf(selectedRecord.titre)}</div>
                   <div><h3 className="text-lg font-extrabold text-[#0F172A]">{selectedRecord.titre}</h3><p className="text-sm text-[#64748B] font-semibold">{selectedRecord.referenceId}</p></div>
                 </div>
                 <button type="button" onClick={() => setSelectedRecord(null)} className="p-2 text-[#94A3B8] hover:text-[#0F172A] hover:bg-white rounded-lg"><span className="material-symbols-outlined">close</span></button>

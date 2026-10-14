@@ -107,7 +107,7 @@ function FieldLabel({
         htmlFor={htmlFor}
         className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-[#64748B]"
       >
-        <span className="material-symbols-outlined text-[16px] text-[#2563EB]">{icon}</span>
+        <span className="material-symbols-outlined text-[16px] text-[#006A8C]">{icon}</span>
         {children}
       </label>
       {hint ? <span className="text-[11px] text-[#94A3B8]">{hint}</span> : null}
@@ -380,7 +380,7 @@ export default function CompteRenduPage() {
               <>
                 <div className="flex flex-col gap-5 p-5 md:p-6 lg:flex-row lg:items-center lg:justify-between">
                   <div className="flex min-w-0 items-start gap-4">
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-[#BFDBFE] bg-[#EFF6FF] font-headline text-lg font-extrabold text-[#1E3A8A]">
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-[#0A7EA4] bg-[#EFF6FF] font-headline text-lg font-extrabold text-[#004A66]">
                       {initialsOf(displayName)}
                     </div>
                     <div className="min-w-0">
@@ -456,7 +456,7 @@ export default function CompteRenduPage() {
               </>
             ) : (
               <div className="flex flex-col items-center gap-2 px-6 py-10 text-center">
-                <span className="material-symbols-outlined text-[36px] text-[#2563EB]">
+                <span className="material-symbols-outlined text-[36px] text-[#006A8C]">
                   contact_page
                 </span>
                 <h1 className="font-headline text-xl font-extrabold text-[#0F172A]">
@@ -494,14 +494,14 @@ export default function CompteRenduPage() {
                       value={filters.nom}
                       onChange={(event) => setFilters((f) => ({ ...f, nom: event.target.value }))}
                       placeholder="Rechercher un patient..."
-                      className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] py-2.5 pl-10 pr-3 text-sm text-[#0F172A] transition placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15"
+                      className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] py-2.5 pl-10 pr-3 text-sm text-[#0F172A] transition placeholder:text-[#94A3B8] focus:border-[#006A8C] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#006A8C]/15"
                     />
                   </div>
 
                   <select
                     value={filters.motif}
                     onChange={(event) => setFilters((f) => ({ ...f, motif: event.target.value }))}
-                    className="mt-2 w-full truncate rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2.5 text-sm text-[#0F172A] transition focus:border-[#2563EB] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15"
+                    className="mt-2 w-full truncate rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2.5 text-sm text-[#0F172A] transition focus:border-[#006A8C] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#006A8C]/15"
                   >
                     <option value="">Tous les motifs</option>
                     {motifOptions.map((motif) => (
@@ -524,7 +524,7 @@ export default function CompteRenduPage() {
                           aria-pressed={active}
                           className={`flex-1 rounded-lg px-1.5 py-1.5 text-[11px] font-bold transition ${
                             active
-                              ? "bg-white text-[#1E3A8A] shadow-sm"
+                              ? "bg-white text-[#004A66] shadow-sm"
                               : "text-[#64748B] hover:text-[#0F172A]"
                           }`}
                         >
@@ -578,7 +578,7 @@ export default function CompteRenduPage() {
                           aria-current={active || undefined}
                           className={`flex w-full items-start gap-3 border-l-[3px] px-4 py-3.5 text-left transition-colors ${
                             active
-                              ? "border-l-[#2563EB] bg-[#EFF6FF]"
+                              ? "border-l-[#006A8C] bg-[#EFF6FF]"
                               : "border-l-transparent hover:bg-[#F8FAFC]"
                           }`}
                         >
@@ -641,7 +641,7 @@ export default function CompteRenduPage() {
                           onClick={() => setSelectedReportId(report.id)}
                           className={`flex w-full items-center gap-2 border-l-[3px] px-4 py-3 text-left transition-colors ${
                             active
-                              ? "border-l-[#2563EB] bg-[#EFF6FF]"
+                              ? "border-l-[#006A8C] bg-[#EFF6FF]"
                               : "border-l-transparent hover:bg-[#F8FAFC]"
                           }`}
                         >
@@ -667,7 +667,7 @@ export default function CompteRenduPage() {
               {!selectedExam ? (
                 <div className="flex h-full min-h-[calc(100vh-14rem)] flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-[#CBD5E1] bg-white p-8 text-center">
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#EFF6FF]">
-                    <span className="material-symbols-outlined text-[32px] text-[#2563EB]">
+                    <span className="material-symbols-outlined text-[32px] text-[#006A8C]">
                       touch_app
                     </span>
                   </div>
@@ -688,7 +688,7 @@ export default function CompteRenduPage() {
                           htmlFor="cr-titre"
                           className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-[#64748B]"
                         >
-                          <span className="material-symbols-outlined text-[16px] text-[#2563EB]">
+                          <span className="material-symbols-outlined text-[16px] text-[#006A8C]">
                             title
                           </span>
                           Titre du compte rendu
@@ -700,7 +700,7 @@ export default function CompteRenduPage() {
                           onChange={(event) => setTitle(event.target.value)}
                           disabled={isLocked}
                           placeholder="Compte rendu de polysomnographie"
-                          className="mt-1 w-full border-0 border-b-2 border-transparent bg-transparent px-0 py-1 font-headline text-xl font-extrabold text-[#0F172A] transition placeholder:font-semibold placeholder:text-[#CBD5E1] focus:border-[#2563EB] focus:outline-none disabled:text-[#64748B]"
+                          className="mt-1 w-full border-0 border-b-2 border-transparent bg-transparent px-0 py-1 font-headline text-xl font-extrabold text-[#0F172A] transition placeholder:font-semibold placeholder:text-[#CBD5E1] focus:border-[#006A8C] focus:outline-none disabled:text-[#64748B]"
                         />
                       </div>
                       <div className="flex shrink-0 items-center gap-1.5 text-xs text-[#64748B]">
@@ -740,7 +740,7 @@ export default function CompteRenduPage() {
                         onChange={(event) => setDraft(event.target.value)}
                         placeholder="Rédigez ici votre compte rendu pour le patient sélectionné..."
                         disabled={isLocked || areReportsLoading}
-                        className="min-h-[280px] w-full flex-1 resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 text-[15px] leading-relaxed text-[#0F172A] transition placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 disabled:cursor-not-allowed disabled:opacity-70"
+                        className="min-h-[280px] w-full flex-1 resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 text-[15px] leading-relaxed text-[#0F172A] transition placeholder:text-[#94A3B8] focus:border-[#006A8C] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#006A8C]/15 disabled:cursor-not-allowed disabled:opacity-70"
                       />
                     </div>
 
@@ -788,7 +788,7 @@ export default function CompteRenduPage() {
                               Import en cours…
                             </>
                           }
-                          className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] px-4 py-5 text-sm font-semibold text-[#475569] transition hover:border-[#2563EB] hover:bg-[#EFF6FF] hover:text-[#1E3A8A]"
+                          className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] px-4 py-5 text-sm font-semibold text-[#475569] transition hover:border-[#006A8C] hover:bg-[#EFF6FF] hover:text-[#004A66]"
                         >
                           <span className="material-symbols-outlined text-[20px]">
                             add_photo_alternate
@@ -808,7 +808,7 @@ export default function CompteRenduPage() {
                         onChange={(event) => setConclusion(event.target.value)}
                         placeholder="Rédigez ici la conclusion du compte rendu..."
                         disabled={isLocked || areReportsLoading}
-                        className="min-h-[130px] w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 text-sm leading-relaxed text-[#0F172A] transition placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 disabled:cursor-not-allowed disabled:opacity-70"
+                        className="min-h-[130px] w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 text-sm leading-relaxed text-[#0F172A] transition placeholder:text-[#94A3B8] focus:border-[#006A8C] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#006A8C]/15 disabled:cursor-not-allowed disabled:opacity-70"
                       />
                     </div>
                   </div>

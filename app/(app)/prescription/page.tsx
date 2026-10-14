@@ -232,7 +232,7 @@ function PrescriptionPageContent() {
                 type="checkbox"
                 checked={urgentOnly}
                 onChange={(event) => setUrgentOnly(event.target.checked)}
-                className="h-4 w-4 accent-[#2563EB]"
+                className="h-4 w-4 accent-[#006A8C]"
               />
               Urgentes uniquement
             </label>

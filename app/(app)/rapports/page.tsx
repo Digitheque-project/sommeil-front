@@ -99,7 +99,7 @@ export default function RapportsPage() {
     {
       label: "Examens réalisés",
       value: stats ? String(stats.indicateurs.examensRealises) : "—",
-      borderColor: "border-[#2563EB]",
+      borderColor: "border-[#006A8C]",
     },
     {
       label: "Comptes-rendus validés",
@@ -111,7 +111,7 @@ export default function RapportsPage() {
     {
       label: "Consultations",
       value: stats ? String(stats.indicateurs.consultations) : "—",
-      borderColor: "border-[#2563EB]",
+      borderColor: "border-[#006A8C]",
       note: stats ? { count: stats.indicateurs.urgences, suffix: "urgente(s)" } : undefined,
     },
   ];
@@ -148,7 +148,7 @@ export default function RapportsPage() {
                 permission="stats:generate"
                 onClick={generateReport}
                 disabled={!stats}
-                className="flex items-center gap-2 rounded-xl bg-[#2563EB] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#1E3A8A] transition"
+                className="flex items-center gap-2 rounded-xl bg-[#006A8C] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#004A66] transition"
               >
                 <span className="material-symbols-outlined text-[20px]">summarize</span>
                 Générer un rapport
@@ -167,7 +167,7 @@ export default function RapportsPage() {
                   onClick={() => setPeriod(item.key)}
                   className={`px-4 py-2 rounded-lg text-sm font-bold transition ${
                     period === item.key
-                      ? "bg-[#2563EB] text-white shadow-sm"
+                      ? "bg-[#006A8C] text-white shadow-sm"
                       : "text-[#475569] hover:bg-white"
                   }`}
                 >
@@ -301,7 +301,7 @@ export default function RapportsPage() {
                       </div>
                       <div className="h-2.5 bg-[#F1F5F9] border border-[#E2E8F0] rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-[#2563EB] rounded-full"
+                          className="h-full bg-[#006A8C] rounded-full"
                           style={{ width: `${room.percent}%` }}
                         />
                       </div>

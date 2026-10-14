@@ -8,9 +8,9 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: '#2563EB',
-        'primary-dark': '#1E3A8A',
-        accent: '#BFDBFE',
+        primary: '#006A8C',
+        'primary-dark': '#004A66',
+        accent: '#0A7EA4',
         success: '#4CAF50',
         warning: '#FFA726',
         danger: '#EF5350',
@@ -21,7 +21,7 @@ module.exports = {
         'text-primary': '#3A3F44',
         'text-secondary': '#6C7680',
         'on-primary': '#FFFFFF',
-        'on-primary-container': '#1e3a8a',
+        'on-primary-container': '#004A66',
         'on-secondary': '#FFFFFF',
         'on-surface': '#0F172A',
         'on-surface-variant': '#64748B',
@@ -30,8 +30,8 @@ module.exports = {
         'surface-container-lowest': '#FFFFFF',
         'surface-container-low': '#F8FAFC',
         'surface-container-high': '#E2E8F0',
-        'secondary-container': '#DBEAFE',
-        'on-secondary-container': '#1E3A8A',
+        'secondary-container': '#CFE9EF',
+        'on-secondary-container': '#004A66',
         'outline-variant': '#E0E4E8',
       },
       fontFamily: {
