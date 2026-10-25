@@ -15,10 +15,6 @@
 
 const stripTrailingSlash = (url: string) => url.replace(/\/+$/, "");
 
-// Une variable vide (`FOO=` dans un .env) doit retomber sur la valeur par
-// défaut, d'où `||` et non `??`.
-const originOr = (value: string | undefined, fallback: string) =>
-  stripTrailingSlash(value || fallback);
 
 /**
  * Passerelle API du CHU : point d'entrée unique des microservices. Elle
