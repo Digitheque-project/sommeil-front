@@ -5,8 +5,8 @@ import { NextRequest, NextResponse } from "next/server";
 // qu'aux appels initiés par un navigateur : en relayant la requête depuis ce
 // serveur Next.js, l'appel devient serveur-à-serveur et n'y est pas soumis.
 // Le navigateur n'appelle plus que cette route, sur sa propre origine.
-const PHARMACIE_URL =
-  process.env.NEXT_PUBLIC_PHARMACIE_URL || "https://pharmacie-back-1.onrender.com";
+// Pharmacie via la passerelle (routes /articles/...).
+const PHARMACIE_URL = (process.env.NEXT_PUBLIC_GATEWAY_URL || "").replace(/\/+$/, "");
 
 export async function GET(request: NextRequest) {
   const upstreamUrl = `${PHARMACIE_URL}/articles/stock-sale-prices?${request.nextUrl.searchParams.toString()}`;

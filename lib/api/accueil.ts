@@ -1,4 +1,4 @@
-import { API_BASE_URLS, CHU_ID } from '../config';
+import { API_BASE_URLS, getChuId } from '../config';
 import { redirectToLogin } from '@/lib/auth';
 
 /**
@@ -95,7 +95,7 @@ export const accueilApi = {
    * inconnu du CHU (404) : l'appelant retombe alors sur l'identité portée par
    * l'examen, sans faire échouer l'écran.
    */
-  async getPatient(id: string, chuId: string = CHU_ID): Promise<AccueilPatient | null> {
+  async getPatient(id: string, chuId: string = getChuId()): Promise<AccueilPatient | null> {
     const res = await fetch(
       `${API_BASE_URLS.accueil}/patients/${encodeURIComponent(id)}?chuId=${encodeURIComponent(chuId)}`,
       { headers: authHeaders() },
@@ -105,7 +105,7 @@ export const accueilApi = {
   },
 
   /** Liste des patients enregistrés pour le CHU. */
-  async listPatients(chuId: string = CHU_ID): Promise<AccueilPatient[]> {
+  async listPatients(chuId: string = getChuId()): Promise<AccueilPatient[]> {
     const res = await fetch(
       `${API_BASE_URLS.accueil}/patients?chuId=${encodeURIComponent(chuId)}`,
       { headers: authHeaders() },

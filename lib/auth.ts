@@ -7,9 +7,8 @@ import {
 export const AUTH_COOKIE_NAME =
   process.env.NEXT_PUBLIC_AUTH_COOKIE_NAME || "sommeil_auth_token";
 
-export const AUTH_LOGIN_URL =
-  process.env.NEXT_PUBLIC_AUTH_LOGIN_URL ||
-  "https://authentification-front.vercel.app/login";
+// Page de connexion centrale du CHU (aucune adresse de repli dans le code).
+export const AUTH_LOGIN_URL = process.env.NEXT_PUBLIC_LOGIN_URL || "";
 
 export type SleepRole = "PARAMED" | "MAJOR" | "MEDECIN";
 

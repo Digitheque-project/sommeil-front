@@ -2,7 +2,8 @@
 import { useState, useEffect } from 'react';
 import { checkPublicEnv } from '@/lib/env';
 
-const API_URL = checkPublicEnv('NEXT_PUBLIC_PRESCRIPTION_URL', process.env.NEXT_PUBLIC_PRESCRIPTION_URL);
+// Service prescriptions, via la passerelle (routes /prescriptions/...).
+const API_URL = checkPublicEnv('NEXT_PUBLIC_GATEWAY_URL', process.env.NEXT_PUBLIC_GATEWAY_URL);
 
 function getToken(): string | null {
   if (typeof window === 'undefined') return null;

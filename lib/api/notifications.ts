@@ -2,7 +2,7 @@
 // Base URL du hub (sans préfixe ni suffixe) : les routes REST sont exposées
 // directement à la racine (ex. /notifications), les clients temps réel sur
 // /socket.io/. Le swagger, lui, est monté sous /notification/api/docs.
-import { API_BASE_URLS, SLEEP_SERVICE_ID } from '../config';
+import { API_BASE_URLS, getSleepServiceId } from '../config';
 import { getSleepUserFromToken } from '../auth';
 
 export type NotificationItem = {
@@ -22,7 +22,7 @@ const getNotificationHubUrl = () => API_BASE_URLS.notificationHub;
 
 // Les notifications diffusées à un service sont consultables sous
 // l'utilisateur pseudo "broadcast:service:{serviceId}".
-const getBroadcastUserId = () => `broadcast:service:${SLEEP_SERVICE_ID}`;
+const getBroadcastUserId = () => `broadcast:service:${getSleepServiceId()}`;
 
 function getToken(): string | null {
   if (typeof window === 'undefined') return null;
@@ -72,7 +72,7 @@ const isForSleepService = (item: NotificationItem): boolean => {
   const declared = [data.serviceDestId, data.serviceId]
     .filter((value): value is string => typeof value === 'string' && value.length > 0);
 
-  return declared.length === 0 || declared.includes(SLEEP_SERVICE_ID);
+  return declared.length === 0 || declared.includes(getSleepServiceId());
 };
 
 /**

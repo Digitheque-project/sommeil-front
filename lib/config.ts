@@ -23,38 +23,25 @@ const originOr = (value: string | undefined, fallback: string) =>
 /**
  * Passerelle API du CHU : point d'entrée unique des microservices. Elle
  * relaie chaque chemin tel quel vers le service concerné (`/accueil/...`,
- * `/services`, `/notifications`, `/sommeil/api/...`) et vérifie elle-même le
- * jeton porteur — tout appel qui la traverse doit donc envoyer
- * `Authorization: Bearer …`, sinon 401 « Token manquant ».
+ * `/services`, `/notifications`, `/prescriptions/...`, `/sommeil/api/...`)
+ * et vérifie elle-même le jeton porteur. Une seule variable, sans adresse de
+ * repli dans le code : changer d'hébergement = changer NEXT_PUBLIC_GATEWAY_URL.
  */
-export const API_GATEWAY_URL = originOr(
-  process.env.NEXT_PUBLIC_API_GATEWAY_URL,
-  "https://gateway-5pqs.onrender.com",
-);
+export const API_GATEWAY_URL = stripTrailingSlash(process.env.NEXT_PUBLIC_GATEWAY_URL || "");
 
-/**
- * Base URLs (origine seule) des services de la plateforme CHU. Par défaut,
- * tout passe par la passerelle ; une variable propre au service permet de
- * la contourner (appel direct) au cas par cas.
- */
+/** Tous les services de la plateforme passent par la passerelle. */
 export const SERVICE_ORIGINS = {
-  auth: originOr(process.env.NEXT_PUBLIC_AUTH_SERVICE_URL, API_GATEWAY_URL),
-  users: originOr(process.env.NEXT_PUBLIC_USER_SERVICE_URL, API_GATEWAY_URL),
-  chu: originOr(process.env.NEXT_PUBLIC_CHU_SERVICE_URL, API_GATEWAY_URL),
-  services: originOr(process.env.NEXT_PUBLIC_SERVICE_REGISTRY_URL, API_GATEWAY_URL),
-  dossierPatient: originOr(process.env.NEXT_PUBLIC_DOSSIER_PATIENT_URL, API_GATEWAY_URL),
-  notificationHub: originOr(process.env.NEXT_PUBLIC_NOTIFICATION_HUB_URL, API_GATEWAY_URL),
-  accueil: originOr(process.env.NEXT_PUBLIC_ACCUEIL_URL, API_GATEWAY_URL),
-  consultation: originOr(process.env.NEXT_PUBLIC_CONSULTATION_URL, API_GATEWAY_URL),
-  // Le service prescriptions n'est PAS exposé par la passerelle
-  // (`/prescriptions/...` y répond 404) : appel direct.
-  prescriptions: originOr(
-    process.env.NEXT_PUBLIC_PRESCRIPTIONS_URL,
-    "https://prescriptionback-production.up.railway.app",
-  ),
+  auth: API_GATEWAY_URL,
+  users: API_GATEWAY_URL,
+  chu: API_GATEWAY_URL,
+  services: API_GATEWAY_URL,
+  dossierPatient: API_GATEWAY_URL,
+  notificationHub: API_GATEWAY_URL,
+  accueil: API_GATEWAY_URL,
+  consultation: API_GATEWAY_URL,
+  prescriptions: API_GATEWAY_URL,
 };
-export const AUTH_LOGIN_URL =
-  process.env.NEXT_PUBLIC_AUTH_LOGIN_URL ?? "https://authentification-front.vercel.app/login";
+export const AUTH_LOGIN_URL = process.env.NEXT_PUBLIC_LOGIN_URL || "";
 
 /** Documentations swagger, servies sous `<base>/<nom>/api/docs`. */
 export const API_ROUTES = {
@@ -70,22 +57,47 @@ export const API_ROUTES = {
   sommeilDocs: `${API_GATEWAY_URL}/sommeil/api/docs`,
 };
 
-/**
- * Identifiant de l'établissement. Le service accueil exige `chuId` sur chacun
- * de ses endpoints patients.
- */
-export const CHU_ID = process.env.NEXT_PUBLIC_CHU_ID ?? "1e5bbbb7-fa10-4d59-8848-2d0ce96a9394";
+/** Contenu du jeton de l'utilisateur connecté (posé par AuthContext). */
+function tokenServices(): Array<{ serviceId?: string; serviceName?: string; chu?: { id?: string } }> {
+  if (typeof window === "undefined") return [];
+  const token =
+    localStorage.getItem("access_token") || localStorage.getItem("auth_token") || localStorage.getItem("token");
+  const part = token?.split(".")[1];
+  if (!part) return [];
+  try {
+    const json = atob(part.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(part.length / 4) * 4, "="));
+    const payload = JSON.parse(json) as { services?: unknown };
+    return Array.isArray(payload.services) ? payload.services : [];
+  } catch {
+    return [];
+  }
+}
+
+const sansAccents = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+/** Service « Centre de Sommeil » parmi ceux du jeton. */
+function sleepServiceOfToken() {
+  return tokenServices().find((s) => sansAccents(s.serviceName ?? "").includes("sommeil"));
+}
 
 /**
- * Identifiant du service Centre de Sommeil dans l'annuaire du CHU.
- *
- * Source de vérité unique : c'est ce même identifiant qui sert de
- * `serviceIdDest` pour les prescriptions et de destinataire des notifications
- * (`broadcast:service:{id}`). Les payloads reçus le confirment —
- * `serviceDestId: "82238f37-…"`, `serviceDestNom: "Centre de Sommeil"`.
+ * Identifiant de l'établissement, lu dans le jeton de l'utilisateur (le
+ * service accueil exige `chuId` sur ses endpoints patients). Repli sur
+ * NEXT_PUBLIC_CHU_ID ; jamais d'identifiant écrit en dur.
  */
-export const SLEEP_SERVICE_ID =
-  process.env.NEXT_PUBLIC_SLEEP_SERVICE_ID ?? "82238f37-2df8-4614-9ea7-3b789e5a7e39";
+export function getChuId(): string {
+  return sleepServiceOfToken()?.chu?.id || tokenServices().find((s) => s.chu?.id)?.chu?.id || process.env.NEXT_PUBLIC_CHU_ID || "";
+}
+
+/**
+ * Identifiant du service Centre de Sommeil dans l'annuaire du CHU, lu dans
+ * le jeton : c'est le `serviceIdDest` des prescriptions et le destinataire
+ * des notifications (`broadcast:service:{id}`). Repli sur
+ * NEXT_PUBLIC_SLEEP_SERVICE_ID.
+ */
+export function getSleepServiceId(): string {
+  return sleepServiceOfToken()?.serviceId || process.env.NEXT_PUBLIC_SLEEP_SERVICE_ID || "";
+}
 
 /**
  * Racines d'appel = base URL + préfixe de chemin réel du service (celui des

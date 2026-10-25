@@ -7,7 +7,7 @@
  * d'identité — seulement le dossier médical, dont la timeline agrégée
  * (`/dossier-patient/patients/{id}/historique`) utilisée par `getPatientTimeline`.
  */
-import { API_BASE_URLS, CHU_ID } from '../config';
+import { API_BASE_URLS, getChuId } from '../config';
 import { accueilApi, type AccueilPatient } from './accueil';
 
 export type PatientInfo = {
@@ -80,7 +80,7 @@ function toPatientInfo(patient: AccueilPatient): PatientInfo {
 
 export const patientApi = {
   /** Identité du patient telle qu'enregistrée à l'accueil du CHU. */
-  async getPatientById(patientId: string, chuId: string = CHU_ID): Promise<PatientInfo> {
+  async getPatientById(patientId: string, chuId: string = getChuId()): Promise<PatientInfo> {
     const patient = await accueilApi.getPatient(patientId, chuId);
     if (!patient) {
       throw new Error(`Patient ${patientId} inconnu du service accueil`);
@@ -94,7 +94,7 @@ export const patientApi = {
    */
   async getPatientTimeline(
     patientId: string,
-    chuId: string = CHU_ID,
+    chuId: string = getChuId(),
   ): Promise<PatientTimelineEntry[]> {
     const res = await fetch(
       `${API_BASE_URLS.dossierPatient}/patients/${encodeURIComponent(patientId)}/historique` +
@@ -111,7 +111,7 @@ export const patientApi = {
    * Recherche par nom, prénom ou identifiant. Le service accueil n'expose pas
    * d'endpoint de recherche : on filtre la liste du CHU côté client.
    */
-  async searchPatients(query: string, chuId: string = CHU_ID): Promise<PatientInfo[]> {
+  async searchPatients(query: string, chuId: string = getChuId()): Promise<PatientInfo[]> {
     const needle = query.trim().toLowerCase();
     const patients = await accueilApi.listPatients(chuId);
     const infos = patients.map(toPatientInfo);

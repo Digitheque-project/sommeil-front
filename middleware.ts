@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 const AUTH_COOKIE_NAME = process.env.NEXT_PUBLIC_AUTH_COOKIE_NAME || "sommeil_auth_token";
-const AUTH_LOGIN_URL =
-  process.env.NEXT_PUBLIC_AUTH_LOGIN_URL || "https://authentification-front.vercel.app/login";
+// Page de connexion centrale du CHU (aucune adresse de repli dans le code).
+const AUTH_LOGIN_URL = process.env.NEXT_PUBLIC_LOGIN_URL || "";
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
