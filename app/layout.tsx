@@ -3,6 +3,7 @@ import { Inter, Manrope } from "next/font/google";
 import "./globals.css";
 import "@/styles/theme.css";
 import { Providers } from "./providers";
+import Script from "next/script";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -38,6 +39,14 @@ export default function RootLayout({
       </head>
       <body className="bg-background text-on-background font-body-md antialiased min-h-screen">
         <Providers>{children}</Providers>
+      
+        {/* Messagerie du CHU : bulle en bas à droite (service-messagerie, via la passerelle). */}
+        {process.env.NEXT_PUBLIC_GATEWAY_URL ? (
+          <Script
+            src={`${process.env.NEXT_PUBLIC_GATEWAY_URL.replace(/\/+$/, "")}/messagerie/widget.js?auto&bas=88`}
+            strategy="afterInteractive"
+          />
+        ) : null}
       </body>
     </html>
   );
