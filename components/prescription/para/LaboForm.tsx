@@ -1,6 +1,6 @@
 'use client';
-import { useState } from 'react';
-import { creerPrescriptionLabo } from '@/lib/prescription-api';
+import { useEffect, useState } from 'react';
+import { analysesLaboBloquees, creerPrescriptionLabo } from '@/lib/prescription-api';
 import { useToast } from '@/components/ToastProvider';
 
 const CATEGORIES = [
@@ -53,6 +53,16 @@ export default function LaboForm({ patient, prescripteur, onAddToCart }: Props) 
   const [showValidationModal, setShowValidationModal] = useState(false);
   const [validatedPrescription, setValidatedPrescription] = useState<ValidatedPrescription | null>(null);
 
+  // Analyses bloquées par le laboratoire (réactif en rupture) : grisées, non
+  // cochables — aucun service ne peut les prescrire tant qu'elles le sont.
+  const [ruptures, setRuptures] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    let annule = false;
+    analysesLaboBloquees().then(liste => { if (!annule) setRuptures(new Set(liste)); });
+    return () => { annule = true; };
+  }, []);
+  const bloquee = (a: string) => ruptures.has(a);
+
   const age = calcAge(patient?.dateNaissance);
   const sexeLabel = patient?.sexe === 'M' ? 'Masculin' : patient?.sexe === 'F' ? 'Féminin' : patient?.sexe;
 
@@ -62,7 +72,10 @@ export default function LaboForm({ patient, prescripteur, onAddToCart }: Props) 
     tu: { border: '#fca5a5', bg: '#fef2f2',    dot: '#dc2626' },
   }[urgence] ?? { border: '#bbf7d0', bg: 'var(--inp)', dot: '#16a34a' };
 
-  function toggle(val: string) { setSelected(prev => prev.includes(val) ? prev.filter(x => x !== val) : [...prev, val]); }
+  function toggle(val: string) {
+    if (bloquee(val) && !selected.includes(val)) return;
+    setSelected(prev => prev.includes(val) ? prev.filter(x => x !== val) : [...prev, val]);
+  }
   const isFormValid = selected.length > 0 && renseignements.trim();
 
   async function handleSubmit() {
@@ -82,12 +95,17 @@ export default function LaboForm({ patient, prescripteur, onAddToCart }: Props) 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 16, alignItems: 'start' }}>
         <div>
           <div className="card mb12"><label className="lbl">Renseignements cliniques <span className="req">*</span></label><textarea rows={2} placeholder="Motif, antécédents, suspicion diagnostique..." value={renseignements} onChange={e => setRenseignements(e.target.value)} /></div>
+          {ruptures.size > 0 && (
+            <div className="card mb12" style={{ background: '#fef2f2', color: '#b91c1c', fontSize: 12.5, fontWeight: 600 }}>
+              {ruptures.size} analyse{ruptures.size > 1 ? 's' : ''} bloquée{ruptures.size > 1 ? 's' : ''} par le laboratoire (rupture de réactif) : grisée{ruptures.size > 1 ? 's' : ''}, impossible{ruptures.size > 1 ? 's' : ''} à prescrire.
+            </div>
+          )}
           {CATEGORIES.map(cat => (
             <div key={cat.id} className="card mb12">
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}><div style={{ width: 10, height: 10, borderRadius: '50%', background: cat.color, flexShrink: 0 }}></div><span style={{ fontSize: 13, fontWeight: 700, color: cat.textColor }}>{cat.label}{cat.tube && ` (${cat.tube})`}</span></div>
               {cat.subGroups ? cat.subGroups.map(sg => (
-                <div key={sg.label} style={{ marginBottom: 10 }}><p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'var(--txt2)', marginBottom: 6 }}>{sg.label}</p><div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>{sg.analyses.map(a => <label key={a} className="cr"><span style={{ fontSize: 13.5, fontWeight: 500, color: 'var(--txt2)' }}>{a}</span><input type="checkbox" checked={selected.includes(a)} onChange={() => toggle(a)} style={{ accentColor: 'var(--navy)', width: 16, height: 16, flexShrink: 0 }} /></label>)}</div></div>
-              )) : <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>{cat.analyses!.map(a => <label key={a} className="cr"><span style={{ fontSize: 13.5, fontWeight: 500, color: 'var(--txt2)' }}>{a}</span><input type="checkbox" checked={selected.includes(a)} onChange={() => toggle(a)} style={{ accentColor: 'var(--navy)', width: 16, height: 16, flexShrink: 0 }} /></label>)}</div>}
+                <div key={sg.label} style={{ marginBottom: 10 }}><p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'var(--txt2)', marginBottom: 6 }}>{sg.label}</p><div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>{sg.analyses.map(a => <label key={a} className="cr" title={bloquee(a) ? 'Analyse bloquée par le laboratoire (rupture de réactif)' : undefined} style={{ cursor: bloquee(a) ? 'not-allowed' : undefined, opacity: bloquee(a) ? 0.45 : 1 }}><span style={{ fontSize: 13.5, fontWeight: 500, color: 'var(--txt2)', textDecoration: bloquee(a) ? 'line-through' : undefined }}>{a}{bloquee(a) && <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 700, color: '#b91c1c', textDecoration: 'none' }}>indisponible</span>}</span><input type="checkbox" checked={!bloquee(a) && selected.includes(a)} disabled={bloquee(a)} onChange={() => toggle(a)} style={{ accentColor: 'var(--navy)', width: 16, height: 16, flexShrink: 0 }} /></label>)}</div></div>
+              )) : <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>{cat.analyses!.map(a => <label key={a} className="cr" title={bloquee(a) ? 'Analyse bloquée par le laboratoire (rupture de réactif)' : undefined} style={{ cursor: bloquee(a) ? 'not-allowed' : undefined, opacity: bloquee(a) ? 0.45 : 1 }}><span style={{ fontSize: 13.5, fontWeight: 500, color: 'var(--txt2)', textDecoration: bloquee(a) ? 'line-through' : undefined }}>{a}{bloquee(a) && <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 700, color: '#b91c1c', textDecoration: 'none' }}>indisponible</span>}</span><input type="checkbox" checked={!bloquee(a) && selected.includes(a)} disabled={bloquee(a)} onChange={() => toggle(a)} style={{ accentColor: 'var(--navy)', width: 16, height: 16, flexShrink: 0 }} /></label>)}</div>}
             </div>
           ))}
         </div>

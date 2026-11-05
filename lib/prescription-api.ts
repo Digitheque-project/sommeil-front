@@ -1,4 +1,4 @@
-import { API_BASE_URLS, API_GATEWAY_URL } from './config';
+import { API_BASE_URLS, API_GATEWAY_URL, getChuId } from './config';
 import { redirectToLogin } from '@/lib/auth';
 
 // Service prescriptions, via la passerelle (routes /prescriptions/...).
@@ -464,4 +464,20 @@ export async function getPrescriptionsPatient(type: string, patientId: string) {
   });
   if (!res.ok) throw new Error('Erreur récupération prescriptions');
   return res.json();
+}
+
+/**
+ * Analyses bloquées par le laboratoire du CHU (réactif en rupture) : elles ne
+ * peuvent pas être prescrites. Liste vide en cas d'échec.
+ */
+export async function analysesLaboBloquees(): Promise<string[]> {
+  try {
+    const chuId = getChuId();
+    const res = await fetch(`${PRESCRIPTION_URL}/prescriptions/labo/ruptures${chuId ? `?chuId=${encodeURIComponent(chuId)}` : ''}`, { headers: authHeaders() });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
 }
