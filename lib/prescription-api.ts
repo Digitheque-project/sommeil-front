@@ -481,3 +481,28 @@ export async function analysesLaboBloquees(): Promise<string[]> {
     return [];
   }
 }
+
+/** Catalogue commun des analyses (prescription_back) : mêmes noms et identifiants partout. */
+export async function getCatalogueAnalysesLabo(): Promise<AnalyseCatalogueLabo[]> {
+  try {
+    const chuId = getChuId();
+    const res = await fetch(`${PRESCRIPTION_URL}/prescriptions/labo/catalogue${chuId ? `?chuId=${encodeURIComponent(chuId)}` : ''}`, { headers: authHeaders() });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
+}
+export interface AnalyseCatalogueLabo {
+  id: string;
+  nom: string;
+  categorieId: string;
+  categorie: string;
+  couleur: string | null;
+  couleurTexte: string | null;
+  tube: string | null;
+  sousGroupe: string | null;
+  ordre: number;
+  bloquee: boolean;
+}

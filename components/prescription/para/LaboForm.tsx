@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { analysesLaboBloquees, creerPrescriptionLabo } from '@/lib/prescription-api';
 import { useToast } from '@/components/ToastProvider';
+import { getCatalogueAnalysesLabo } from '@/lib/prescription-api';
 
 // Le laboratoire bloque une analyse sous le nom de SON catalogue (« NFS »,
 // « VSH », « TQ ») ; le formulaire la nomme autrement (« NFS complète »,
@@ -44,6 +45,27 @@ const CATEGORIES = [
   ]},
 ];
 
+// Catégories construites depuis le catalogue commun (mêmes noms que le labo et
+// les autres services) ; la liste ci-dessus ne sert que si le serveur ne répond pas.
+function categoriesDepuisCatalogue(liste: { nom: string; categorieId: string; categorie: string; couleur: string | null; couleurTexte: string | null; tube: string | null; sousGroupe: string | null }[]): typeof CATEGORIES {
+  const parCategorie = new Map<string, { id: string; label: string; color: string; textColor: string; tube: string; analyses: string[]; groupes: Map<string, string[]> }>();
+  for (const a of liste) {
+    let c = parCategorie.get(a.categorieId);
+    if (!c) {
+      c = { id: a.categorieId, label: a.categorie, color: a.couleur ?? '#64748b', textColor: a.couleurTexte ?? '#334155', tube: a.tube ?? '', analyses: [], groupes: new Map() };
+      parCategorie.set(a.categorieId, c);
+    }
+    if (a.sousGroupe) c.groupes.set(a.sousGroupe, [...(c.groupes.get(a.sousGroupe) ?? []), a.nom]);
+    else c.analyses.push(a.nom);
+  }
+  return [...parCategorie.values()].map((c) =>
+    c.groupes.size > 0
+      ? { id: c.id, label: c.label, color: c.color, textColor: c.textColor, tube: c.tube, subGroups: [...c.groupes].map(([label, analyses]) => ({ label, analyses })) }
+      : { id: c.id, label: c.label, color: c.color, textColor: c.textColor, tube: c.tube, analyses: c.analyses },
+  ) as unknown as typeof CATEGORIES;
+}
+
+
 interface Props {
   patient: { id: string; nom?: string; prenom?: string; sexe?: string; dateNaissance?: string; allergies?: string[]; groupeSanguin?: string };
   prescripteur: { id?: string; nom?: string; prenom?: string; service?: string; chuId?: string; serviceId?: string };
@@ -77,6 +99,12 @@ export default function LaboForm({ patient, prescripteur, onAddToCart }: Props) 
   // Analyses bloquées par le laboratoire (réactif en rupture) : grisées, non
   // cochables — aucun service ne peut les prescrire tant qu'elles le sont.
   const [ruptures, setRuptures] = useState<Set<string>>(new Set());
+  const [categories, setCategories] = useState<typeof CATEGORIES>(CATEGORIES);
+  useEffect(() => {
+    let annule = false;
+    getCatalogueAnalysesLabo().then(liste => { if (!annule && liste.length > 0) setCategories(categoriesDepuisCatalogue(liste)); });
+    return () => { annule = true; };
+  }, []);
   useEffect(() => {
     let annule = false;
     analysesLaboBloquees().then(liste => { if (!annule) setRuptures(new Set(liste)); });
@@ -121,7 +149,7 @@ export default function LaboForm({ patient, prescripteur, onAddToCart }: Props) 
               {ruptures.size} analyse{ruptures.size > 1 ? 's' : ''} bloquée{ruptures.size > 1 ? 's' : ''} par le laboratoire (rupture de réactif) : grisée{ruptures.size > 1 ? 's' : ''}, impossible{ruptures.size > 1 ? 's' : ''} à prescrire.
             </div>
           )}
-          {CATEGORIES.map(cat => (
+          {categories.map(cat => (
             <div key={cat.id} className="card mb12">
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}><div style={{ width: 10, height: 10, borderRadius: '50%', background: cat.color, flexShrink: 0 }}></div><span style={{ fontSize: 13, fontWeight: 700, color: cat.textColor }}>{cat.label}{cat.tube && ` (${cat.tube})`}</span></div>
               {cat.subGroups ? cat.subGroups.map(sg => (
