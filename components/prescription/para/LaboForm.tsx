@@ -3,6 +3,27 @@ import { useEffect, useState } from 'react';
 import { analysesLaboBloquees, creerPrescriptionLabo } from '@/lib/prescription-api';
 import { useToast } from '@/components/ToastProvider';
 
+// Le laboratoire bloque une analyse sous le nom de SON catalogue (« NFS »,
+// « VSH », « TQ ») ; le formulaire la nomme autrement (« NFS complète »,
+// « VSH 1ère heure », « TQ / TP »). Correspondance par mots entiers : « NFS »
+// bloque « NFS complète », mais « TP » ne bloque pas « INR ».
+function motsAnalyse(s: string): string[] {
+  return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+}
+
+function estAnalyseBloquee(nom: string, bloquees: Set<string>): boolean {
+  if (bloquees.has(nom)) return true;
+  const mots = motsAnalyse(nom);
+  for (const b of bloquees) {
+    const cle = motsAnalyse(b);
+    if (cle.length === 0 || cle.length > mots.length) continue;
+    for (let i = 0; i + cle.length <= mots.length; i++) {
+      if (cle.every((m, j) => mots[i + j] === m)) return true;
+    }
+  }
+  return false;
+}
+
 const CATEGORIES = [
   { id: 'hemato', label: '1. Hématologie & NFS', color: '#7c3aed', textColor: '#6d28d9', tube: 'Tube violet', analyses: ['NFS complète','Réticulocytes','VSH','Frottis sanguin','Groupage ABO / Rh','Test d\'Itano (drépanocytose)'] },
   { id: 'hemostase', label: '2. Hémostase', color: '#0284c7', textColor: '#075985', tube: 'Tube bleu', analyses: ['Temps de saignement (TS)','TQ / TP','INR','TCA','D-Dimères'] },
@@ -61,7 +82,7 @@ export default function LaboForm({ patient, prescripteur, onAddToCart }: Props) 
     analysesLaboBloquees().then(liste => { if (!annule) setRuptures(new Set(liste)); });
     return () => { annule = true; };
   }, []);
-  const bloquee = (a: string) => ruptures.has(a);
+  const bloquee = (a: string) => estAnalyseBloquee(a, ruptures);
 
   const age = calcAge(patient?.dateNaissance);
   const sexeLabel = patient?.sexe === 'M' ? 'Masculin' : patient?.sexe === 'F' ? 'Féminin' : patient?.sexe;
