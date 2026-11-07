@@ -13,6 +13,7 @@ import { useAuth } from "@/context/AuthContext";
 import { roleLabel } from "@/lib/auth";
 import { resolveNotificationTarget } from "@/lib/notification-routing";
 import { playNotificationSound } from "@/lib/sound";
+import PointServeur from "@/components/PointServeur";
 
 type TopBarProps = {
   title: string;
@@ -315,7 +316,7 @@ export default function TopBar({
             className="flex items-center gap-3 cursor-pointer rounded-full py-1 pl-3 pr-1 transition-all hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             <span className="hidden text-right leading-tight sm:block">
-              <span className="block text-sm font-bold text-slate-700">{displayName}</span>
+              <span className="block text-sm font-bold text-slate-700"><PointServeur />{displayName}</span>
               <span className="block text-[11px] font-medium uppercase tracking-wider text-slate-400">
                 {displayRole}
               </span>
