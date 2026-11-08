@@ -1,5 +1,6 @@
 "use client";
 
+import { ActionsCompte } from "@/components/ActionsCompte";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NAV_ITEMS, isPathActive } from "@/lib/nav";
@@ -66,6 +67,7 @@ export default function Sidebar() {
             <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wider text-white/70">{roleLabel(user.role)}</p>
           </div>
         )}
+        <ActionsCompte className="flex w-full items-center gap-3 px-4 py-3 rounded-xl transition-all duration-150 border-l-4 border-transparent text-white hover:bg-white/20" classeLibelle="text-sm font-semibold" />
         <Link
           href="/deconnexion"
           onClick={closeMobile}
