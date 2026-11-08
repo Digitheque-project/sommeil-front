@@ -1,5 +1,6 @@
 "use client";
 
+import { PastilleAutresServices } from "@/components/ActionsCompte";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -197,6 +198,7 @@ export default function TopBar({
         <HeaderClock />
         <div className="hidden h-8 w-px bg-outline-variant md:block" />
 
+        <PastilleAutresServices />
         <div className="relative">
           <button
             type="button"
