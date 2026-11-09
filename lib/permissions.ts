@@ -223,7 +223,9 @@ export function resolvePermissions(
     const resolved = grantedByAuthService
       .map(normalizePermission)
       .filter((permission): permission is Permission => permission !== null);
-    if (resolved.length > 0) return [...new Set(resolved)];
+    // Les droits du jeton s'ajoutent à ceux du rôle : remplacés, un médecin perdait jusqu'au
+    // tableau de bord dès que son compte portait une seule permission du catalogue.
+    return [...new Set([...(role ? ROLE_PERMISSIONS[role] : []), ...resolved])];
   }
 
   return role ? ROLE_PERMISSIONS[role] : [];
