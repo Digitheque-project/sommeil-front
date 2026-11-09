@@ -100,7 +100,7 @@ export const ALL_PERMISSIONS = Object.keys(PERMISSION_CATALOG) as Permission[];
  * suffit de repasser ce drapeau à `false` pour que la répartition fine
  * reprenne effet, sans autre changement de code.
  * ───────────────────────────────────────────────────────────────────────── */
-export const GRANT_ALL_PERMISSIONS = true;
+export const GRANT_ALL_PERMISSIONS = false;
 
 /** Rôle appliqué quand le jeton CHU n'en porte aucun de reconnaissable. */
 export const DEFAULT_ROLE: SleepRole = "MEDECIN";

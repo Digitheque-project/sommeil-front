@@ -82,7 +82,7 @@ function PrescriptionPageContent() {
   const filtered = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     return polysomnographies.filter((item) => {
-      if (item.statut === "PLANIFIE") return false;
+      if (["PLANIFIE", "REALISEE", "TERMINE", "TERMINEE", "ANNULEE"].includes(item.statut)) return false;
       const searchableText = [item.patientNom, item.patientPrenom, item.patientId, item.motif].join(" ").toLowerCase();
       if (query && !searchableText.includes(query)) return false;
       if (urgentOnly && !item.urgence) return false;

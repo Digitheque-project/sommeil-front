@@ -193,7 +193,9 @@ export default function CompteRenduPage() {
     return sortedExams.filter((exam) => {
       const matchesNom = !nom || patientLabel(exam).toLowerCase().includes(nom);
       const matchesMotif = !filters.motif || exam.motif === filters.motif;
-      const matchesStatut = !filters.statut || getExamStatus(exam.id) === filters.statut;
+      // Envoyé : retiré de la liste de travail, sauf filtre explicite sur les validés.
+      const statut = getExamStatus(exam.id);
+      const matchesStatut = filters.statut ? statut === filters.statut : statut !== "VALIDE";
       return matchesNom && matchesMotif && matchesStatut;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
