@@ -332,7 +332,7 @@ export default function ConsultationTraitementClient({
             <div className="flex flex-col gap-4 border-b border-slate-100 p-6 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-4">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#EAF3FA] text-[#006A8C]"><span className="material-symbols-outlined">person</span></div>
-                <div><h2 className="text-lg font-black text-slate-900">{patientName}</h2><p className="text-xs font-medium text-slate-400">Dossier {consultation.patient?.dossier ?? "non renseigné"} · Consultation #{consultation.id}</p></div>
+                <div><h2 className="text-lg font-black text-slate-900">{patientName}</h2><p className="text-xs font-medium text-slate-400">Dossier {consultation.patient?.dossier ?? "non renseigné"}</p></div>
               </div>
               <span className="rounded-full bg-slate-100 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">{consultation.statut.replaceAll("_", " ")}</span>
             </div>
