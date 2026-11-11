@@ -33,7 +33,7 @@ export default function RootLayout({
       <head>
         {/* eslint-disable-next-line @next/next/no-page-custom-font -- root layout is the correct place for this in App Router */}
         <link
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+          href="/polices/material-symbols.css"
           rel="stylesheet"
         />
       </head>
