@@ -22,7 +22,9 @@ export function middleware(request: NextRequest) {
       path: "/",
       maxAge: 60 * 60 * 24 * 7,
       sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
+      // Cookie « Secure » seulement en HTTPS : au CHU (HTTP en réseau local) le
+      // navigateur rejette un cookie Secure et la session ne tient jamais.
+      secure: (request.headers.get("x-forwarded-proto") ?? new URL(request.url).protocol.replace(":", "")) === "https",
     });
     return response;
   }
