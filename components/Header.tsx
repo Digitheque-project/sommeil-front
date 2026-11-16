@@ -15,6 +15,8 @@ import { resolveNotificationTarget } from "@/lib/notification-routing";
 import { playNotificationSound } from "@/lib/sound";
 import { Bell, Menu } from "lucide-react";
 import { getChuLogoUrl } from "@/lib/config";
+import { getAuthToken } from "@/lib/api/http";
+import { useLogoAuthentifie } from "@/lib/use-logo-authentifie";
 
 const timeFormatter = new Intl.DateTimeFormat("fr-FR", {
   day: "2-digit",
@@ -109,10 +111,13 @@ export default function Header() {
 
   // Logo du CHU lu dans le jeton après le montage (jamais figé dans le code).
   const [chuLogoUrl, setChuLogoUrl] = useState("");
+  const [jeton, setJeton] = useState<string | null>(null);
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setChuLogoUrl(getChuLogoUrl());
+    setJeton(getAuthToken());
   }, [user]);
+  const logoChu = useLogoAuthentifie(chuLogoUrl, jeton);
 
   return (
     <header className="app-shell-header z-30 flex shrink-0 items-center justify-between border-b border-[#F1F5F9] bg-white px-4 py-2.5 shadow-[0px_4px_10px_rgba(0,0,0,0.015)] sm:px-6 sm:py-3 lg:px-7 print:hidden">
@@ -127,10 +132,10 @@ export default function Header() {
         >
           <Menu className="h-5 w-5" />
         </button>
-        {chuLogoUrl ? (
+        {logoChu ? (
           // eslint-disable-next-line @next/next/no-img-element -- logo servi par service-upload, adresse lue dans le jeton
           <img
-            src={chuLogoUrl}
+            src={logoChu}
             alt="Logo CHU"
             className="h-8 w-8 shrink-0 rounded-full border border-[#CFE9EF] object-cover sm:h-9 sm:w-9"
           />
