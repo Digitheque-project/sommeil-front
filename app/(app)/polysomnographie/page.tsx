@@ -3,7 +3,6 @@
 import { Suspense, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import TopBar from "@/components/TopBar";
 import ActionButton from "@/components/ActionButton";
 import { useDeletePsg, usePsgExams, useStartPsg, useStopPsg, useUpdatePsg } from "@/hooks/use-psg";
 import { psgApi, type PsgExam } from "@/lib/api/psg";
@@ -48,7 +47,7 @@ const STATUS_STYLES: Record<PsgExam["statut"], { label: string; className: strin
  */
 export default function PolysomnographiePage() {
   return (
-    <Suspense fallback={<TopBar title="Polysomnographie" />}>
+    <Suspense fallback={null}>
       <PolysomnographiePageContent />
     </Suspense>
   );
@@ -192,12 +191,11 @@ function PolysomnographiePageContent() {
 
   return (
     <>
-      <TopBar title="Polysomnographie" searchPlaceholder="Rechercher un patient planifié..." />
 
       <div className="p-6 md:p-8 flex flex-col min-h-[calc(100vh-5rem)] max-w-7xl mx-auto w-full">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
           <div>
-            <h2 className="font-display-lg text-display-lg text-primary mb-1">
+            <h2 className="font-display-lg text-display-lg text-[#0F172A] mb-1">
               Examens de polysomnographie
             </h2>
             <p className="text-on-surface-variant font-body-md">
@@ -207,7 +205,7 @@ function PolysomnographiePageContent() {
           </div>
           <Link
             href="/prescription"
-            className="bg-secondary text-on-secondary px-4 py-2.5 rounded-lg text-label-md font-label-md flex items-center gap-2 shadow-sm hover:brightness-110 active:scale-95 transition-all self-start lg:self-auto"
+            className="bg-[#006A8C] hover:bg-[#005a76] text-white px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-sm hover:brightness-110 active:scale-95 transition-all self-start lg:self-auto"
           >
             <span className="material-symbols-outlined text-lg">medication</span>
             Prescriptions
@@ -218,7 +216,7 @@ function PolysomnographiePageContent() {
           {stats.map((stat) => (
             <div
               key={stat.label}
-              className="col-span-1 bg-surface-container-lowest border border-outline-variant p-5 rounded-xl flex flex-col justify-between"
+              className="col-span-1 bg-surface-container-lowest border border-[#F1F5F9] p-5 rounded-2xl shadow-sm flex flex-col justify-between"
             >
               <span className="text-on-surface-variant font-label-md text-label-md uppercase tracking-wider mb-3">
                 {stat.label}
@@ -249,8 +247,8 @@ function PolysomnographiePageContent() {
           </Link>
         )}
 
-        <div className="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden mb-6 shadow-sm">
-          <div className="p-4 border-b border-outline-variant">
+        <div className="bg-surface-container-lowest border border-[#F1F5F9] rounded-2xl overflow-hidden mb-6 shadow-sm">
+          <div className="p-4 border-b border-[#F1F5F9]">
             <div className="relative w-full max-w-md">
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">
                 search
@@ -260,7 +258,7 @@ function PolysomnographiePageContent() {
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 placeholder="Rechercher par nom, ID patient, salle ou indication..."
-                className="w-full pl-10 pr-4 py-2.5 bg-surface-container border border-outline-variant rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none font-body-sm text-body-sm transition-all"
+                className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl focus:ring-2 focus:ring-[#006A8C]/20 focus:border-transparent outline-none font-body-sm text-body-sm transition-all"
               />
             </div>
           </div>
@@ -280,7 +278,7 @@ function PolysomnographiePageContent() {
                 </p>
                 <Link
                   href="/prescription"
-                  className="mt-2 bg-secondary text-on-secondary px-4 py-2.5 rounded-lg text-label-md font-label-md flex items-center gap-2 shadow-sm hover:brightness-110 active:scale-95 transition-all"
+                  className="mt-2 bg-[#006A8C] hover:bg-[#005a76] text-white px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-sm hover:brightness-110 active:scale-95 transition-all"
                 >
                   <span className="material-symbols-outlined text-lg">add</span>
                   Planifier une prescription
@@ -288,7 +286,7 @@ function PolysomnographiePageContent() {
               </div>
             </div>
           ) : (
-            <ul className="divide-y divide-outline-variant">
+            <ul className="divide-y divide-[#F1F5F9]">
               {filtered.map((item) => {
                 const status = STATUS_STYLES[item.statut] ?? STATUS_STYLES.PLANIFIE;
                 return (
@@ -356,7 +354,7 @@ function PolysomnographiePageContent() {
                           permission="psg:stop"
                           onClick={() => stop(item)}
                           pending={stopMutation.isPending}
-                          className="action-danger flex items-center gap-1.5 rounded-lg px-3 py-2 text-label-md font-label-md"
+                          className="action-danger flex items-center gap-1.5 rounded-xl px-3 py-2 text-label-md font-label-md"
                         >
                           <span className="material-symbols-outlined text-[18px]">stop_circle</span>
                           Stopper
@@ -369,7 +367,7 @@ function PolysomnographiePageContent() {
                             onClick={() => openEdit(item)}
                             pending={updateMutation.isPending}
                             title="Choisir la date et l'heure du rendez-vous"
-                            className="action-secondary flex items-center gap-1.5 rounded-lg px-3 py-2 text-label-md font-label-md"
+                            className="action-secondary flex items-center gap-1.5 rounded-xl px-3 py-2 text-label-md font-label-md"
                           >
                             <span className="material-symbols-outlined text-[18px]">edit_calendar</span>
                             Planifier
@@ -377,7 +375,7 @@ function PolysomnographiePageContent() {
                           <ActionButton
                             permission="psg:start"
                             onClick={() => { setStartTarget(item); setRoom(item.salle ?? ""); }}
-                            className="action-success flex items-center gap-1.5 rounded-lg px-3 py-2 text-label-md font-label-md"
+                            className="action-success flex items-center gap-1.5 rounded-xl px-3 py-2 text-label-md font-label-md"
                           >
                             <span className="material-symbols-outlined text-[18px]">play_circle</span>
                             Démarrer
@@ -413,7 +411,7 @@ function PolysomnographiePageContent() {
 
       {startTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-3xl bg-surface-container-lowest border border-outline-variant p-6 shadow-2xl">
+          <div className="w-full max-w-md rounded-2xl bg-white border border-[#F1F5F9] p-6 shadow-2xl">
             <div className="mb-5">
               <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-on-surface-variant">
                 Démarrer l&apos;enregistrement
@@ -433,14 +431,14 @@ function PolysomnographiePageContent() {
               value={room}
               onChange={(event) => setRoom(event.target.value)}
               placeholder="Ex. Salle B-04"
-              className="h-11 w-full rounded-2xl border border-outline-variant bg-surface-container px-3 text-sm font-medium text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary"
+              className="h-11 w-full rounded-xl border border-[#E2E8F0] bg-white px-3 text-sm font-medium text-on-surface focus:outline-none focus:ring-2 focus:ring-[#006A8C]/20"
             />
 
             <div className="mt-6 flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setStartTarget(null)}
-                className="action-secondary rounded-2xl px-4 py-2 text-sm font-bold"
+                className="action-secondary rounded-xl px-4 py-2 text-sm font-bold"
               >
                 Annuler
               </button>
@@ -449,7 +447,7 @@ function PolysomnographiePageContent() {
                 onClick={confirmStart}
                 pending={startMutation.isPending}
                 pendingLabel="Démarrage…"
-                className="action-success rounded-2xl px-4 py-2 text-sm font-bold"
+                className="action-success rounded-xl px-4 py-2 text-sm font-bold"
               >
                 Démarrer l&apos;acquisition
               </ActionButton>
@@ -460,7 +458,7 @@ function PolysomnographiePageContent() {
 
       {editTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-3xl bg-surface-container-lowest border border-outline-variant p-6 shadow-2xl">
+          <div className="w-full max-w-md rounded-2xl bg-white border border-[#F1F5F9] p-6 shadow-2xl">
             <div className="mb-5 flex items-start justify-between gap-3">
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-on-surface-variant">
@@ -491,7 +489,7 @@ function PolysomnographiePageContent() {
                   type="date"
                   value={editDate}
                   onChange={(event) => setEditDate(event.target.value)}
-                  className="h-11 w-full rounded-2xl border border-outline-variant bg-surface-container px-3 text-sm font-medium text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary"
+                  className="h-11 w-full rounded-xl border border-[#E2E8F0] bg-white px-3 text-sm font-medium text-on-surface focus:outline-none focus:ring-2 focus:ring-[#006A8C]/20"
                 />
               </div>
               <div>
@@ -503,7 +501,7 @@ function PolysomnographiePageContent() {
                   type="time"
                   value={editTime}
                   onChange={(event) => setEditTime(event.target.value)}
-                  className="h-11 w-full rounded-2xl border border-outline-variant bg-surface-container px-3 text-sm font-medium text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary"
+                  className="h-11 w-full rounded-xl border border-[#E2E8F0] bg-white px-3 text-sm font-medium text-on-surface focus:outline-none focus:ring-2 focus:ring-[#006A8C]/20"
                 />
               </div>
               <div>
@@ -516,7 +514,7 @@ function PolysomnographiePageContent() {
                   value={editRoom}
                   onChange={(event) => setEditRoom(event.target.value)}
                   placeholder="Ex. Salle B-04"
-                  className="h-11 w-full rounded-2xl border border-outline-variant bg-surface-container px-3 text-sm font-medium text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary"
+                  className="h-11 w-full rounded-xl border border-[#E2E8F0] bg-white px-3 text-sm font-medium text-on-surface focus:outline-none focus:ring-2 focus:ring-[#006A8C]/20"
                 />
               </div>
             </div>
@@ -525,7 +523,7 @@ function PolysomnographiePageContent() {
               <button
                 type="button"
                 onClick={() => setEditTarget(null)}
-                className="action-secondary rounded-2xl px-4 py-2 text-sm font-bold"
+                className="action-secondary rounded-xl px-4 py-2 text-sm font-bold"
               >
                 Annuler
               </button>
@@ -535,7 +533,7 @@ function PolysomnographiePageContent() {
                 disabled={!editDate}
                 pending={updateMutation.isPending}
                 pendingLabel="Enregistrement…"
-                className="action-primary rounded-2xl px-4 py-2 text-sm font-bold"
+                className="action-primary rounded-xl px-4 py-2 text-sm font-bold"
               >
                 Enregistrer
               </ActionButton>

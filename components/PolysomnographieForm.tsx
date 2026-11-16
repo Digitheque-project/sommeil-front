@@ -89,7 +89,7 @@ export default function PolysomnographieForm({ patient, prescripteur }: Props) {
     <div className="space-y-4">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 space-y-4">
-          <div className="bg-slate-50 rounded-2xl border border-gray-200 p-4">
+          <div className="bg-slate-50 rounded-2xl border border-[#E2E8F0] p-4">
             <label className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500 block mb-2">
               Renseignements cliniques <span className="text-red-500">*</span>
             </label>
@@ -98,10 +98,10 @@ export default function PolysomnographieForm({ patient, prescripteur }: Props) {
               value={renseignements}
               onChange={(e) => setRenseignements(e.target.value)}
               placeholder="Contexte clinique, indications pour la polysomnographie..."
-              className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#005b82]/30"
+              className="w-full rounded-xl border border-[#E2E8F0] bg-white px-4 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#005a76]/30"
             />
           </div>
-          <div className="bg-slate-50 rounded-2xl border border-gray-200 p-4">
+          <div className="bg-slate-50 rounded-2xl border border-[#E2E8F0] p-4">
             <label className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500 block mb-2">
               Remarques
             </label>
@@ -110,12 +110,12 @@ export default function PolysomnographieForm({ patient, prescripteur }: Props) {
               value={remarques}
               onChange={(e) => setRemarques(e.target.value)}
               placeholder="Informations spécifiques..."
-              className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#005b82]/30"
+              className="w-full rounded-xl border border-[#E2E8F0] bg-white px-4 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#005a76]/30"
             />
           </div>
         </div>
         <div className="space-y-4">
-          <div className="bg-slate-50 rounded-2xl border border-gray-200 p-4">
+          <div className="bg-slate-50 rounded-2xl border border-[#E2E8F0] p-4">
             <label className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500 block mb-2">
               Degré d'urgence <span className="text-red-500">*</span>
             </label>
@@ -147,7 +147,7 @@ export default function PolysomnographieForm({ patient, prescripteur }: Props) {
           <button
             onClick={handleSubmit}
             disabled={!isFormValid || loading}
-            className="action-success w-full rounded-2xl px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-gray-300"
+            className="action-success w-full rounded-xl px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-gray-300"
           >
             {loading ? "Envoi..." : "Valider"}
           </button>

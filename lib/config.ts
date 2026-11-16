@@ -86,6 +86,16 @@ export function getChuId(): string {
 }
 
 /**
+ * Logo de l'établissement, lu dans le jeton (service-upload) : il peut changer,
+ * il n'est donc jamais figé dans le code. Chaîne vide s'il est absent.
+ */
+export function getChuLogoUrl(): string {
+  const services = tokenServices() as Array<{ chu?: { logoUrl?: string } }>;
+  const sleep = sleepServiceOfToken() as { chu?: { logoUrl?: string } } | undefined;
+  return sleep?.chu?.logoUrl || services.find((s) => s.chu?.logoUrl)?.chu?.logoUrl || "";
+}
+
+/**
  * Identifiant du service Centre de Sommeil dans l'annuaire du CHU, lu dans
  * le jeton : c'est le `serviceIdDest` des prescriptions et le destinataire
  * des notifications (`broadcast:service:{id}`). Repli sur

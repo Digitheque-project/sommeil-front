@@ -139,7 +139,7 @@ export default function ConsultationLayout({ patient, prescripteur, onChangePati
             {/* ID + Nom */}
             <div style={{display:'flex', alignItems:'center', gap:10, flex:1, minWidth:0}}>
               <div style={{
-                background:'#005b82', color:'#fff', borderRadius:6,
+                background:'#005a76', color:'#fff', borderRadius:6,
                 padding:'3px 10px', fontSize:11, fontWeight:700, flexShrink:0,
                 fontFamily:'"Manrope",sans-serif', letterSpacing:'.3px',
               }}>
@@ -217,8 +217,8 @@ export default function ConsultationLayout({ patient, prescripteur, onChangePati
                 style={{
                   display:'flex', flexDirection:'column', alignItems:'center', gap:2,
                   padding:'10px 14px', border:'none', background:'none', cursor:'pointer',
-                  borderBottom: isActive ? '3px solid #005b82' : '3px solid transparent',
-                  color: isActive ? '#005b82' : '#6b7280',
+                  borderBottom: isActive ? '3px solid #005a76' : '3px solid transparent',
+                  color: isActive ? '#005a76' : '#6b7280',
                     fontWeight: isActive ? 700 : 500, fontSize:13,
                   whiteSpace:'nowrap', transition:'all .15s', flexShrink:0,
                 }}>

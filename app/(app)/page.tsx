@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import TopBar from "@/components/TopBar";
 import { useAuth } from "@/context/AuthContext";
 import { useAllConsultations } from "@/hooks/use-consultations";
 import { usePsgExams } from "@/hooks/use-psg";
@@ -61,7 +60,6 @@ export default function DashboardPage() {
 
   return (
     <>
-      <TopBar title="Tableau de bord" />
 
       <div className="p-8 flex flex-col min-h-[calc(100vh-4rem)] max-w-7xl mx-auto bg-[#F8FAFC] animate-fade-in">
         {/* Welcome Section */}
@@ -79,7 +77,7 @@ export default function DashboardPage() {
           {/* Examens Aujourd'hui */}
           <Link
             href="/consultation"
-            className="bg-[#004A66] p-6 rounded-[24px] relative overflow-hidden flex flex-col justify-between h-[220px] cursor-pointer shadow-sm transition hover:brightness-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            className="bg-[#004A66] p-6 rounded-2xl relative overflow-hidden flex flex-col justify-between h-[220px] cursor-pointer shadow-sm transition hover:brightness-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
           >
             <div className="flex justify-between items-start">
               <div className="flex items-center gap-1 text-[#4FC3F7]">
@@ -102,7 +100,7 @@ export default function DashboardPage() {
           {/* Comptes-rendus en attente */}
           <Link
             href="/comptes-rendus"
-            className="bg-white p-6 rounded-[24px] relative overflow-hidden cursor-pointer flex flex-col justify-between h-[220px] shadow-sm border border-[#E0E4E8] transition hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#006A8C]"
+            className="bg-white p-6 rounded-2xl relative overflow-hidden cursor-pointer flex flex-col justify-between h-[220px] shadow-sm border border-[#F1F5F9] transition hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#006A8C]"
           >
             <div className="flex justify-between items-start">
               <span className="material-symbols-outlined text-[#006A8C] text-[32px]" style={{ fontVariationSettings: '"FILL" 1' }}>
@@ -128,7 +126,7 @@ export default function DashboardPage() {
           {/* Consultations urgentes */}
           <Link
             href="/consultation"
-            className="bg-white p-6 rounded-[24px] relative overflow-hidden cursor-pointer flex flex-col justify-between h-[220px] shadow-sm border border-[#E0E4E8] transition hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E]"
+            className="bg-white p-6 rounded-2xl relative overflow-hidden cursor-pointer flex flex-col justify-between h-[220px] shadow-sm border border-[#F1F5F9] transition hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E]"
           >
             <div className="flex justify-between items-start">
               <span className="material-symbols-outlined text-[#0F766E] text-[32px]" style={{ fontVariationSettings: '"FILL" 1' }}>
@@ -155,8 +153,8 @@ export default function DashboardPage() {
           {/* Center Column - Activité Récente */}
           <div className="lg:col-span-2 space-y-8">
             {/* Activité Récente */}
-            <div className="bg-white border border-[#E0E4E8] rounded-[24px] overflow-hidden shadow-sm">
-              <div className="p-6 border-b border-[#E0E4E8] flex justify-between items-center">
+            <div className="bg-white border border-[#F1F5F9] rounded-2xl overflow-hidden shadow-sm">
+              <div className="p-6 border-b border-[#F1F5F9] flex justify-between items-center">
                 <h3 className="text-[20px] font-extrabold text-[#0F172A] font-headline">
                   Activité Récente
                 </h3>
@@ -167,7 +165,7 @@ export default function DashboardPage() {
                   Voir tout <span className="material-symbols-outlined text-sm">arrow_forward</span>
                 </Link>
               </div>
-              <div className="divide-y divide-[#E0E4E8]">
+              <div className="divide-y divide-[#F1F5F9]">
                 {!isLoading && activityFeed.length === 0 && (
                   <p className="p-5 text-sm text-[#64748B]">Aucune activité clinique enregistrée.</p>
                 )}
@@ -214,7 +212,7 @@ export default function DashboardPage() {
           {/* Right Column */}
           <div className="space-y-8">
             {/* Prochain RDV */}
-            <div className="bg-gradient-to-br from-[#006A8C] to-[#004A66] rounded-[24px] p-6 shadow-sm text-white overflow-hidden relative">
+            <div className="bg-gradient-to-br from-[#006A8C] to-[#004A66] rounded-2xl p-6 shadow-sm text-white overflow-hidden relative">
               <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/5 rounded-full" />
               <div className="relative z-10">
                 <p className="text-xs font-bold uppercase tracking-wider text-[#94A3B8] mb-2">

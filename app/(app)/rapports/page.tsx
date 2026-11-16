@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import TopBar from "@/components/TopBar";
 import ActionButton from "@/components/ActionButton";
 import BarChart from "@/components/charts/BarChart";
 import DonutChart from "@/components/charts/DonutChart";
@@ -17,12 +16,12 @@ const PERIODS: Array<{ key: StatsPeriod; label: string }> = [
 ];
 
 // Palette réutilisée pour les secteurs, quel que soit le nombre de séries.
-const SLICE_COLORS = ["#1e3a8a", "#2563eb", "#7fa6ff", "#bfdbfe", "#93c5fd", "#dbeafe"];
+const SLICE_COLORS = ["#004A66", "#006A8C", "#7fa6ff", "#bfdbfe", "#93c5fd", "#F0F7FF"];
 const SEVERITY_COLORS = ["#22c55e", "#eab308", "#f97316", "#ef5350"];
 
 const examVolumeSeries = [
   { key: "precedent", label: "Période précédente", color: "#cbd5e1" },
-  { key: "courant", label: "Période actuelle", color: "#2563eb" },
+  { key: "courant", label: "Période actuelle", color: "#006A8C" },
 ];
 
 const withColors = (
@@ -118,7 +117,6 @@ export default function RapportsPage() {
 
   return (
     <>
-      <TopBar title="Rapports & Statistiques" searchPlaceholder="Rechercher un rapport..." />
 
       <div className="page-content p-8 bg-[#F7FBFD] min-h-[calc(100vh-84px)]">
         <div className="max-w-[1500px] mx-auto space-y-6">
@@ -165,7 +163,7 @@ export default function RapportsPage() {
                   key={item.key}
                   type="button"
                   onClick={() => setPeriod(item.key)}
-                  className={`px-4 py-2 rounded-lg text-sm font-bold transition ${
+                  className={`px-4 py-2 rounded-xl text-sm font-bold transition ${
                     period === item.key
                       ? "bg-[#006A8C] text-white shadow-sm"
                       : "text-[#475569] hover:bg-white"
@@ -189,7 +187,7 @@ export default function RapportsPage() {
               <button
                 type="button"
                 onClick={() => refetch()}
-                className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-red-700"
+                className="rounded-xl bg-red-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-red-700"
               >
                 Réessayer
               </button>

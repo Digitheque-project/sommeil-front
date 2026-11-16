@@ -126,7 +126,7 @@ export default function CalendrierSemaine({
                               onSelectRdv(rdv);
                             }}
                             title={estRealise ? "RDV déjà réalisé" : undefined}
-                            className={`w-full text-left text-xs p-1.5 rounded-lg border-l-2 transition-opacity hover:opacity-80 ${
+                            className={`w-full text-left text-xs p-1.5 rounded-xl border-l-2 transition-opacity hover:opacity-80 ${
                               estRealise
                                 ? "opacity-40 grayscale-[0.6] border-slate-300 bg-slate-50 text-slate-500"
                                 : PRIORITE_COULEUR[rdv.priorite]

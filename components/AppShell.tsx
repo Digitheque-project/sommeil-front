@@ -9,7 +9,7 @@ import {
 } from "react";
 import type { ReactNode } from "react";
 import Sidebar from "@/components/Sidebar";
-import MobileNav from "@/components/MobileNav";
+import Header from "@/components/Header";
 
 type SidebarContextValue = {
   desktopOpen: boolean;
@@ -67,16 +67,16 @@ export default function AppShell({ children }: Readonly<{ children: ReactNode }>
     <SidebarContext.Provider
       value={{ desktopOpen, mobileOpen, toggleSidebar, closeMobile }}
     >
-      <div className="min-h-screen">
-        <Sidebar />
-        <main
-          className={`min-h-screen pb-16 transition-[margin] duration-200 ease-in-out md:pb-0 ${
-            desktopOpen ? "md:ml-64" : "md:ml-0"
-          }`}
-        >
-          {children}
-        </main>
-        <MobileNav />
+      {/* Mise en page commune de la plateforme : en-tête sur toute la largeur,
+          puis barre latérale + contenu (modèle Consultation externe). */}
+      <div className="flex h-screen flex-col overflow-hidden bg-[#F8F9FB] print:block print:h-auto print:overflow-visible">
+        <Header />
+        <div className="flex min-w-0 flex-1 overflow-hidden print:block print:overflow-visible">
+          <Sidebar />
+          <main className="min-w-0 flex-1 overflow-auto overflow-x-hidden bg-[#F8F9FB] print:overflow-visible">
+            {children}
+          </main>
+        </div>
       </div>
     </SidebarContext.Provider>
   );

@@ -31,7 +31,7 @@ export function ConsultationTabs() {
               className={cn(
                 'flex items-center gap-2 px-4 py-3.5 text-[13px] font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0',
                 isActive
-                  ? 'border-[#005b82] text-[#005b82]'
+                  ? 'border-[#005a76] text-[#005a76]'
                   : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-200'
               )}
             >

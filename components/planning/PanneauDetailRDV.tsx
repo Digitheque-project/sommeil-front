@@ -114,7 +114,7 @@ export default function PanneauDetailRDV({
           {rdv.motif && (
             <div>
               <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">Motif</p>
-              <p className="text-sm text-slate-700 bg-slate-50 rounded-lg p-3 leading-relaxed">{rdv.motif}</p>
+              <p className="text-sm text-slate-700 bg-slate-50 rounded-xl p-3 leading-relaxed">{rdv.motif}</p>
             </div>
           )}
         </div>
@@ -128,7 +128,7 @@ export default function PanneauDetailRDV({
               permission="consultation:treat"
               disabled={enCours !== null}
               onClick={() => action("recevoir", onRecevoirPatient)}
-              className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-[#006A8C] px-4 py-2 text-sm font-bold text-white hover:bg-[#004D66]"
+              className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-[#006A8C] px-4 py-2 text-sm font-bold text-white hover:bg-[#004A66]"
             >
               <UserCheck size={16} />
               {enCours === "recevoir" ? "Ouverture..." : "Recevoir le patient"}

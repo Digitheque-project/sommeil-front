@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from "react";
-import TopBar from "@/components/TopBar";
 import ActionButton from "@/components/ActionButton";
 import { usePsgExams } from "@/hooks/use-psg";
 import {
@@ -17,6 +16,7 @@ import type { CompteRendu } from "@/lib/api/comptes-rendus";
 import { useAuth } from "@/context/AuthContext";
 import type { PsgExam } from "@/lib/api/psg";
 import { useToast } from "@/components/ToastProvider";
+import { isTechnicalId } from "@/lib/utils";
 
 const formatDateTime = (value?: string | null) => {
   if (!value) return "Jamais";
@@ -129,7 +129,7 @@ function MetaChip({
   return (
     <span
       title={title}
-      className={`inline-flex min-w-0 max-w-[260px] items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium ${tones[tone]}`}
+      className={`inline-flex min-w-0 max-w-[260px] items-center gap-1.5 rounded-xl border px-2.5 py-1 text-xs font-medium ${tones[tone]}`}
     >
       <span className="material-symbols-outlined shrink-0 text-[15px]">{icon}</span>
       <span className="truncate">{children}</span>
@@ -370,7 +370,6 @@ export default function CompteRenduPage() {
 
   return (
     <>
-      <TopBar title="Rédaction du compte rendu" searchPlaceholder="Rechercher un dossier..." />
 
       <div className="min-h-[calc(100vh-5rem)] bg-[#F8FAFC]">
         {/* Pas de largeur maximale : l'écran de rédaction occupe toute la
@@ -393,7 +392,7 @@ export default function CompteRenduPage() {
                         {displayName}
                       </h1>
                       <div className="mt-2.5 flex flex-wrap items-center gap-2">
-                        <MetaChip icon="badge">Dossier {selectedExam.patientId}</MetaChip>
+                        {!isTechnicalId(selectedExam.patientId) && <MetaChip icon="badge">Dossier {selectedExam.patientId}</MetaChip>}
                         {identite && <MetaChip icon="person">{identite}</MetaChip>}
                         {patient?.telephone && (
                           <MetaChip icon="call">{patient.telephone}</MetaChip>
@@ -524,7 +523,7 @@ export default function CompteRenduPage() {
                           type="button"
                           onClick={() => setFilters((f) => ({ ...f, statut: option.value }))}
                           aria-pressed={active}
-                          className={`flex-1 rounded-lg px-1.5 py-1.5 text-[11px] font-bold transition ${
+                          className={`flex-1 rounded-xl px-1.5 py-1.5 text-[11px] font-bold transition ${
                             active
                               ? "bg-white text-[#004A66] shadow-sm"
                               : "text-[#64748B] hover:text-[#0F172A]"

@@ -1,20 +1,15 @@
 import type { Metadata } from "next";
-import { Inter, Manrope } from "next/font/google";
+import { Manrope } from "next/font/google";
 import "./globals.css";
 import "@/styles/theme.css";
 import { Providers } from "./providers";
 import Script from "next/script";
 
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
-
+// Police commune de la plateforme (modèle Consultation externe) : embarquée
+// au moment de la construction par next/font, aucun appel à Internet.
 const manrope = Manrope({
-  variable: "--font-manrope",
+  variable: "--font-sans",
   subsets: ["latin"],
-  weight: ["500", "600", "700", "800"],
 });
 
 export const metadata: Metadata = {
@@ -29,7 +24,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className={`${inter.variable} ${manrope.variable}`}>
+    <html lang="fr" className={`${manrope.variable} font-sans antialiased`}>
       <head>
         {/* eslint-disable-next-line @next/next/no-page-custom-font -- root layout is the correct place for this in App Router */}
         <link
@@ -37,7 +32,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="bg-background text-on-background font-body-md antialiased min-h-screen">
+      <body className="min-h-screen bg-[#F8F9FB] font-sans text-[#0F172A] antialiased">
         <Providers>{children}</Providers>
       
         {/* Onglet caché : toute interrogation répétée (toutes les 5 s ou plus) ne

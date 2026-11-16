@@ -3,8 +3,7 @@
 import { Suspense, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Calendar, CalendarClock, Search, Filter, X, Plus, ChevronRight, Archive as ArchiveIcon, UserCheck } from "lucide-react";
-import { cn } from "@/lib/utils";
-import TopBar from "@/components/TopBar";
+import { cn, isTechnicalId } from "@/lib/utils";
 import ActionButton from "@/components/ActionButton";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -101,7 +100,7 @@ const buildObservationNotes = (parameters: ClinicalParameterRow[], notes: string
  */
 export default function ConsultationPage() {
   return (
-    <Suspense fallback={<TopBar title="Consultation" />}>
+    <Suspense fallback={null}>
       <ConsultationPageContent />
     </Suspense>
   );
@@ -396,7 +395,6 @@ function ConsultationPageContent() {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
-        <TopBar title="Consultation" searchPlaceholder="Rechercher un patient, un motif..." />
 
         {/* Patient List View */}
         {!selectedPatient && (
@@ -408,13 +406,13 @@ function ConsultationPageContent() {
                   <h1 className="text-2xl font-bold text-gray-900">Mes consultations du jour</h1>
                   {doctorName && <p className="text-sm text-gray-500 mt-1">{doctorName}</p>}
                 </div>
-                <div className="flex items-center gap-2.5 rounded-2xl border border-gray-100 bg-white px-4 py-2.5 shadow-[0px_4px_16px_rgba(17,17,26,0.05)]">
+                <div className="flex items-center gap-2.5 rounded-2xl border border-[#F1F5F9] bg-white px-4 py-2.5 shadow-[0px_4px_16px_rgba(17,17,26,0.05)]">
                   <div className="relative h-9 w-9 shrink-0">
                     <svg className="h-9 w-9 -rotate-90" viewBox="0 0 36 36">
                       <circle cx="18" cy="18" r="15.5" fill="none" stroke="#F1F5F9" strokeWidth="4" />
                       <circle
                         cx="18" cy="18" r="15.5" fill="none"
-                        stroke={progressPercent >= 100 ? "#10B981" : "#005b82"}
+                        stroke={progressPercent >= 100 ? "#10B981" : "#005a76"}
                         strokeWidth="4"
                         strokeDasharray={`${(progressPercent / 100) * 97.4} 97.4`}
                         strokeLinecap="round"
@@ -423,7 +421,7 @@ function ConsultationPageContent() {
                   </div>
                   <div className="leading-tight">
                     <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Quota aujourd&apos;hui</p>
-                    <p className="text-[15px] font-black text-[#005b82]">
+                    <p className="text-[15px] font-black text-[#005a76]">
                       {todayTotal}<span className="text-gray-300 font-bold">/{quotaMax}</span>
                     </p>
                   </div>
@@ -431,15 +429,15 @@ function ConsultationPageContent() {
               </div>
 
               {/* Filters */}
-              <div className="mb-6 space-y-2.5 rounded-2xl border border-gray-100 bg-white p-2.5 shadow-[0px_4px_16px_rgba(17,17,26,0.04)]">
+              <div className="mb-6 space-y-2.5 rounded-2xl border border-[#F1F5F9] bg-white p-2.5 shadow-[0px_4px_16px_rgba(17,17,26,0.04)]">
                 <div className="flex flex-nowrap items-center gap-2 overflow-x-auto">
                   <div className="flex items-center gap-1 rounded-xl bg-slate-100 p-1 shrink-0">
                     <button
                       type="button"
                       onClick={() => handleSetViewMode('today')}
                       className={cn(
-                        'flex h-7 items-center gap-1.5 rounded-lg px-3 text-[12px] font-semibold transition-colors whitespace-nowrap',
-                        viewMode === 'today' ? 'bg-white text-[#005b82] shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                        'flex h-7 items-center gap-1.5 rounded-xl px-3 text-[12px] font-semibold transition-colors whitespace-nowrap',
+                        viewMode === 'today' ? 'bg-white text-[#005a76] shadow-sm' : 'text-slate-500 hover:text-slate-700'
                       )}
                     >
                       <Filter className="w-3.5 h-3.5" />
@@ -449,8 +447,8 @@ function ConsultationPageContent() {
                       type="button"
                       onClick={() => handleSetViewMode('all')}
                       className={cn(
-                        'h-7 rounded-lg px-3 text-[12px] font-semibold transition-colors whitespace-nowrap',
-                        viewMode === 'all' ? 'bg-white text-[#005b82] shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                        'h-7 rounded-xl px-3 text-[12px] font-semibold transition-colors whitespace-nowrap',
+                        viewMode === 'all' ? 'bg-white text-[#005a76] shadow-sm' : 'text-slate-500 hover:text-slate-700'
                       )}
                     >
                       Tous
@@ -466,7 +464,7 @@ function ConsultationPageContent() {
                       value={searchQuery}
                       onChange={(event) => setSearchQuery(event.target.value)}
                       placeholder="Rechercher un patient, un motif..."
-                      className="h-9 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-8 text-[12px] font-medium text-slate-700 placeholder:text-slate-400 transition-colors focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#005b82]/30"
+                      className="h-9 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-8 text-[12px] font-medium text-slate-700 placeholder:text-slate-400 transition-colors focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#005a76]/30"
                     />
                     {searchQuery && (
                       <button
@@ -486,7 +484,7 @@ function ConsultationPageContent() {
                   <select
                     value={statusFilter}
                     onChange={(event) => setStatusFilter(event.target.value as PatientStatus)}
-                    className="h-9 min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 text-[12px] font-semibold text-slate-600 transition-colors focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#005b82]/30"
+                    className="h-9 min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 text-[12px] font-semibold text-slate-600 transition-colors focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#005a76]/30"
                   >
                     <option value="TOUS">Tous les statuts</option>
                     <option value="EN ATTENTE">En attente</option>
@@ -497,7 +495,7 @@ function ConsultationPageContent() {
                   <select
                     value={visitTypeFilter}
                     onChange={(event) => setVisitTypeFilter(event.target.value as VisitType)}
-                    className="h-9 min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 text-[12px] font-semibold text-slate-600 transition-colors focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#005b82]/30"
+                    className="h-9 min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 text-[12px] font-semibold text-slate-600 transition-colors focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#005a76]/30"
                   >
                     <option value="TOUS">Tous les types</option>
                     <option value="INITIALE">Consultation initiale</option>
@@ -519,7 +517,7 @@ function ConsultationPageContent() {
 
               {/* Patient List */}
               <div className="space-y-6">
-                <div className="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-[0px_4px_16px_rgba(17,17,26,0.05)]">
+                <div className="overflow-hidden rounded-2xl border border-[#F1F5F9] bg-white shadow-[0px_4px_16px_rgba(17,17,26,0.05)]">
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm table-fixed">
                       <thead className="bg-slate-50 text-left text-gray-500">
@@ -550,19 +548,19 @@ function ConsultationPageContent() {
                         )}
                         {filteredAppointments.map((patient) => (
                           <tr key={patient.id} className={cn(
-                            "border-t border-gray-100 hover:bg-slate-100 align-top transition-colors",
-                            patient.priseEnCharge?.isActive ? "bg-[#EAF3FA]" : ""
+                            "border-t border-[#F1F5F9] hover:bg-slate-100 align-top transition-colors",
+                            patient.priseEnCharge?.isActive ? "bg-[#F0F7FF]" : ""
                           )}>
                             <td className={cn(
                               "px-1.5 py-2.5 border-l-[6px]",
-                              patient.priseEnCharge?.isActive ? "border-[#005b82]" : "border-transparent"
+                              patient.priseEnCharge?.isActive ? "border-[#005a76]" : "border-transparent"
                             )}>
                               <div className="flex flex-col gap-1">
                                 <div className="flex items-center gap-1.5">
                                   {patient.isUrgent && <span className="h-2 w-2 shrink-0 rounded-full bg-red-500" />}
                                   <span className={cn(
                                     "font-semibold text-[12px] truncate",
-                                    patient.status === "EFFECTUÉ" ? "text-slate-400" : "text-[#005b82]"
+                                    patient.status === "EFFECTUÉ" ? "text-slate-400" : "text-[#005a76]"
                                   )}>{patient.time}</span>
                                 </div>
                                 <span className="text-[10px] text-gray-500 truncate">{patient.date}</span>
@@ -573,7 +571,7 @@ function ConsultationPageContent() {
                               {patient.priseEnCharge && (
                                 <p className={cn(
                                   "mt-0.5 text-[9px] font-bold truncate",
-                                  patient.priseEnCharge.isActive ? "text-[#005b82]" : "text-amber-600"
+                                  patient.priseEnCharge.isActive ? "text-[#005a76]" : "text-amber-600"
                                 )}>
                                   {patient.priseEnCharge.companyName}
                                 </p>
@@ -609,7 +607,7 @@ function ConsultationPageContent() {
                               <div className="flex flex-col items-start gap-1">
                                 <span className={cn(
                                   "inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider whitespace-nowrap",
-                                  patient.status === "EFFECTUÉ" ? "bg-[#E6F4EA] text-[#059669]" : patient.isUrgent ? "bg-red-50 text-red-700" : "bg-[#EAF3FA] text-[#006A8C]"
+                                  patient.status === "EFFECTUÉ" ? "bg-[#E6F4EA] text-[#059669]" : patient.isUrgent ? "bg-red-50 text-red-700" : "bg-[#F0F7FF] text-[#006A8C]"
                                 )}>
                                   {patient.status}
                                 </span>
@@ -626,14 +624,14 @@ function ConsultationPageContent() {
                                 <ActionButton
                                   permission="consultation:treat"
                                   onClick={() => handleStart(patient)}
-                                  className="bg-[#005b82] hover:bg-[#004a6b] text-white rounded-lg px-2 py-1.5 h-auto text-[10px] font-bold whitespace-nowrap"
+                                  className="bg-[#005a76] hover:bg-[#004a6b] text-white rounded-xl px-2 py-1.5 h-auto text-[10px] font-bold whitespace-nowrap"
                                 >
                                   Ouvrir
                                 </ActionButton>
                                 <ActionButton
                                   permission="consultation:read"
                                   onClick={() => handleOpenPatientInfo(patient)}
-                                  className="text-[#005b82] hover:bg-slate-50 h-auto px-1.5 py-1.5 text-[10px] font-bold whitespace-nowrap"
+                                  className="text-[#005a76] hover:bg-slate-50 h-auto px-1.5 py-1.5 text-[10px] font-bold whitespace-nowrap"
                                 >
                                   Infos
                                 </ActionButton>
@@ -643,7 +641,7 @@ function ConsultationPageContent() {
                                   pending={markArrivalMutation.isPending}
                                   title={patient.isArrived ? "Annuler l'arrivée" : "Marquer le patient comme arrivé"}
                                   className={cn(
-                                    "h-auto rounded-lg px-1.5 py-1.5 text-[10px] font-bold whitespace-nowrap",
+                                    "h-auto rounded-xl px-1.5 py-1.5 text-[10px] font-bold whitespace-nowrap",
                                     patient.isArrived
                                       ? "text-emerald-700 hover:bg-emerald-50"
                                       : "text-slate-500 hover:bg-slate-50"
@@ -698,7 +696,7 @@ function ConsultationPageContent() {
                 {/* Left Column: Patient Info & Clinical Parameters */}
                 <div className="lg:col-span-2 space-y-6">
                   {/* Patient Header */}
-                  <div className="bg-white rounded-2xl border border-gray-200 p-6">
+                  <div className="bg-white rounded-2xl border border-[#E2E8F0] p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div>
                         <h2 className="text-2xl font-bold text-gray-900">{selectedPatient.name}</h2>
@@ -709,7 +707,7 @@ function ConsultationPageContent() {
                           <span className="px-3 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded-full">URGENCE</span>
                         )}
                         <span className={cn(
-                          "px-4 py-2 text-sm font-semibold rounded-lg",
+                          "px-4 py-2 text-sm font-semibold rounded-xl",
                           selectedPatient.status === "EFFECTUÉ"
                             ? "bg-emerald-100 text-emerald-700"
                             : selectedPatient.status === "EN COURS"
@@ -721,7 +719,7 @@ function ConsultationPageContent() {
                         <ActionButton
                           permission="consultation:treat"
                           onClick={() => handleStart(selectedPatient)}
-                          className="px-4 py-2 bg-[#005b82] hover:bg-[#004a6b] text-white text-sm font-semibold rounded-lg"
+                          className="px-4 py-2 bg-[#005a76] hover:bg-[#004a6b] text-white text-sm font-semibold rounded-xl"
                         >
                           Traiter le patient
                         </ActionButton>
@@ -742,14 +740,14 @@ function ConsultationPageContent() {
                       <textarea
                         value={selectedPatient.motif}
                         rows={2}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#006A8C]/20"
                         readOnly
                       />
                     </div>
                   </div>
 
                   {/* Clinical Parameters */}
-                  <div className="bg-white rounded-2xl border border-gray-200 p-6">
+                  <div className="bg-white rounded-2xl border border-[#E2E8F0] p-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Paramètres cliniques</h3>
                     <div className="space-y-3">
                       {clinicalParameters.map((parameter) => (
@@ -759,27 +757,27 @@ function ConsultationPageContent() {
                             value={parameter.nom}
                             onChange={(event) => updateParameter(parameter.id, "nom", event.target.value)}
                             placeholder="Paramètre"
-                            className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="border border-[#E2E8F0] rounded-xl px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#006A8C]/20"
                           />
                           <input
                             type="text"
                             value={parameter.valeur}
                             onChange={(event) => updateParameter(parameter.id, "valeur", event.target.value)}
                             placeholder="Valeur"
-                            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="border border-[#E2E8F0] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#006A8C]/20"
                           />
                           <input
                             type="text"
                             value={parameter.unite}
                             onChange={(event) => updateParameter(parameter.id, "unite", event.target.value)}
                             placeholder="Unité"
-                            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="border border-[#E2E8F0] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#006A8C]/20"
                           />
                           <button
                             type="button"
                             onClick={() => setClinicalParameters((rows) => rows.filter((row) => row.id !== parameter.id))}
                             aria-label={`Supprimer ${parameter.nom || "le paramètre"}`}
-                            className="rounded-lg px-2 text-gray-400 hover:bg-red-50 hover:text-red-600"
+                            className="rounded-xl px-2 text-gray-400 hover:bg-red-50 hover:text-red-600"
                           >
                             <X className="w-4 h-4" />
                           </button>
@@ -791,7 +789,7 @@ function ConsultationPageContent() {
                       onClick={() =>
                         setClinicalParameters((rows) => [...rows, { id: Date.now(), nom: "", valeur: "", unite: "" }])
                       }
-                      className="action-primary mt-4 flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium"
+                      className="action-primary mt-4 flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium"
                     >
                       <Plus className="w-4 h-4" />
                       Ajouter
@@ -799,7 +797,7 @@ function ConsultationPageContent() {
                   </div>
 
                   {/* Medical Observations */}
-                  <div className="bg-white rounded-2xl border border-gray-200 p-6">
+                  <div className="bg-white rounded-2xl border border-[#E2E8F0] p-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Observations médicales</h3>
                     <div className="space-y-4">
                       <div>
@@ -810,7 +808,7 @@ function ConsultationPageContent() {
                           value={observationNotes}
                           onChange={(event) => setObservationNotes(event.target.value)}
                           placeholder="Saisir les notes d'observation clinique..."
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#006A8C]/20"
                         />
                       </div>
                       <div>
@@ -821,7 +819,7 @@ function ConsultationPageContent() {
                           value={diagnosticSuspicion}
                           onChange={(event) => setDiagnosticSuspicion(event.target.value)}
                           placeholder="Écrire la suspicion clinique..."
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#006A8C]/20"
                         />
                       </div>
                       <div>
@@ -832,7 +830,7 @@ function ConsultationPageContent() {
                           value={diagnosticRetenu}
                           onChange={(event) => setDiagnosticRetenu(event.target.value)}
                           placeholder="Écrire le diagnostic retenu..."
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#006A8C]/20"
                         />
                       </div>
                     </div>
@@ -842,13 +840,13 @@ function ConsultationPageContent() {
                 {/* Right Column: Patient Details & Help */}
                 <div className="space-y-6">
                   {/* Patient Details */}
-                  <div className="bg-white rounded-2xl border border-gray-200 p-6">
+                  <div className="bg-white rounded-2xl border border-[#E2E8F0] p-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Détails Patient</h3>
                     <div className="space-y-4">
                       <div>
                         <p className="text-xs font-medium text-gray-500 uppercase">Identité</p>
                         <p className="text-sm font-semibold text-gray-900 mt-1">{selectedPatient.name}</p>
-                        <p className="text-xs text-gray-500">{selectedPatient.dossier}</p>
+                        {!isTechnicalId(selectedPatient.dossier) && <p className="text-xs text-gray-500">{selectedPatient.dossier}</p>}
                       </div>
                       <div>
                         <p className="text-xs font-medium text-gray-500 uppercase">Prise en charge</p>
@@ -912,7 +910,7 @@ function ConsultationPageContent() {
                     <ActionButton
                       permission="consultation:read"
                       onClick={() => setShowHistory((open) => !open)}
-                      className="action-secondary flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium"
+                      className="action-secondary flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium"
                     >
                       {showHistory ? "Masquer le dossier historique" : "Consulter le dossier historique"}
                       <ChevronRight className={cn("w-4 h-4 transition-transform", showHistory && "rotate-90")} />
@@ -925,7 +923,7 @@ function ConsultationPageContent() {
                     onClick={saveConsultation}
                     pending={saveObservationMutation.isPending}
                     pendingLabel="Enregistrement…"
-                    className="action-success w-full py-3 rounded-lg font-semibold"
+                    className="action-success w-full py-3 rounded-xl font-semibold"
                   >
                     Sauvegarder la consultation
                   </ActionButton>
@@ -939,7 +937,7 @@ function ConsultationPageContent() {
       {/* Report modal */}
       {reportTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
-          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
             <div className="mb-5 flex items-start justify-between gap-3">
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">
@@ -971,7 +969,7 @@ function ConsultationPageContent() {
                   value={reportDate}
                   min={getTodayDateKey()}
                   onChange={(event) => setReportDate(event.target.value)}
-                  className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#005b82]/30"
+                  className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#005a76]/30"
                 />
               </div>
               <div>
@@ -983,7 +981,7 @@ function ConsultationPageContent() {
                   type="time"
                   value={reportTime}
                   onChange={(event) => setReportTime(event.target.value)}
-                  className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#005b82]/30"
+                  className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#005a76]/30"
                 />
               </div>
             </div>
@@ -1002,7 +1000,7 @@ function ConsultationPageContent() {
                 disabled={!reportDate}
                 pending={traiterMutation.isPending}
                 pendingLabel="Report en cours…"
-                className="action-warning rounded-2xl px-4 py-2 text-sm font-bold"
+                className="action-warning rounded-xl px-4 py-2 text-sm font-bold"
               >
                 Confirmer le report
               </ActionButton>

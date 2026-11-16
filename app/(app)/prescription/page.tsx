@@ -3,7 +3,6 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import TopBar from "@/components/TopBar";
 import ActionButton from "@/components/ActionButton";
 import { usePolysomnographies, useSchedulePolysomnographie } from "@/hooks/use-prescriptions";
 import type { PolysomnographieItem } from "@/lib/api/prescription";
@@ -40,7 +39,7 @@ const getInitials = (item: PolysomnographieItem) => {
  */
 export default function PrescriptionPage() {
   return (
-    <Suspense fallback={<TopBar title="Prescriptions" />}>
+    <Suspense fallback={null}>
       <PrescriptionPageContent />
     </Suspense>
   );
@@ -128,13 +127,12 @@ function PrescriptionPageContent() {
 
   return (
     <>
-      <TopBar title="Prescriptions" searchPlaceholder="Rechercher une prescription..." />
 
       <div className="p-6 md:p-8 flex flex-col min-h-[calc(100vh-5rem)] max-w-7xl mx-auto w-full">
         {/* Page Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
           <div>
-            <h2 className="font-display-lg text-display-lg text-primary mb-1">
+            <h2 className="font-display-lg text-display-lg text-[#0F172A] mb-1">
               Prescriptions de polysomnographie
             </h2>
             <p className="text-on-surface-variant font-body-md">
@@ -144,7 +142,7 @@ function PrescriptionPageContent() {
           </div>
           <Link
             href="/polysomnographie"
-            className="bg-secondary text-on-secondary px-4 py-2.5 rounded-lg text-label-md font-label-md flex items-center gap-2 shadow-sm hover:brightness-110 active:scale-95 transition-all self-start lg:self-auto"
+            className="bg-[#006A8C] hover:bg-[#005a76] text-white px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-sm hover:brightness-110 active:scale-95 transition-all self-start lg:self-auto"
           >
             <span className="material-symbols-outlined text-lg">night_shelter</span>
             Voir les RDV planifiés
@@ -156,7 +154,7 @@ function PrescriptionPageContent() {
           {statCards.map((stat) => (
             <div
               key={stat.label}
-              className="col-span-1 bg-surface-container-lowest border border-outline-variant p-5 rounded-xl flex flex-col justify-between"
+              className="col-span-1 bg-surface-container-lowest border border-[#F1F5F9] p-5 rounded-2xl shadow-sm flex flex-col justify-between"
             >
               <span className="text-on-surface-variant font-label-md text-label-md uppercase tracking-wider mb-3">
                 {stat.label}
@@ -213,8 +211,8 @@ function PrescriptionPageContent() {
         )}
 
         {/* Filters */}
-        <div className="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden mb-6 shadow-sm">
-          <div className="p-4 border-b border-outline-variant flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="bg-surface-container-lowest border border-[#F1F5F9] rounded-2xl overflow-hidden mb-6 shadow-sm">
+          <div className="p-4 border-b border-[#F1F5F9] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="relative w-full max-w-md">
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">
                 search
@@ -224,7 +222,7 @@ function PrescriptionPageContent() {
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 placeholder="Rechercher par nom, ID patient ou indication..."
-                className="w-full pl-10 pr-4 py-2.5 bg-surface-container border border-outline-variant rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none font-body-sm text-body-sm transition-all"
+                className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl focus:ring-2 focus:ring-[#006A8C]/20 focus:border-transparent outline-none font-body-sm text-body-sm transition-all"
               />
             </div>
             <label className="flex items-center gap-2 text-sm font-semibold text-on-surface whitespace-nowrap">
@@ -242,15 +240,15 @@ function PrescriptionPageContent() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-tertiary-fixed border-b border-outline-variant">
-                  <th className="px-6 py-4 font-label-md text-label-md text-on-surface uppercase tracking-wider">Patient</th>
-                  <th className="px-6 py-4 font-label-md text-label-md text-on-surface uppercase tracking-wider">Indication</th>
-                  <th className="px-6 py-4 font-label-md text-label-md text-on-surface uppercase tracking-wider">Statut</th>
-                  <th className="px-6 py-4 font-label-md text-label-md text-on-surface uppercase tracking-wider">Reçue le</th>
-                  <th className="px-6 py-4 font-label-md text-label-md text-on-surface uppercase tracking-wider text-right">Action</th>
+                <tr className="bg-tertiary-fixed border-b border-[#F1F5F9]">
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-[#64748B]">Patient</th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-[#64748B]">Indication</th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-[#64748B]">Statut</th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-[#64748B]">Reçue le</th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-[#64748B] text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-outline-variant">
+              <tbody className="divide-y divide-[#F1F5F9]">
                 {isLoading && (
                   <tr>
                     <td colSpan={5} className="px-6 py-14 text-center text-on-surface-variant">
@@ -318,7 +316,7 @@ function PrescriptionPageContent() {
                         <ActionButton
                           permission="psg:create"
                           onClick={() => openSchedule(item)}
-                          className="action-primary px-4 py-2.5 rounded-lg text-label-md font-label-md flex items-center gap-1.5 shadow-sm ml-auto"
+                          className="action-primary px-4 py-2.5 rounded-xl text-label-md font-label-md flex items-center gap-1.5 shadow-sm ml-auto"
                         >
                           <span className="material-symbols-outlined text-[18px]">event</span>
                           Planifier
@@ -336,7 +334,7 @@ function PrescriptionPageContent() {
       {/* Schedule Modal */}
       {scheduleTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-3xl bg-surface-container-lowest border border-outline-variant p-6 shadow-2xl">
+          <div className="w-full max-w-md rounded-2xl bg-white border border-[#F1F5F9] p-6 shadow-2xl">
             <div className="mb-5 flex items-start justify-between gap-3">
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-on-surface-variant">
@@ -372,7 +370,7 @@ function PrescriptionPageContent() {
                   value={rdvDate}
                   min={new Date().toISOString().slice(0, 10)}
                   onChange={(event) => setRdvDate(event.target.value)}
-                  className="h-11 w-full rounded-2xl border border-outline-variant bg-surface-container px-3 text-sm font-medium text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary"
+                  className="h-11 w-full rounded-xl border border-[#E2E8F0] bg-white px-3 text-sm font-medium text-on-surface focus:outline-none focus:ring-2 focus:ring-[#006A8C]/20"
                 />
               </div>
               <div>
@@ -383,7 +381,7 @@ function PrescriptionPageContent() {
                   type="time"
                   value={rdvHeure}
                   onChange={(event) => setRdvHeure(event.target.value)}
-                  className="h-11 w-full rounded-2xl border border-outline-variant bg-surface-container px-3 text-sm font-medium text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary"
+                  className="h-11 w-full rounded-xl border border-[#E2E8F0] bg-white px-3 text-sm font-medium text-on-surface focus:outline-none focus:ring-2 focus:ring-[#006A8C]/20"
                 />
               </div>
             </div>
@@ -392,7 +390,7 @@ function PrescriptionPageContent() {
               <button
                 type="button"
                 onClick={() => setScheduleTarget(null)}
-                className="action-secondary rounded-2xl px-4 py-2 text-sm font-bold"
+                className="action-secondary rounded-xl px-4 py-2 text-sm font-bold"
               >
                 Annuler
               </button>
@@ -402,7 +400,7 @@ function PrescriptionPageContent() {
                 pending={scheduleMutation.isPending}
                 pendingLabel="Planification..."
                 onClick={submitSchedule}
-                className="action-primary rounded-2xl px-4 py-2 text-sm font-bold"
+                className="action-primary rounded-xl px-4 py-2 text-sm font-bold"
               >
                 Confirmer le rendez-vous
               </ActionButton>

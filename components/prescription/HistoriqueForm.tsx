@@ -26,7 +26,7 @@ const FILTRES = [
 const TYPE_COLORS: Record<string, string> = {
   trans: '#ef4444', labo: '#f59e0b', imag:  '#06b6d4',
   eeg:   '#6366f1', kine: '#84cc16', endo:  '#f97316',
-  dial:  '#14b8a6', ana:  '#ec4899', bloc:  '#1e40af',
+  dial:  '#14b8a6', ana:  '#ec4899', bloc:  '#004A66',
 };
 
 const ENDPOINTS: Record<string, string> = {

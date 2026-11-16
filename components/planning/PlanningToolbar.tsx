@@ -39,7 +39,7 @@ export default function PlanningToolbar({
           <button
             type="button"
             onClick={onSemainePrecedente}
-            className="flex items-center gap-1 px-3 py-1.5 text-sm text-slate-600 rounded-lg hover:bg-slate-50"
+            className="flex items-center gap-1 px-3 py-1.5 text-sm text-slate-600 rounded-xl hover:bg-slate-50"
           >
             <ChevronLeft size={16} /> Précédente
           </button>
@@ -47,7 +47,7 @@ export default function PlanningToolbar({
           <button
             type="button"
             onClick={onSemaineSuivante}
-            className="flex items-center gap-1 px-3 py-1.5 text-sm text-slate-600 rounded-lg hover:bg-slate-50"
+            className="flex items-center gap-1 px-3 py-1.5 text-sm text-slate-600 rounded-xl hover:bg-slate-50"
           >
             Suivante <ChevronRight size={16} />
           </button>

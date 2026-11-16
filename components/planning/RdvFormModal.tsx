@@ -89,7 +89,7 @@ export default function RdvFormModal({ titre, valeurInitiale, onClose, onConfirm
                 type="text"
                 value={patientNom}
                 onChange={(e) => setPatientNom(e.target.value)}
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#006A8C]/20"
               />
             </div>
             <div>
@@ -100,7 +100,7 @@ export default function RdvFormModal({ titre, valeurInitiale, onClose, onConfirm
                 type="text"
                 value={patientPrenom}
                 onChange={(e) => setPatientPrenom(e.target.value)}
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#006A8C]/20"
               />
             </div>
           </div>
@@ -113,7 +113,7 @@ export default function RdvFormModal({ titre, valeurInitiale, onClose, onConfirm
               type="text"
               value={patientDossier}
               onChange={(e) => setPatientDossier(e.target.value)}
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#006A8C]/20"
             />
           </div>
 
@@ -123,7 +123,7 @@ export default function RdvFormModal({ titre, valeurInitiale, onClose, onConfirm
               value={motif}
               onChange={(e) => setMotif(e.target.value)}
               rows={2}
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#006A8C]/20"
             />
           </div>
 
@@ -135,7 +135,7 @@ export default function RdvFormModal({ titre, valeurInitiale, onClose, onConfirm
                   key={p}
                   type="button"
                   onClick={() => setPriorite(p)}
-                  className={`flex-1 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  className={`flex-1 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-colors ${
                     priorite === p
                       ? PRIORITE_STYLE_SELECTIONNE[p]
                       : "border-slate-200 text-slate-500 hover:bg-slate-50"
@@ -156,7 +156,7 @@ export default function RdvFormModal({ titre, valeurInitiale, onClose, onConfirm
               value={date}
               onChange={(e) => setDate(e.target.value)}
               min={dateISODansFuseauHopital()}
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#006A8C]/20"
             />
           </div>
 
@@ -169,7 +169,7 @@ export default function RdvFormModal({ titre, valeurInitiale, onClose, onConfirm
                 type="time"
                 value={heureDebut}
                 onChange={(e) => setHeureDebut(e.target.value)}
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#006A8C]/20"
               />
             </div>
             <div>
@@ -179,7 +179,7 @@ export default function RdvFormModal({ titre, valeurInitiale, onClose, onConfirm
                 min={1}
                 value={dureeMinutesStr}
                 onChange={(e) => setDureeMinutesStr(e.target.value)}
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#006A8C]/20"
               />
             </div>
           </div>

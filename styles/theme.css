@@ -1,22 +1,22 @@
 :root {
-  --surface: #F7F9FA;
-  --on-surface: #3A3F44;
-  --surface-muted: #E0E4E8;
-  --primary: #2563EB;
-  --primary-strong: #1E3A8A;
-  --primary-light: #BFDBFE;
-  --success: #4CAF50;
+  --surface: #F8F9FB;
+  --on-surface: #0F172A;
+  --surface-muted: #E2E8F0;
+  --primary: #006A8C;
+  --primary-strong: #004A66;
+  --primary-light: #F0F7FF;
+  --success: #059669;
   --warning: #FFA726;
-  --danger: #EF5350;
+  --danger: #E11D48;
 
   /* Menu/Sidebar Colors */
-  --menu-bg-primary: #2563EB;
-  --menu-bg-secondary: #1E3A8A;
-  --menu-text-primary: #FFFFFF;
-  --menu-text-secondary: #E0F2FE;
-  --menu-hover-bg: rgba(255, 255, 255, 0.15);
-  --menu-active-bg: rgba(255, 255, 255, 0.25);
-  --menu-divider: rgba(255, 255, 255, 0.1);
+  --menu-bg-primary: #FFFFFF;
+  --menu-bg-secondary: #FFFFFF;
+  --menu-text-primary: #475569;
+  --menu-text-secondary: #64748B;
+  --menu-hover-bg: #F9FAFB;
+  --menu-active-bg: #F0F7FF;
+  --menu-divider: #F1F5F9;
 }
 
 .bg-surface {
@@ -30,9 +30,8 @@
 /* === MENU/SIDEBAR ENHANCED STYLES === */
 
 .app-shell-header {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fbff 55%, #eef4ff 100%);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  background: #FFFFFF;
+  
 }
 
 .app-shell-header-title {
@@ -63,7 +62,7 @@
   border-radius: 9999px;
   background: rgba(255, 255, 255, 0.9);
   padding: 0.55rem 0.75rem;
-  color: #1e3a8a;
+  color: #004A66;
   font-size: 0.9rem;
   font-weight: 600;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
