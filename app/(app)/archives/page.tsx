@@ -7,6 +7,7 @@ import { archiveApi, type Archive } from "@/lib/api/archives";
 import { downloadCsv, printDocument } from "@/lib/download";
 import { useToast } from "@/components/ToastProvider";
 import { isTechnicalId } from "@/lib/utils";
+import ContenuArchive, { contenuEnHtml } from "@/components/archives/ContenuArchive";
 
 type RecordStatus = "Tous" | "Actifs" | "Restaurés";
 
@@ -136,7 +137,7 @@ export default function ArchivesPage() {
            Édité le ${formatDateTime(data.genereLe)}
          </p>
          ${data.description ? `<p>${data.description}</p>` : ""}
-         <div class="content">${JSON.stringify(data.donnees, null, 2).replaceAll("<", "&lt;")}</div>`
+         <div>${contenuEnHtml(data.donnees)}</div>`
       );
     } catch (error) {
       showError(error instanceof Error ? error.message : "L'export a échoué.");
@@ -270,12 +271,13 @@ export default function ArchivesPage() {
                 </div>
                 <button type="button" onClick={() => setSelectedRecord(null)} className="p-2 text-[#94A3B8] hover:text-[#0F172A] hover:bg-white rounded-xl"><span className="material-symbols-outlined">close</span></button>
               </div>
-              <div className="p-8 grid grid-cols-2 gap-4">
+              <div className="p-8 grid grid-cols-2 gap-4 max-h-[65vh] overflow-y-auto">
                 <div className="bg-[#F8FAFC] rounded-xl p-4"><p className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Type</p><p className="text-sm font-bold text-[#0F172A] mt-1">{selectedRecord.type}</p></div>
                 <div className="bg-[#F8FAFC] rounded-xl p-4"><p className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Archivé le</p><p className="text-sm font-bold text-[#0F172A] mt-1">{formatDateTime(selectedRecord.archivedAt)}</p></div>
                 <div className="bg-[#F8FAFC] rounded-xl p-4"><p className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Archivé par</p><p className="text-sm font-bold text-[#0F172A] mt-1">{selectedRecord.archivedBy ?? "—"}</p></div>
                 <div className="bg-[#F8FAFC] rounded-xl p-4"><p className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Statut</p><p className="text-sm font-bold text-[#0F172A] mt-1">{selectedRecord.restored ? `Restauré le ${formatDateTime(selectedRecord.restoredAt)}` : "Scellé"}</p></div>
                 {selectedRecord.description && <div className="bg-[#F8FAFC] rounded-xl p-4 col-span-2"><p className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Description</p><p className="text-sm font-medium text-[#0F172A] mt-1">{selectedRecord.description}</p></div>}
+                <div className="col-span-2"><ContenuArchive donnees={selectedRecord.donnees} /></div>
               </div>
               <div className="px-8 py-5 border-t border-slate-100 bg-[#F8FAFC] flex justify-end gap-3">
                 <button type="button" onClick={() => setSelectedRecord(null)} className="px-5 py-2.5 rounded-xl text-sm font-bold text-[#64748B] hover:bg-white">Fermer</button>
