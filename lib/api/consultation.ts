@@ -4,6 +4,8 @@ import { redirectToLogin } from '@/lib/auth';
 export type ConsultationHistoryEntry = {
   id: string;
   date: string;
+  /** Date réelle de la consultation (`date` = date prévue du rendez-vous). */
+  dateRealisation?: string | null;
   heure: string;
   statut: string;
   typeVisite?: string;

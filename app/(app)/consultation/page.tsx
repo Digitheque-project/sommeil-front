@@ -889,7 +889,10 @@ function ConsultationPageContent() {
                                   {item.typeVisite === "CONTROLE" ? "Contrôle" : "Consultation"}
                                 </p>
                                 <p className="text-xs text-gray-500">
-                                  {new Date(item.date).toLocaleDateString("fr-FR")} · {item.heure}
+                                  {new Date(item.dateRealisation ?? item.date).toLocaleDateString("fr-FR")} ·{" "}
+                                  {item.dateRealisation
+                                    ? new Date(item.dateRealisation).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
+                                    : item.heure}
                                 </p>
                                 <p className="text-xs text-gray-600 mt-1">
                                   {item.diagnostic || item.observations || "Consultation sans observation"}

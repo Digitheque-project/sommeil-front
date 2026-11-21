@@ -14,7 +14,7 @@ export default function DashboardPage() {
   // Le nom vient du compte connecté ; sans jeton lu, salutation neutre.
   const fullName = user ? `${user.firstName} ${user.lastName}`.trim() : "";
   const greeting = fullName ? `Bonjour, ${fullName}` : "Bonjour";
-  const today = new Date().toISOString().slice(0, 10);
+  const today = new Date().toLocaleDateString('sv-SE');
   const todayConsultations = (consultations as ConsultationApi[]).filter((item) => item.date.slice(0, 10) === today);
   const completed = todayConsultations.filter((item) => item.termine).length;
   const urgent = todayConsultations.filter((item) => item.urgence).length;

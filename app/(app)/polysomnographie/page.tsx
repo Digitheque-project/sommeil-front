@@ -95,7 +95,7 @@ function PolysomnographiePageContent() {
     );
   }, [exams, searchQuery]);
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = new Date().toLocaleDateString('sv-SE');
   const stats = [
     { label: "RDV planifiés", value: exams.length, icon: "event_available", valueColor: "text-primary" },
     {

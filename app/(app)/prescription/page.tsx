@@ -368,7 +368,7 @@ function PrescriptionPageContent() {
                 <input
                   type="date"
                   value={rdvDate}
-                  min={new Date().toISOString().slice(0, 10)}
+                  min={new Date().toLocaleDateString('sv-SE')}
                   onChange={(event) => setRdvDate(event.target.value)}
                   className="h-11 w-full rounded-xl border border-[#E2E8F0] bg-white px-3 text-sm font-medium text-on-surface focus:outline-none focus:ring-2 focus:ring-[#006A8C]/20"
                 />
