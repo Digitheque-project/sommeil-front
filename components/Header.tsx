@@ -37,6 +37,13 @@ const PRIORITY_STYLES: Record<NotificationItem["priority"], { dot: string; label
 /** Nom du service affiché dans l'en-tête (identique sur toutes les pages). */
 const SERVICE_NAME = "Centre de Sommeil";
 
+/** Émetteur lisible (« prescription_back » → « Prescription »). */
+function sourceLisible(source: string): string {
+  const s = source.toLowerCase().replace(/[-_]?back$/, "").replace(/[_-]+/g, " ").trim();
+  const connus: Record<string, string> = { prescription: "Prescription", accueil: "Accueil", messagerie: "Messagerie", hospitalisation: "Hospitalisation" };
+  return connus[s] ?? s.charAt(0).toUpperCase() + s.slice(1);
+}
+
 /** Titre de la notification ; les anciennes prescriptions de polysomnographie
  * arrivaient avec le titre « undefined » (corrigé côté Prescription le 26/11/2026). */
 function titreLisible(item: NotificationItem): string {
@@ -245,7 +252,7 @@ export default function Header() {
                                   <div className="mt-1 flex items-center justify-between gap-2">
                                     {item.source ? (
                                       <p className="truncate text-[10px] font-bold uppercase tracking-wider text-[#64748B]">
-                                        {item.source}
+                                        {sourceLisible(item.source)}
                                       </p>
                                     ) : (
                                       <span />
