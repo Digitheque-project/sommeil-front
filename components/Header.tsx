@@ -37,6 +37,16 @@ const PRIORITY_STYLES: Record<NotificationItem["priority"], { dot: string; label
 /** Nom du service affiché dans l'en-tête (identique sur toutes les pages). */
 const SERVICE_NAME = "Centre de Sommeil";
 
+/** Titre de la notification ; les anciennes prescriptions de polysomnographie
+ * arrivaient avec le titre « undefined » (corrigé côté Prescription le 26/11/2026). */
+function titreLisible(item: NotificationItem): string {
+  const t = (item.title ?? "").trim();
+  if (t && t !== "undefined" && t !== "null") return t;
+  const u = String((item.data as Record<string, unknown> | null | undefined)?.urgence ?? "");
+  const prefixe = u === "TRES_URGENT" ? "🔴 TRES URGENT — " : u === "URGENT" ? "🟡 Urgent — " : "";
+  return `${prefixe}Nouvelle prescription Polysomnographie`;
+}
+
 export default function Header() {
   const { toggleSidebar } = useSidebar();
   const router = useRouter();
@@ -223,7 +233,7 @@ export default function Header() {
                                 <div className="min-w-0 flex-1">
                                   <div className="flex items-baseline justify-between gap-2">
                                     <p className="truncate text-[13px] font-bold text-[#0F172A]">
-                                      {item.title}
+                                      {titreLisible(item)}
                                     </p>
                                     <span className="shrink-0 text-[10px] text-[#64748B]">
                                       {timeFormatter.format(new Date(item.createdAt))}
