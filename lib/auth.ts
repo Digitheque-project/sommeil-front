@@ -45,7 +45,13 @@ type JwtPayload = {
   // transporter les permissions à plat ou imbriquées dans les rôles.
   permissions?: Array<string | { name?: string }>;
   roles?: Array<string | { name?: string; permissions?: Array<string | { name?: string }> }>;
+  // Jeton réel du SSO central : le rôle n'est ni dans `role` ni dans `roles`,
+  // mais dans chaque accès service (`services[].roleName`).
+  services?: Array<{ serviceName?: string; roleName?: string }>;
 };
+
+const sansAccents = (s: string) =>
+  s.normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase();
 
 /**
  * Rôle applicatif porté par le jeton. Les noms de rôles du service
@@ -61,13 +67,22 @@ function readRole(payload: JwtPayload): SleepRole {
     else if (entry?.name) names.push(entry.name);
   };
 
+  // Rôle du compte dans le Centre de Sommeil d'abord : sans lui, aucun rôle
+  // n'était jamais trouvé et chacun recevait le rôle par défaut (MEDECIN),
+  // donc tous les menus (28/11/2026).
+  const services = Array.isArray(payload.services) ? payload.services : [];
+  const sommeil = services.find((s) => sansAccents(s?.serviceName ?? "").includes("SOMMEIL"));
+  push(sommeil?.roleName);
   push(payload.role);
   payload.roles?.forEach((role) =>
     push(typeof role === "object" ? { name: role.name } : role)
   );
+  // Compte sans accès « Sommeil » nommé : rôles portés pour les autres services.
+  if (!sommeil) services.forEach((s) => push(s?.roleName));
 
   for (const name of names) {
-    const normalized = name.trim().toUpperCase();
+    // Sans accents : « Paramédical » devient « PARAMEDICAL », « Médecin » « MEDECIN ».
+    const normalized = sansAccents(name.trim());
     if (normalized.includes("MAJOR") || normalized.includes("ADMIN")) return "MAJOR";
     if (
       normalized.includes("PARAMED") ||
@@ -76,7 +91,7 @@ function readRole(payload: JwtPayload): SleepRole {
     ) {
       return "PARAMED";
     }
-    if (normalized.includes("MEDECIN") || normalized.includes("MÉDECIN")) return "MEDECIN";
+    if (normalized.includes("MEDECIN")) return "MEDECIN";
   }
 
   return DEFAULT_ROLE;
