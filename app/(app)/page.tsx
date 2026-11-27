@@ -5,6 +5,31 @@ import { useAuth } from "@/context/AuthContext";
 import { useAllConsultations } from "@/hooks/use-consultations";
 import { usePsgExams } from "@/hooks/use-psg";
 import type { ConsultationApi } from "@/lib/api/consultation";
+import { usePermissions } from "@/hooks/use-permissions";
+import { canAccessPath } from "@/lib/auth";
+
+/**
+ * Lien vers une rubrique : cliquable seulement si le rôle y a accès. Sinon la
+ * carte reste visible sans lien, ou disparaît avec `masquer` (bouton « Voir tout »).
+ */
+function LienAutorise({
+  href,
+  className,
+  masquer = false,
+  children,
+}: {
+  href: string;
+  className?: string;
+  masquer?: boolean;
+  children: React.ReactNode;
+}) {
+  const { permissions } = usePermissions();
+  if (canAccessPath(permissions, href.split("?")[0])) {
+    return <Link href={href} className={className}>{children}</Link>;
+  }
+  if (masquer) return null;
+  return <div className={className?.replace(/cursor-pointer|hover:\S+/g, "")}>{children}</div>;
+}
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -75,7 +100,7 @@ export default function DashboardPage() {
         {/* KPI Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-10">
           {/* Examens Aujourd'hui */}
-          <Link
+          <LienAutorise
             href="/consultation"
             className="bg-[#004A66] p-6 rounded-2xl relative overflow-hidden flex flex-col justify-between h-[220px] cursor-pointer shadow-sm transition hover:brightness-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
           >
@@ -95,10 +120,10 @@ export default function DashboardPage() {
               </p>
               <p className="text-[#64748B] text-[11px]">Données synchronisées avec le planning</p>
             </div>
-          </Link>
+          </LienAutorise>
 
           {/* Comptes-rendus en attente */}
-          <Link
+          <LienAutorise
             href="/comptes-rendus"
             className="bg-white p-6 rounded-2xl relative overflow-hidden cursor-pointer flex flex-col justify-between h-[220px] shadow-sm border border-[#F1F5F9] transition hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#006A8C]"
           >
@@ -121,10 +146,10 @@ export default function DashboardPage() {
                 {urgent} urgente{urgent > 1 ? "s" : ""}
               </span>
             </div>
-          </Link>
+          </LienAutorise>
 
           {/* Consultations urgentes */}
-          <Link
+          <LienAutorise
             href="/consultation"
             className="bg-white p-6 rounded-2xl relative overflow-hidden cursor-pointer flex flex-col justify-between h-[220px] shadow-sm border border-[#F1F5F9] transition hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E]"
           >
@@ -145,7 +170,7 @@ export default function DashboardPage() {
               </p>
               <p className="text-[#64748B] text-[11px] mt-2">Parmi les consultations du jour</p>
             </div>
-          </Link>
+          </LienAutorise>
         </div>
 
         {/* Main Dashboard Layout */}
@@ -158,19 +183,20 @@ export default function DashboardPage() {
                 <h3 className="text-[20px] font-extrabold text-[#0F172A] font-headline">
                   Activité Récente
                 </h3>
-                <Link
+                <LienAutorise
+                  masquer
                   href="/comptes-rendus"
                   className="text-[#006A8C] font-bold text-sm hover:underline flex items-center gap-1"
                 >
                   Voir tout <span className="material-symbols-outlined text-sm">arrow_forward</span>
-                </Link>
+                </LienAutorise>
               </div>
               <div className="divide-y divide-[#F1F5F9]">
                 {!isLoading && activityFeed.length === 0 && (
                   <p className="p-5 text-sm text-[#64748B]">Aucune activité clinique enregistrée.</p>
                 )}
                 {activityFeed.map((item) => (
-                  <Link
+                  <LienAutorise
                     key={item.id}
                     href={`/consultation/traitement?id=${item.id}`}
                     className="p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between hover:bg-[#F8FAFC] transition-colors"
@@ -202,7 +228,7 @@ export default function DashboardPage() {
                         </span>
                       )}
                     </div>
-                  </Link>
+                  </LienAutorise>
                 ))}
               </div>
             </div>
@@ -225,13 +251,14 @@ export default function DashboardPage() {
                     </h3>
                     <p className="font-semibold text-base mb-3">{nextAppointment.patient}</p>
                     <p className="text-sm text-[#94A3B8]">{nextAppointment.detail}</p>
-                    <Link
+                    <LienAutorise
+                      masquer
                       href={nextAppointment.href}
                       className="mt-4 inline-flex items-center gap-2 bg-white text-[#006A8C] px-4 py-2 rounded-lg font-semibold text-sm hover:bg-[#F1F5F9] transition-colors"
                     >
                       Accéder
                       <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-                    </Link>
+                    </LienAutorise>
                   </>
                 ) : (
                   <>
@@ -239,13 +266,13 @@ export default function DashboardPage() {
                     <p className="text-sm text-[#94A3B8]">
                       Aucun rendez-vous à venir n&apos;est enregistré.
                     </p>
-                    <Link
+                    <LienAutorise
                       href="/polysomnographie"
                       className="mt-4 inline-flex items-center gap-2 bg-white text-[#006A8C] px-4 py-2 rounded-lg font-semibold text-sm hover:bg-[#F1F5F9] transition-colors"
                     >
                       Voir le planning
                       <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-                    </Link>
+                    </LienAutorise>
                   </>
                 )}
               </div>

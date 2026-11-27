@@ -125,54 +125,30 @@ export function normalizePermission(raw: unknown): Permission | null {
   return permissionSet.has(converted) ? (converted as Permission) : null;
 }
 
-const MEDECIN_PERMISSIONS: Permission[] = [
+/*
+ * Répartition des accès par rôle (demande du 28/11/2026) :
+ *   MAJOR   : tableau de bord, prescription (c'est le major qui planifie les
+ *             examens prescrits), planning, polysomnographie, rapports, archives.
+ *   PARAMED : tableau de bord, planning (consultation), polysomnographie, archives.
+ *   MEDECIN : tout, sauf générer un rapport.
+ */
+
+/** Toutes les permissions sauf la génération de rapport. */
+const MEDECIN_PERMISSIONS: Permission[] = ALL_PERMISSIONS.filter(
+  (permission) => permission !== "stats:generate"
+);
+
+const MAJOR_PERMISSIONS: Permission[] = [
   "dashboard:view",
-  "consultation:list",
-  "consultation:read",
-  "consultation:treat",
-  "prescription:create",
+  // Prescription : consulter les demandes reçues et les planifier (psg:create / psg:update).
   "prescription:read",
   "prescription:list",
-  "prescription:update",
-  "prescription:delete",
-  "prescription:sign",
   "prescription:print",
   "planning:list",
   "planning:read",
   "planning:create",
   "planning:update",
-  "psg:read",
-  "psg:list",
-  "psg:view_waveform",
-  "psg:interpret_create",
-  "psg:interpret_read",
-  "psg:interpret_list",
-  "psg:interpret_update",
-  "psg:interpret_validate",
-  "psg:interpret_delete",
-  "psg:interpret_export",
-  "report:create",
-  "report:read",
-  "report:list",
-  "report:update",
-  "report:delete",
-  "report:validate",
-  "report:export",
-  "stats:view",
-  "stats:generate",
-  "archive:read",
-  "archive:list",
-  "archive:export",
-];
-
-const PARAMED_PERMISSIONS: Permission[] = [
-  "dashboard:view",
-  "consultation:list",
-  "consultation:read",
-  "planning:list",
-  "planning:read",
-  "planning:create",
-  "planning:update",
+  "planning:delete",
   "psg:create",
   "psg:read",
   "psg:list",
@@ -184,33 +160,55 @@ const PARAMED_PERMISSIONS: Permission[] = [
   "psg:export_data",
   "psg:interpret_read",
   "psg:interpret_list",
-  "report:create",
-  "report:read",
-  "report:list",
+  "stats:view",
+  "stats:generate",
+  "stats:export",
+  "archive:read",
+  "archive:list",
+  "archive:restore",
+  "archive:delete",
+  "archive:export",
+];
+
+const PARAMED_PERMISSIONS: Permission[] = [
+  "dashboard:view",
+  // Planning en lecture : c'est le major qui planifie.
+  "planning:list",
+  "planning:read",
+  "psg:read",
+  "psg:list",
+  "psg:update",
+  "psg:start",
+  "psg:stop",
+  "psg:view_waveform",
+  "psg:export_data",
+  "psg:interpret_read",
+  "psg:interpret_list",
+  "archive:read",
+  "archive:list",
 ];
 
 /**
- * Répartition par rôle applicative, dérivée de la matrice Rôles × Modules.
+ * Répartition par rôle applicative.
  *
  * Correspondance avec les rôles du document :
  *   MEDECIN -> Médecin Spécialiste
- *   PARAMED -> Technicien PSG
- *   MAJOR   -> Administrateur (encadrement de l'unité)
+ *   PARAMED -> Paramédical / Technicien PSG
+ *   MAJOR   -> Major (encadrement de l'unité)
  *
- * Ce tableau n'est qu'un repli : dès que le service d'authentification CHU
- * fournit les permissions du compte (claim JWT ou `GET /roles`), ce sont
- * elles qui font foi — voir `resolvePermissions`.
+ * Cette matrice fait foi : les permissions du jeton ne s'y ajoutent plus
+ * (voir `resolvePermissions`).
  */
 export const ROLE_PERMISSIONS: Record<SleepRole, Permission[]> = {
   MEDECIN: MEDECIN_PERMISSIONS,
   PARAMED: PARAMED_PERMISSIONS,
-  MAJOR: ALL_PERMISSIONS,
+  MAJOR: MAJOR_PERMISSIONS,
 };
 
 /**
  * Permissions effectives d'un compte.
- * `grantedByAuthService` provient du jeton ou de l'API d'authentification ;
- * si rien n'est fourni, on retombe sur la matrice du rôle.
+ * La matrice du rôle fait foi ; `grantedByAuthService` (jeton ou API
+ * d'authentification) ne sert que lorsqu'aucun rôle n'est connu.
  */
 export function resolvePermissions(
   role: SleepRole | null | undefined,
@@ -219,16 +217,13 @@ export function resolvePermissions(
   // Ouverture temporaire : prime sur le jeton comme sur la matrice.
   if (GRANT_ALL_PERMISSIONS) return ALL_PERMISSIONS;
 
-  if (grantedByAuthService && grantedByAuthService.length > 0) {
-    const resolved = grantedByAuthService
-      .map(normalizePermission)
-      .filter((permission): permission is Permission => permission !== null);
-    // Les droits du jeton s'ajoutent à ceux du rôle : remplacés, un médecin perdait jusqu'au
-    // tableau de bord dès que son compte portait une seule permission du catalogue.
-    return [...new Set([...(role ? ROLE_PERMISSIONS[role] : []), ...resolved])];
-  }
+  // Le rôle décide de ce que le compte voit : les permissions du jeton s'y
+  // ajoutaient, ce qui pouvait rouvrir une rubrique fermée à ce rôle.
+  if (role) return ROLE_PERMISSIONS[role];
 
-  return role ? ROLE_PERMISSIONS[role] : [];
+  return (grantedByAuthService ?? [])
+    .map(normalizePermission)
+    .filter((permission): permission is Permission => permission !== null);
 }
 
 /** Permissions requises pour ouvrir chaque rubrique de navigation. */
