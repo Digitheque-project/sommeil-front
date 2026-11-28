@@ -1,5 +1,6 @@
 "use client";
 
+import { getSleepUserFromToken } from '@/lib/auth';
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -46,6 +47,16 @@ export default function PrescriptionPage() {
 }
 
 function PrescriptionPageContent() {
+  // Rôle lu dans le jeton de connexion (après montage, jamais côté serveur).
+  const [estMedecin, setEstMedecin] = useState(false);
+  useEffect(() => {
+    try {
+      const t = localStorage.getItem('access_token') || localStorage.getItem('auth_token') || localStorage.getItem('token');
+      setEstMedecin(getSleepUserFromToken(t)?.role === 'MEDECIN');
+    } catch {
+      setEstMedecin(false);
+    }
+  }, []);
   const searchParams = useSearchParams();
   // Identifiant de prescription transmis par une notification (cf.
   // lib/notification-routing.ts) : la ligne correspondante est mise en avant
@@ -315,6 +326,9 @@ function PrescriptionPageContent() {
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <ActionButton
                           permission="psg:create"
+                          // Le médecin voit tout mais ne planifie pas (28/11/2026).
+                          disabled={estMedecin}
+                          title={estMedecin ? "La planification est réservée au secrétariat / major du Centre de sommeil" : undefined}
                           onClick={() => openSchedule(item)}
                           className="action-primary px-4 py-2.5 rounded-xl text-label-md font-label-md flex items-center gap-1.5 shadow-sm ml-auto"
                         >

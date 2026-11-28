@@ -1,5 +1,6 @@
 "use client";
 
+import { FlotteServices } from './FlotteServices';
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
@@ -192,6 +193,8 @@ export function ActionsCompte({
 
   return (
     <>
+      {/* Téléphones fixes des services (gérés dans l'admin) — 28/11/2026 */}
+      <FlotteServices className={className} classeLibelle={classeLibelle} icones={icones} />
       <button
         type="button"
         className={className}

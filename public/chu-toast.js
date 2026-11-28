@@ -193,20 +193,21 @@
   function html() {
     var i = infos();
     var trait = '<div style="width:60px;border-top:1px solid #000;margin:3px auto"></div>';
+    // Tout le texte centré (comme le compte rendu de l'Anapath), logo du CHU à gauche.
     return '' +
-      '<div data-chu-entete style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;' +
+      '<div data-chu-entete style="display:flex;align-items:center;gap:12px;' +
       'font-family:\'Times New Roman\',Times,serif;color:#000;margin:0 0 14px;padding-bottom:8px;border-bottom:1.5px solid #000">' +
-      '<div style="display:flex;align-items:center;gap:10px;min-width:0">' +
-      (logoPret ? '<img src="' + logoPret + '" alt="" style="width:58px;height:58px;object-fit:contain"/>' : '') +
-      '<div style="text-align:center;font-size:11px;line-height:1.35;text-transform:uppercase">' +
-      '<div style="font-weight:bold">Ministère de la Santé Publique</div>' + trait +
-      (i.chu ? '<div style="font-weight:bold">' + esc(i.chu) + '</div>' + trait : '') +
-      (i.service ? '<div>Service : ' + esc(i.service) + '</div>' : '') +
-      '</div></div>' +
-      '<div style="text-align:center;font-size:11px;line-height:1.35">' +
-      '<div style="font-weight:bold;letter-spacing:.5px">REPOBLIKAN\'I MADAGASIKARA</div>' +
+      '<div style="width:62px;flex-shrink:0">' +
+      (logoPret ? '<img src="' + logoPret + '" alt="" style="width:62px;height:62px;object-fit:contain"/>' : '') +
+      '</div>' +
+      '<div style="flex:1;text-align:center;font-size:11px;line-height:1.35">' +
+      '<div style="font-size:13px;font-weight:bold;letter-spacing:.5px">REPOBLIKAN\'I MADAGASIKARA</div>' +
       '<div style="font-style:italic">Fitiavana – Tanindrazana – Fandrosoana</div>' + trait +
-      '</div></div>';
+      '<div style="font-weight:bold;text-transform:uppercase">Ministère de la Santé Publique</div>' +
+      (i.chu ? trait + '<div style="font-weight:bold;text-transform:uppercase">' + esc(i.chu) + '</div>' : '') +
+      (i.service ? '<div style="text-transform:uppercase">Service : ' + esc(i.service) + '</div>' : '') +
+      '</div>' +
+      '<div style="width:62px;flex-shrink:0"></div></div>';
   }
 
   function dejaEntete(racine) {
