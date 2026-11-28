@@ -8,6 +8,7 @@ import { downloadCsv, printDocument } from "@/lib/download";
 import { useToast } from "@/components/ToastProvider";
 import { isTechnicalId } from "@/lib/utils";
 import ContenuArchive, { contenuEnHtml } from "@/components/archives/ContenuArchive";
+import ExamensTermines from "@/components/archives/ExamensTermines";
 
 type RecordStatus = "Tous" | "Actifs" | "Restaurés";
 
@@ -158,6 +159,10 @@ export default function ArchivesPage() {
           </div>
         </div>
 
+        {/* Prescriptions terminées : début, fin, résultat (28/11/2026). */}
+        <ExamensTermines />
+
+        <h2 className="text-[#0F172A] font-extrabold text-lg pt-2">Documents archivés</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-3">
             <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.08em] text-[#64748B]"><span className="material-symbols-outlined text-sm">calendar_month</span>PÉRIODE D&apos;ARCHIVAGE</div>
