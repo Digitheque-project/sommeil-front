@@ -306,7 +306,8 @@ function PolysomnographiePageContent() {
                       </div>
                       <div className="min-w-0">
                         <p className="font-semibold text-primary truncate">{item.patientPrenom} {item.patientNom}</p>
-                        <p className="text-xs font-data-mono text-on-surface-variant truncate">{item.patientId}</p>
+                        {/* Jamais l'identifiant technique à l'écran (28/11/2026). */}
+                        {item.motif ? <p className="text-xs text-on-surface-variant truncate">{item.motif}</p> : null}
                       </div>
                     </div>
 
